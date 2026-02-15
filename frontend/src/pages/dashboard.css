@@ -1,0 +1,306 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* --- 1. GLOBAL RESET & LAYOUT --- */
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+    font-family: 'Plus Jakarta Sans', sans-serif; 
+}
+
+body, html, #root { 
+    width: 100%; 
+    height: 100vh; 
+    overflow: hidden; 
+    background-color: #fcfdfe; 
+}
+
+.dashboard-container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    background-color: #fcfdfe;
+    overflow: hidden;
+}
+
+/* Sidebar Fixed */
+.sidebar-modern {
+    width: 280px;
+    height: 100vh;
+    position: fixed;
+    left: 0; top: 0;
+    background: #ffffff;
+    z-index: 100;
+    border-right: 1px solid #f1f5f9;
+}
+
+/* Main Content Area */
+.main-content {
+    margin-left: 280px;
+    flex: 1; 
+    height: 100vh; 
+    padding: 45px 60px;
+    display: flex; 
+    flex-direction: column; 
+    overflow-y: auto; 
+    background: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.05) 0px, transparent 50%);
+}
+
+/* --- 2. CARDS & GRIDS --- */
+.pro-card {
+    background: #ffffff;
+    border-radius: 30px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    padding: 32px;
+    box-shadow: 0 10px 30px -12px rgba(0,0,0,0.05);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.pro-card:hover { 
+    transform: translateY(-5px); 
+    box-shadow: 0 20px 40px -12px rgba(0,0,0,0.1); 
+}
+
+.stats-grid { 
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 32px; 
+    margin-bottom: 45px; 
+}
+
+.dashboard-grid { 
+    display: grid; 
+    grid-template-columns: 1.85fr 1fr; 
+    gap: 32px; 
+}
+
+.mini-card {
+    background: white;
+    padding: 18px 25px;
+    border-radius: 18px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    color: #1e293b;
+    font-weight: 700;
+}
+
+/* --- 3. HIGH VISIBILITY TABLE UI --- */
+.table-ui { 
+    border-radius: 20px; 
+    overflow: hidden; 
+    border: 1px solid #e2e8f0; 
+    margin-top: 25px; 
+}
+
+table { width: 100%; border-collapse: separate; border-spacing: 0; }
+
+.table-ui th {
+    background: #f8fafc !important;
+    color: #0f172a !important; /* Pure Dark for visibility */
+    padding: 20px 15px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.table-ui td {
+    padding: 20px 15px;
+    color: #1e293b !important; /* High contrast text */
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-bottom: 1px solid #f8fafc;
+}
+
+tr:hover td { background: #f5f3ff; color: #4f46e5 !important; }
+
+.no-data-text {
+    text-align: center;
+    padding: 50px;
+    color: #64748b;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+/* --- 4. MODAL & POPUP UI --- */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(15, 23, 42, 0.75); /* Darker overlay */
+    backdrop-filter: blur(8px);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 9999;
+}
+
+.modal-content {
+    width: 480px;
+    max-width: 90%;
+    background: #ffffff !important;
+    padding: 35px;
+    border-radius: 28px;
+    text-align: center;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.view-header {
+    display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;
+}
+
+.inst-icon {
+    width: 65px; height: 65px;
+    background: #6366f1;
+    color: white;
+    font-size: 26px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; margin-bottom: 12px; font-weight: 800;
+}
+
+.info-row {
+    display: flex; justify-content: space-between;
+    padding: 15px 0;
+    border-bottom: 1px dashed #e2e8f0;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.info-row span { color: #64748b; font-weight: 500; }
+
+/* --- 5. BUTTONS, INPUTS & BADGES --- */
+.btn-pro {
+    background: linear-gradient(135deg, #6366f1, #4f46e5); 
+    color: white; border: none; padding: 15px 30px; 
+    border-radius: 18px; font-weight: 800; cursor: pointer;
+    box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.3);
+    transition: 0.3s;
+}
+
+.btn-pro:hover { transform: scale(1.02); box-shadow: 0 15px 30px -10px rgba(79, 70, 229, 0.5); }
+
+.btn-small {
+    padding: 8px 15px; border-radius: 10px; border: none;
+    font-size: 0.75rem; font-weight: 800; cursor: pointer; transition: 0.2s;
+}
+.view { background: #e0f2fe; color: #0369a1; }
+.edit { background: #f5f3ff; color: #4f46e5; }
+.btn-cancel { background: #f1f5f9; color: #64748b; padding: 10px 20px; border-radius: 12px; font-weight: 600; border:none; cursor:pointer;}
+
+.modern-input {
+    width: 100%;
+    padding: 16px 20px;
+    border-radius: 15px;
+    border: 2px solid #e2e8f0;
+    background: #f8fafc;
+    color: #0f172a;
+    font-weight: 600;
+    margin-top: 10px;
+    transition: 0.3s;
+}
+
+.modern-input:focus {
+    border-color: #6366f1;
+    background: white;
+    outline: none;
+}
+
+.badge {
+    padding: 6px 14px; border-radius: 10px; font-size: 0.75rem; font-weight: 800; 
+    display: inline-flex; align-items: center; gap: 6px;
+}
+.active-badge { background: #ecfdf5; color: #059669; border: 1px solid rgba(5, 150, 105, 0.1); }
+
+.warning-icon { font-size: 50px; margin-bottom: 15px; }
+
+/* Quick Action Hover Items */
+.action-item-modern {
+    padding: 18px; border-radius: 18px; border: 1px solid #f1f5f9;
+    cursor: pointer; display: flex; justify-content: space-between;
+    font-weight: 700; transition: 0.3s; margin-bottom: 12px;
+}
+.action-item-modern:hover { background: #f8fafc; transform: translateX(5px); color: #4f46e5; }
+
+
+
+
+/* --- NEW ANIMATIONS & VISIBILITY FIX (No changes to existing UI) --- */
+
+/* 1. Title Visibility Fix */
+.main-title {
+    color: #0f172a !important; /* Pure Dark Navy for maximum visibility */
+    font-size: 2.5rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -1px !important;
+    opacity: 1 !important;
+    animation: fadeInDown 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* 2. Subtitle Visibility */
+.sub-title, .main-content p {
+    color: #475569 !important; /* Visible Slate Gray */
+    opacity: 1 !important;
+    animation: fadeInDown 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* 3. Table Rows Staggered Animation (Slide from Left) */
+.table-ui tbody tr {
+    opacity: 0;
+    animation: slideInLeft 0.5s ease-out forwards;
+}
+
+/* Har row thodi der baad aayegi (Stagger effect) */
+.table-ui tbody tr:nth-child(1) { animation-delay: 0.1s; }
+.table-ui tbody tr:nth-child(2) { animation-delay: 0.2s; }
+.table-ui tbody tr:nth-child(3) { animation-delay: 0.3s; }
+.table-ui tbody tr:nth-child(4) { animation-delay: 0.4s; }
+.table-ui tbody tr:nth-child(5) { animation-delay: 0.5s; }
+
+/* 4. Action Buttons Hover Animation */
+.btn-small {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.btn-small:hover {
+    transform: scale(1.1) translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* 5. Keyframes Definition */
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* 6. Modal Content Entrance Bounce */
+.modal-content {
+    animation: modalBounce 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
+}
+
+@keyframes modalBounce {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}

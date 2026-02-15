@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "framer-motion": "^12.34.0",
+    "jspdf": "^4.1.0",
+    "jspdf-autotable": "^5.0.7",
+    "leaflet": "^1.9.4",
+    "react-leaflet": "^5.0.0"
+  }
+}
