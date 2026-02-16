@@ -28,9 +28,6 @@ export default function Enrollments() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6; 
 
-  // Mobile/Tab par Sidebar Open/Close karne ke liye
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
   const loadData = async () => {
     try {
       const [s, c, e] = await Promise.all([
@@ -151,28 +148,19 @@ Thank you for learning with us!
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentEnrollments = filteredEnrollments.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.max(1, Math.ceil(filteredEnrollments.length / itemsPerPage)); // 🚀 FIX: Hamesha kam se kam 1 page dikhega
+  const totalPages = Math.max(1, Math.ceil(filteredEnrollments.length / itemsPerPage)); 
 
   return (
     <div className="dashboard-container" style={{ display: 'flex', background: '#f8fafc', minHeight: '100vh', position: 'relative', overflowX: 'hidden' }}>
       
-      <div className={`sidebar-backdrop ${isSidebarOpen ? 'active' : ''}`} onClick={() => setIsSidebarOpen(false)}></div>
-      
-      <div className={`sidebar-wrapper ${isSidebarOpen ? 'active' : ''}`}>
-        <SidebarModern />
-      </div>
-
+      <SidebarModern />
       <Toaster position="top-right" />
       
-      <div className="main-content" style={{ flex: 1, padding: '40px', marginLeft: '280px', transition: '0.3s', filter: showDeletePrompt ? 'blur(4px)' : 'none' }}>
+      {/* 🚀 Changed class to match global mobile setup */}
+      <div className="enrollment-main-content" style={{ filter: showDeletePrompt ? 'blur(4px)' : 'none' }}>
         
-        <div className="mobile-topbar">
-           <button className="mobile-s-btn" onClick={() => setIsSidebarOpen(true)}>S</button>
-           <h2 style={{margin: 0, color: '#0f172a', fontWeight: '900', letterSpacing: '0.5px'}}>SHIVADDA</h2>
-        </div>
-
         {/* Header */}
-        <header className="page-header" style={{ marginBottom: '35px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
                 <h1 className="gradient-text" style={{ fontSize: '2.5rem', fontWeight: '900', margin: 0 }}>Enrollment Hub</h1>
                 <p style={{ color: '#64748b', marginTop: '5px' }}>Manage student admissions & records.</p>
@@ -268,7 +256,7 @@ Thank you for learning with us!
                 {filteredEnrollments.length === 0 && <div className="empty-state">No records found.</div>}
             </div>
 
-            {/* 🚀 FIX: Ab pagination hamesha dikhegi agar 1 bhi student ho ya khali list ho tab bhi */}
+            {/* Pagination */}
             <div className="pagination-container">
                 <button 
                     className="btn-page" 
@@ -345,13 +333,13 @@ Thank you for learning with us!
         .gradient-text { background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .card-glass { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid #f1f5f9; }
         
+        .enrollment-main-content { flex: 1; padding: 40px; margin-left: 280px; transition: 0.3s; box-sizing: border-box; }
         .flex-container { display: flex; gap: 30px; }
-        .sidebar-backdrop { display: none; }
-        .mobile-topbar { display: none; }
+        .page-header { margin-bottom: 35px; }
 
         /* Search & Form */
         .search-box { position: relative; }
-        .search-box input { padding: 12px 20px 12px 45px; border-radius: 30px; border: 1px solid #e2e8f0; width: 300px; outline: none; transition: 0.3s; }
+        .search-box input { padding: 12px 20px 12px 45px; border-radius: 30px; border: 1px solid #e2e8f0; width: 300px; outline: none; transition: 0.3s; box-sizing: border-box; }
         .search-box input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
         .search-box span { position: absolute; left: 15px; top: 12px; opacity: 0.5; }
 
@@ -359,7 +347,7 @@ Thank you for learning with us!
         .section-title { margin-bottom: 20px; border-left: 4px solid #3b82f6; padding-left: 15px; color: #1e293b; font-weight: 800; }
         .input-group { margin-bottom: 20px; }
         .input-group label { display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; letter-spacing: 0.5px; }
-        .modern-input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; outline: none; font-size: 0.95rem; background: #f8fafc; color: #1e293b !important; }
+        .modern-input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; outline: none; font-size: 0.95rem; background: #f8fafc; color: #1e293b !important; box-sizing: border-box;}
         .modern-input:focus { border-color: #3b82f6; background: white; }
         
         .btn-primary { width: 100%; padding: 14px; background: #0f172a; color: white; border: none; border-radius: 14px; font-weight: 700; cursor: pointer; transition: 0.3s; }
@@ -369,17 +357,14 @@ Thank you for learning with us!
         .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .filter-select { padding: 8px 15px; border-radius: 10px; border: 1px solid #e2e8f0; cursor: pointer; outline: none; color: #1e293b; background: white; }
         
-        /* 🚀 FIX: Table Wrapper CSS for hidden scrollbar */
-        .table-wrapper { overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
-        .table-wrapper::-webkit-scrollbar { display: none; }
-
+        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .modern-table { width: 100%; border-collapse: collapse; min-width: 600px; }
         .modern-table th { text-align: left; color: #94a3b8; font-size: 0.75rem; padding: 15px; border-bottom: 2px solid #f1f5f9; letter-spacing: 0.5px; }
         .modern-table td { padding: 15px; border-bottom: 1px solid #f8fafc; vertical-align: middle; }
         .modern-table tr:hover { background: #fcfdfe; }
 
         .student-cell { display: flex; align-items: center; gap: 12px; }
-        .avatar-circle { width: 35px; height: 35px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
+        .avatar-circle { width: 35px; height: 35px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0;}
         .s-name { font-weight: 700; color: #1e293b; font-size: 0.9rem; white-space: nowrap; }
         .s-id { font-size: 0.75rem; color: #94a3b8; }
 
@@ -451,36 +436,11 @@ Thank you for learning with us!
         @keyframes bounceIn { 0% { transform: scale(0.8); opacity: 0; } 60% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); } }
         .bounce-in { animation: bounceIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
-        /* MEDIA QUERIES FOR RESPONSIVENESS & SIDEBAR S ICON */
+        /* 📱 MEDIA QUERIES FOR RESPONSIVENESS */
         @media (max-width: 1024px) {
-            .flex-container { flex-direction: column; }
+            .enrollment-main-content { margin-left: 0 !important; padding: 15px !important; padding-top: 90px !important; width: 100%; }
+            .flex-container { flex-direction: column; gap: 20px; }
             .form-card { position: static; width: 100%; }
-            .main-content { margin-left: 0 !important; padding: 20px !important; }
-            
-            /* Sidebar Wrapper Magic */
-            .sidebar-wrapper { position: fixed; left: -320px; top: 0; height: 100vh; z-index: 5000; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-            .sidebar-wrapper.active { left: 0; }
-            .sidebar-backdrop { display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(15,23,42,0.5); backdrop-filter: blur(4px); z-index: 4000; transition: 0.3s; opacity: 0; pointer-events: none; }
-            .sidebar-backdrop.active { opacity: 1; pointer-events: auto; }
-            
-            /* Topbar with S icon */
-            .mobile-topbar {
-                display: flex; align-items: center; gap: 15px;
-                margin: -20px -20px 25px -20px; padding: 15px 25px;
-                background: white; border-bottom: 1px solid #e2e8f0;
-                position: sticky; top: 0; z-index: 1000;
-                box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-            }
-            .mobile-s-btn {
-                width: 42px; height: 42px; border-radius: 12px;
-                background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-                color: white; font-size: 1.4rem; font-weight: 900;
-                border: none; cursor: pointer; display: flex;
-                align-items: center; justify-content: center;
-                box-shadow: 0 4px 10px rgba(59,130,246,0.3);
-            }
-        }
-        @media (max-width: 768px) {
             .page-header { flex-direction: column; align-items: flex-start !important; gap: 15px; }
             .search-box { width: 100%; }
             .search-box input { width: 100%; }
