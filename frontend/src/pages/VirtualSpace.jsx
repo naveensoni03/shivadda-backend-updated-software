@@ -199,7 +199,8 @@ export default function VirtualSpace() {
     <div className="virtual-space-container">
         <SidebarModern />
         
-        <div className="main-content-area">
+        {/* 🚀 Changed class structure for Responsiveness */}
+        <div className="vs-main-content">
             <Toaster position="top-center" />
             <input type="file" ref={fileInputRef} style={{display: 'none'}} onChange={handleFileChange} />
 
@@ -212,7 +213,7 @@ export default function VirtualSpace() {
                 <div className="header-actions">
                       {/* ASLI GO LIVE BUTTON (SCREEN SHARE) */}
                       <button onClick={toggleLive} className={`btn-action ${isLive ? 'btn-danger' : 'btn-primary'}`}>
-                         {isLive ? <><StopCircle size={16}/> Stop Sharing</> : <><ScreenShare size={16}/> Go Live (Share Screen)</>}
+                          {isLive ? <><StopCircle size={16}/> Stop Sharing</> : <><ScreenShare size={16}/> Go Live</>}
                       </button>
                       
                       {isRecording ? (
@@ -227,7 +228,7 @@ export default function VirtualSpace() {
                 </div>
             </header>
 
-            {/* MAIN CONTENT */}
+            {/* MAIN CONTENT GRID */}
             <div className="vs-grid-layout">
                 
                 {/* VIDEO AREA */}
@@ -281,7 +282,7 @@ export default function VirtualSpace() {
                         </div>
                         <div className="card-body">
                             <div onClick={() => openLink('https://meet.google.com')} className="list-item clickable">
-                                <div className="icon-box green"><Video size={16}/></div> <span>Meet</span>
+                                <div className="icon-box green"><Video size={16}/></div> <span>Google Meet</span>
                             </div>
                             <div onClick={() => openLink('https://zoom.us')} className="list-item clickable">
                                 <div className="icon-box blue"><Monitor size={16}/></div> <span>Zoom</span>
@@ -316,27 +317,36 @@ export default function VirtualSpace() {
             </div>
         </div>
 
+        {/* 🚀 CSS WITH MOBILE RESPONSIVENESS ADDED */}
         <style>{`
             :root { --bg-body: #f8fafc; --text-main: #1e293b; --text-muted: #64748b; --primary: #3b82f6; --danger: #ef4444; --border-light: #e2e8f0; }
             .virtual-space-container { display: flex; height: 100vh; background: var(--bg-body); font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }
-            .main-content-area { flex: 1; padding: 20px; margin-left: 280px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+            
+            /* Main Content Desktop View */
+            .vs-main-content { flex: 1; padding: 20px; margin-left: 280px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box; transition: all 0.3s ease;}
+            
             .vs-grid-layout { display: grid; grid-template-columns: 1fr 280px; gap: 20px; flex: 1; min-height: 0; }
             .sidebar-panels { display: flex; flex-direction: column; gap: 15px; height: 100%; overflow: hidden; } 
+            
             .info-card { background: white; border-radius: 14px; border: 1px solid var(--border-light); overflow: hidden; display: flex; flex-direction: column; }
             .broadcast-card { flex-shrink: 0; }
             .resources-card { flex: 1; min-height: 0; display: flex; flex-direction: column; } 
+            
             .scrollable-list { overflow-y: auto; flex: 1; padding: 10px; min-height: 0; }
             .scrollable-list::-webkit-scrollbar { width: 6px; }
             .scrollable-list::-webkit-scrollbar-track { background: transparent; }
             .scrollable-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+            
             .card-header { padding: 12px 15px; background: #f8fafc; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
             .vs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0; }
             .vs-title { font-size: 1.4rem; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; }
             .vs-subtitle { color: var(--text-muted); margin-top: 2px; font-size: 0.85rem; font-weight: 500; }
             .pro-badge { background: var(--primary); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 8px; }
+            
             .video-card { background: black; border-radius: 16px; overflow: hidden; position: relative; border: 1px solid #334155; height: 100%; }
             .video-frame { width: 100%; height: 100%; position: relative; display: flex; justify-content: center; alignItems: center; }
             .camera-off-placeholder { color: white; font-size: 1.2rem; opacity: 0.7; }
+            
             .control-overlay { position: absolute; bottom: 20px; width: 100%; display: flex; justify-content: center; }
             .control-bar { display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 8px 20px; border-radius: 40px; backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1); }
             .ctrl-btn { color: white; background: rgba(255,255,255,0.1); border: none; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; alignItems: center; justify-content: center; transition: 0.2s; }
@@ -344,16 +354,19 @@ export default function VirtualSpace() {
             .ctrl-btn.off { background: var(--danger); }
             .btn-hangup { background: var(--danger); }
             .divider { width: 1px; height: 25px; background: rgba(255,255,255,0.2); margin: 0 5px; align-self: center; }
+            
             .status-tags { position: absolute; top: 15px; left: 15px; display: flex; gap: 8px; }
             .tag { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; color: white; }
             .tag.live { background: var(--danger); }
             .tag.rec { background: var(--primary); }
+            
             .card-header h3 { margin: 0; font-size: 0.9rem; font-weight: 700; color: var(--text-main); }
             .text-purple { color: #8b5cf6; } .text-blue { color: #3b82f6; }
             .list-item { padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 10px; color: var(--text-main); font-size: 0.85rem; font-weight: 600; border: 1px solid transparent; transition: 0.2s; cursor: pointer; }
             .list-item:hover { background: #f1f5f9; border-color: var(--border-light); }
-            .icon-box { width: 28px; height: 28px; border-radius: 6px; display: flex; alignItems: center; justifyContent: center; color: white; }
+            .icon-box { width: 28px; height: 28px; border-radius: 6px; display: flex; alignItems: center; justify-content: center; color: white; }
             .green { background: #10b981; } .blue { background: #3b82f6; }
+            
             .resource-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: #f8fafc; border-radius: 8px; cursor: pointer; border: 1px solid transparent; transition: 0.2s; margin-bottom: 8px; }
             .resource-item:hover { border-color: var(--primary); background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
             .res-icon { color: var(--text-muted); }
@@ -361,14 +374,46 @@ export default function VirtualSpace() {
             .res-name { font-size: 0.8rem; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             .res-meta { font-size: 0.7rem; color: var(--text-muted); }
             .btn-download { background: white; border: 1px solid var(--border-light); width: 26px; height: 26px; border-radius: 50%; display: flex; alignItems: center; justify-content: center; color: var(--primary); cursor: pointer; }
+            
             .card-footer { padding: 10px; border-top: 1px solid var(--border-light); text-align: center; background: #f8fafc; flex-shrink: 0; }
             .btn-upload { width: 100%; padding: 10px; background: white; border: 1px dashed var(--primary); color: var(--primary); border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.85rem; transition: 0.2s; }
             .btn-upload:hover { background: #eff6ff; }
+            
+            .header-actions { display: flex; gap: 10px;}
             .btn-action { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 700; font-size: 0.85rem; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
             .btn-primary { background: var(--text-main); color: white; }
             .btn-danger { background: var(--danger); color: white; }
             .btn-secondary { background: white; border: 1px solid var(--border-light); color: var(--text-main); }
             .btn-danger-outline { background: white; border: 1px solid var(--danger); color: var(--danger); }
+
+            /* 📱 MOBILE RESPONSIVENESS */
+            @media (max-width: 850px) {
+                .virtual-space-container { overflow-y: auto; }
+                
+                .vs-main-content {
+                    margin-left: 0 !important;
+                    padding: 15px !important;
+                    padding-top: 90px !important; /* Top space for Mobile Header */
+                    width: 100% !important;
+                    height: auto !important; /* Remove fixed height for scrolling */
+                    overflow: visible !important;
+                }
+                
+                /* Stack header buttons */
+                .vs-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+                .header-actions { width: 100%; flex-wrap: wrap; }
+                .header-actions button { flex: 1; justify-content: center; }
+
+                /* Stack Video and Sidebar */
+                .vs-grid-layout { grid-template-columns: 1fr; display: flex; flex-direction: column; }
+                
+                /* Video Player adjustments */
+                .video-card { min-height: 400px; height: 50vh; flex-shrink: 0; }
+                
+                /* Sidebar panels adjustments for mobile */
+                .sidebar-panels { height: auto; }
+                .resources-card { min-height: 350px; } /* Ensures resources list is visible */
+            }
         `}</style>
     </div>
   );
