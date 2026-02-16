@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import SidebarModern from "../components/SidebarModern";
 import api from "../api/axios";
 import toast, { Toaster } from 'react-hot-toast';
-// ✅ FIX: Added 'ChevronRight' and 'Save' to imports
 import { 
   Globe, Map as MapIcon, Plus, Trash2, X, Flag, 
   Layers, ChevronDown, ChevronRight, Sparkles, LayoutList, MapPin, ArrowLeft, Save 
@@ -59,7 +58,6 @@ export default function Locations() {
 
   useEffect(() => { fetchPlaces(null); }, []);
 
-  // ✅ FIXED: Safety check for Array to prevent map error
   const fetchPlaces = async (parentId) => {
     try {
       let url = parentId ? `locations/places/${parentId}/children/` : "locations/places/roots/";
@@ -121,12 +119,13 @@ export default function Locations() {
       <SidebarModern />
       <Toaster position="top-right" toastOptions={{style: {borderRadius:'12px', background:'#1e293b', color:'#fff'}}}/>
       
-      <div style={{flex: 1, marginLeft: "280px", padding: "35px", height:'100vh', overflowY:'auto', position:'relative'}}>
+      {/* 🚀 FIXED: Use CSS class for layout instead of inline styles */}
+      <div className="locations-main-view">
         
         <div style={{position: 'fixed', top: '-10%', right: '-10%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(99,102,241,0.08) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none'}} />
         
         {/* --- HEADER --- */}
-        <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-end', marginBottom:'35px'}}>
+        <div className="locations-header">
             <div>
                 <div style={{display:'flex', alignItems:'center', gap:'10px', marginBottom:'10px'}}>
                     {breadcrumbs.length > 0 && (
@@ -144,7 +143,8 @@ export default function Locations() {
             </div>
         </div>
 
-        <div style={{display:'grid', gridTemplateColumns:'360px 1fr', gap:'35px', paddingBottom:'20px'}}>
+        {/* 🚀 FIXED: Grid layout extracted to CSS */}
+        <div className="locations-content-grid">
             
             {/* LEFT: FORMS */}
             <div style={{display:'flex', flexDirection:'column', gap:'25px'}}>
@@ -214,7 +214,7 @@ export default function Locations() {
                                 border:'1px solid #f1f5f9'
                             }}
                         >
-                            <div style={{padding:'18px 24px', background:'linear-gradient(to right, #f8fafc, #fff)', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                            <div className="location-card-inner">
                                 <div style={{display:'flex', alignItems:'center', gap:'15px', cursor:'pointer'}} onClick={() => handleEnter(place)}>
                                     <div style={{width:'42px', height:'42px', borderRadius:'12px', background: place.children_count > 0 ? 'linear-gradient(135deg, #6366f1, #4f46e5)' : '#f1f5f9', color: place.children_count > 0 ? 'white' : '#94a3b8', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.2rem'}}>
                                         {place.place_type === 'Country' ? '🇮🇳' : <MapIcon size={20}/>}
@@ -239,9 +239,69 @@ export default function Locations() {
         </div>
       </div>
       
+      {/* 🚀 ALL RESPONSIVE STYLES HERE */}
       <style>{`
         .spin { animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Desktop Default Styles */
+        .locations-main-view {
+            flex: 1;
+            margin-left: 280px;
+            padding: 35px;
+            height: 100vh;
+            overflow-y: auto;
+            position: relative;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        .locations-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 35px;
+        }
+
+        .locations-content-grid {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 35px;
+            padding-bottom: 20px;
+        }
+
+        .location-card-inner {
+            padding: 18px 24px;
+            background: linear-gradient(to right, #f8fafc, #fff);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 📱 MOBILE RESPONSIVE STYLES */
+        @media (max-width: 850px) {
+            .locations-main-view {
+                margin-left: 0 !important;
+                padding: 15px !important;
+                padding-top: 90px !important; /* Top space for mobile header */
+                width: 100% !important;
+            }
+
+            .locations-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
+
+            .locations-content-grid {
+                grid-template-columns: 1fr; /* Form and List stack vertically */
+                gap: 25px;
+            }
+
+            .location-card-inner {
+                padding: 15px;
+            }
+        }
       `}</style>
     </div>
   );
@@ -251,7 +311,7 @@ export default function Locations() {
 const inputStyle = { 
     width:'100%', padding:'14px 18px', borderRadius:'14px', 
     border:'2px solid #f1f5f9', outline:'none', background:'#f8fafc', 
-    fontSize:'0.95rem', color:'#1e293b', fontWeight:'600', transition:'all 0.2s'
+    fontSize:'0.95rem', color:'#1e293b', fontWeight:'600', transition:'all 0.2s', boxSizing:'border-box'
 };
 
 const btnPrimary = { 
