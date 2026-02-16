@@ -1,8 +1,12 @@
-﻿import React from "react";
+﻿import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+// Lucide icons add kiye hain Mobile button ke liye
+import { Menu, X } from "lucide-react"; 
 
 const SidebarModern = () => {
   const navigate = useNavigate();
+  // State for mobile toggle
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const linkStyle = ({ isActive }) => ({
     padding: "12px 16px",
@@ -28,72 +32,102 @@ const SidebarModern = () => {
   };
 
   return (
-    <aside style={{ 
-      width: "280px", background: "#ffffff", height: "100vh", position: "fixed", 
-      left: 0, top: 0, display: "flex", flexDirection: "column", padding: "35px 25px",
-      borderRight: "1px solid #f1f5f9", zIndex: 1000, overflowY: "auto"
-    }}>
-      <div style={{ marginBottom: "40px", display: 'flex', alignItems: 'center', gap: '15px' }}>
-         <div style={{ 
-           width: '42px', height: '42px', background: 'linear-gradient(135deg, #6366f1, #4f46e5)', 
-           borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-           boxShadow: '0 8px 16px rgba(79, 70, 229, 0.25)'
-         }}>
-           <span style={{color:'white', fontWeight: '900', fontSize: '1.4rem'}}>S</span>
-         </div>
-         <h2 style={{ color: "#0f172a", fontSize: "1.6rem", fontWeight: "900", letterSpacing: "-1px" }}>SHIVADDA</h2>
+    <>
+      {/* 📱 MOBILE TOP HEADER (Sirf phone par dikhega) */}
+      <div className="mobile-header">
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{
+            width: '35px', height: '35px', background: 'linear-gradient(135deg, #6366f1, #4f46e5)', 
+            borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)'
+          }}>
+            <span style={{ color: 'white', fontWeight: '900', fontSize: '1.2rem' }}>S</span>
+          </div>
+          <h2 style={{ color: "#0f172a", fontSize: "1.2rem", fontWeight: "900", margin: 0, letterSpacing: "1px" }}>SHIVADDA</h2>
+        </div>
+        <button className="mobile-menu-btn" onClick={() => setIsMobileOpen(true)}>
+          <Menu size={26} color="#0f172a" />
+        </button>
       </div>
 
-      <nav style={{ flex: 1 }}>
-        <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', letterSpacing: '1.5px', paddingLeft: '8px' }}>Super Controls</p>
-        <NavLink to="/dashboard" style={linkStyle}>📊 Dashboard</NavLink>
-        <NavLink to="/ai-brain" style={linkStyle}>🧠 AI Brain</NavLink> {/* ✅ MOVED HERE FOR BETTER VISIBILITY */}
-        <NavLink to="/institutions" style={linkStyle}>🏢 Institutions</NavLink>
-        <NavLink to="/locations" style={linkStyle}>🌍 Global Locations</NavLink>
+      {/* 📱 MOBILE BLACK OVERLAY (Jab menu open ho tab piche ka hissa dark karne ke liye) */}
+      {isMobileOpen && (
+        <div className="mobile-overlay" onClick={() => setIsMobileOpen(false)}></div>
+      )}
+
+      {/* 🖥️ MAIN SIDEBAR (Desktop par hamesha, Mobile par toggle) */}
+      <aside className={`custom-sidebar ${isMobileOpen ? "open" : ""}`} style={{ 
+        width: "280px", background: "#ffffff", height: "100vh", position: "fixed", 
+        top: 0, display: "flex", flexDirection: "column", padding: "35px 25px",
+        borderRight: "1px solid #f1f5f9", zIndex: 1000, overflowY: "auto"
+      }}>
         
-        <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', marginTop: '30px', letterSpacing: '1.5px', paddingLeft: '8px' }}>Access & Logs</p>
-        <NavLink to="/users" style={linkStyle}>👥 User Manager</NavLink>
-        <NavLink to="/access-logs" style={linkStyle}>🔐 Audit Logs</NavLink>
-        <NavLink to="/virtual-space" style={linkStyle}>📹 Virtual Space</NavLink> 
+        {/* Mobile Close Button */}
+        <button className="mobile-close-btn" onClick={() => setIsMobileOpen(false)}>
+          <X size={24} color="#64748b" />
+        </button>
 
-        <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', marginTop: '30px', letterSpacing: '1.5px', paddingLeft: '8px' }}>School Ops</p>
-        <NavLink to="/visitors" style={linkStyle}>🤝 Front Office</NavLink>
-        <NavLink to="/admissions" style={linkStyle}>📝 Admissions</NavLink> 
-        <NavLink to="/attendance" style={linkStyle}>📅 Attendance</NavLink>
-        <NavLink to="/students" style={linkStyle}>🎓 Student Base</NavLink>
-        <NavLink to="/teachers" style={linkStyle}>👨‍🏫 Teachers</NavLink>
-        <NavLink to="/courses" style={linkStyle}>📚 Course Manager</NavLink>
-        <NavLink to="/exams" style={linkStyle}>📝 Exams & AI</NavLink>
+        <div style={{ marginBottom: "40px", display: 'flex', alignItems: 'center', gap: '15px' }}>
+           <div style={{ 
+             width: '42px', height: '42px', background: 'linear-gradient(135deg, #6366f1, #4f46e5)', 
+             borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+             boxShadow: '0 8px 16px rgba(79, 70, 229, 0.25)'
+           }}>
+             <span style={{color:'white', fontWeight: '900', fontSize: '1.4rem'}}>S</span>
+           </div>
+           <h2 style={{ color: "#0f172a", fontSize: "1.6rem", fontWeight: "900", letterSpacing: "-1px", margin: 0 }}>SHIVADDA</h2>
+        </div>
 
-        <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', marginTop: '30px', letterSpacing: '1.5px', paddingLeft: '8px' }}>Finance & Assets</p>
-        <NavLink to="/fees" style={linkStyle}>💰 Fees Ledger</NavLink>
-        <NavLink to="/payroll" style={linkStyle}>💸 Payroll & Salary</NavLink>
-        <NavLink to="/inventory" style={linkStyle}>📦 Inventory</NavLink>
-        <NavLink to="/timetable" style={linkStyle}>📅 Timetable & Routine</NavLink>
-        <NavLink to="/communication" style={linkStyle}>📢 Communication</NavLink>
+        <nav style={{ flex: 1 }}>
+          <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', letterSpacing: '1.5px', paddingLeft: '8px' }}>Super Controls</p>
+          <NavLink to="/dashboard" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📊 Dashboard</NavLink>
+          <NavLink to="/ai-brain" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🧠 AI Brain</NavLink>
+          <NavLink to="/institutions" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🏢 Institutions</NavLink>
+          <NavLink to="/locations" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🌍 Global Locations</NavLink>
+          
+          <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', marginTop: '30px', letterSpacing: '1.5px', paddingLeft: '8px' }}>Access & Logs</p>
+          <NavLink to="/users" style={linkStyle} onClick={() => setIsMobileOpen(false)}>👥 User Manager</NavLink>
+          <NavLink to="/access-logs" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🔐 Audit Logs</NavLink>
+          <NavLink to="/virtual-space" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📹 Virtual Space</NavLink> 
 
-        <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', marginTop: '30px', letterSpacing: '1.5px', paddingLeft: '8px' }}>Facilities</p>
-        <NavLink to="/library" style={linkStyle}>📖 Library</NavLink>
-        <NavLink to="/hostel" style={linkStyle}>🛏️ Hostel</NavLink>
-        <NavLink to="/transport" style={linkStyle}>🚌 Transport</NavLink>
-        
-        <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', marginTop: '30px', letterSpacing: '1.5px', paddingLeft: '8px' }}>System</p>
-        <NavLink to="/services" style={linkStyle}>🛠️ Service Master</NavLink>
-        <NavLink to="/system" style={linkStyle}>⚙️ Config</NavLink>
-      
-      </nav>
+          <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', marginTop: '30px', letterSpacing: '1.5px', paddingLeft: '8px' }}>School Ops</p>
+          <NavLink to="/visitors" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🤝 Front Office</NavLink>
+          <NavLink to="/admissions" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📝 Admissions</NavLink> 
+          <NavLink to="/attendance" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📅 Attendance</NavLink>
+          <NavLink to="/students" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🎓 Student Base</NavLink>
+          <NavLink to="/teachers" style={linkStyle} onClick={() => setIsMobileOpen(false)}>👨‍🏫 Teachers</NavLink>
+          <NavLink to="/courses" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📚 Course Manager</NavLink>
+          <NavLink to="/exams" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📝 Exams & AI</NavLink>
 
-      <div 
-        onClick={handleLogout} 
-        style={{ 
-          color: "#ef4444", cursor: "pointer", padding: "16px", borderRadius: "16px", 
-          display: "flex", alignItems: "center", gap: "12px", fontWeight: "700",
-          background: "#fff1f2", border: "1px solid #fee2e2", marginTop: '30px'
-        }}
-      >
-        🛰️ Terminate Session
-      </div>
-    </aside>
+          <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', marginTop: '30px', letterSpacing: '1.5px', paddingLeft: '8px' }}>Finance & Assets</p>
+          <NavLink to="/fees" style={linkStyle} onClick={() => setIsMobileOpen(false)}>💰 Fees Ledger</NavLink>
+          <NavLink to="/payroll" style={linkStyle} onClick={() => setIsMobileOpen(false)}>💸 Payroll & Salary</NavLink>
+          <NavLink to="/inventory" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📦 Inventory</NavLink>
+          <NavLink to="/timetable" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📅 Timetable & Routine</NavLink>
+          <NavLink to="/communication" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📢 Communication</NavLink>
+
+          <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', marginTop: '30px', letterSpacing: '1.5px', paddingLeft: '8px' }}>Facilities</p>
+          <NavLink to="/library" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📖 Library</NavLink>
+          <NavLink to="/hostel" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🛏️ Hostel</NavLink>
+          <NavLink to="/transport" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🚌 Transport</NavLink>
+          
+          <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', marginTop: '30px', letterSpacing: '1.5px', paddingLeft: '8px' }}>System</p>
+          <NavLink to="/services" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🛠️ Service Master</NavLink>
+          <NavLink to="/system" style={linkStyle} onClick={() => setIsMobileOpen(false)}>⚙️ Config</NavLink>
+        </nav>
+
+        <div 
+          onClick={handleLogout} 
+          style={{ 
+            color: "#ef4444", cursor: "pointer", padding: "16px", borderRadius: "16px", 
+            display: "flex", alignItems: "center", gap: "12px", fontWeight: "700",
+            background: "#fff1f2", border: "1px solid #fee2e2", marginTop: '30px'
+          }}
+        >
+          🛰️ Terminate Session
+        </div>
+      </aside>
+    </>
   );
 };
 

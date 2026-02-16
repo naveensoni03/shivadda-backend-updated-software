@@ -1,68 +1,95 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+/* =========================================
+   📱 MOBILE RESPONSIVENESS (Global Fixes)
+========================================= */
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+/* Desktop par ye sab hidden rahenge */
+.mobile-header { display: none; }
+.mobile-overlay { display: none; }
+.mobile-close-btn { display: none; }
+.custom-sidebar { left: 0; transition: left 0.3s ease-in-out; }
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
+/* Desktop Body Fix */
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+    margin: 0;
+    display: block !important; /* Center hataya taaki UI left se shuru ho */
+    place-items: unset !important;
+    min-width: 320px;
+    min-height: 100vh;
+    background-color: #f3f4f6 !important; /* Light background */
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+#root {
+    max-width: 100% !important; /* Center limitation hatayi */
+    margin: 0;
+    padding: 0 !important;
+    text-align: left !important;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
+@media (max-width: 850px) {
+    /* Main Area Adjustments (Institutions/Dashboard page ke liye) */
+    .waoo-view {
+        margin-left: 0 !important; /* Sidebar ki jagah khatam */
+        padding: 15px !important;
+        padding-top: 90px !important; /* Header ke liye jagah chodi */
+        width: 100% !important;
+        box-sizing: border-box;
+    }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+    /* Show Mobile Header */
+    .mobile-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #ffffff;
+        padding: 15px 20px;
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        z-index: 998;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .mobile-menu-btn { background: transparent; border: none; padding: 0; cursor: pointer; outline: none; }
+    .mobile-menu-btn:hover { background: transparent; border: none; }
+
+    /* Hide Sidebar by Default on Mobile */
+    .custom-sidebar {
+        left: -320px !important; /* Screen ke bahar nikal diya */
+        box-shadow: 20px 0 50px rgba(0,0,0,0.1);
+    }
+    
+    /* Show Sidebar when 'open' state is true */
+    .custom-sidebar.open {
+        left: 0 !important; 
+    }
+
+    /* Black Overlay */
+    .mobile-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 999;
+    }
+
+    /* Close Button inside Sidebar */
+    .mobile-close-btn {
+        display: flex;
+        position: absolute;
+        right: 15px;
+        top: 25px;
+        background: #f1f5f9;
+        border: none;
+        padding: 8px;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+
+    /* Fix Institutions Grid for Mobile */
+    .grid-header { display: none !important; }
+    .waoo-card-row { grid-template-columns: 1fr !important; gap: 15px; }
+    .col-status { justify-content: flex-start !important; margin-top: 10px; }
+    .waoo-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+    .waoo-fab-btn { width: 100%; justify-content: center; }
 }
