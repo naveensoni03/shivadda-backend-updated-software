@@ -120,7 +120,6 @@ export default function Students() {
     try {
         const submissionData = new FormData();
         Object.keys(formData).forEach(key => {
-            // ✅ FIXED 400 ERROR: Do not send empty strings or nulls to Django backend
             if (key !== 'id' && formData[key] !== null && formData[key] !== undefined && formData[key] !== "") {
                 submissionData.append(key, formData[key]);
             }
@@ -136,7 +135,6 @@ export default function Students() {
         setShowAddModal(false);
         fetchData();
     } catch (err) { 
-        // ✅ PROPER DEBUGGING: Logs exactly which field failed in the console
         console.error("400 Bad Request Details:", err.response?.data);
         const errorMsg = err.response?.data ? Object.values(err.response.data).flat()[0] : "Operation Failed";
         toast.error(typeof errorMsg === 'string' ? errorMsg : "Operation Failed", { id: load }); 
@@ -173,7 +171,7 @@ export default function Students() {
   const prevStep = () => setFormStep(prev => prev - 1);
 
   const currentItems = filteredList.slice((currentPage-1)*itemsPerPage, currentPage*itemsPerPage);
-  const totalPages = Math.ceil(filteredList.length / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredList.length / itemsPerPage));
 
   const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
   const itemVariants = { hidden: { y: 10, opacity: 0 }, show: { y: 0, opacity: 1 } };
@@ -184,7 +182,7 @@ export default function Students() {
   };
 
   return (
-    <div className="dashboard-container" style={{background: '#f1f5f9', minHeight: '100vh', display: 'flex'}}>
+    <div className="dashboard-container" style={{background: '#f1f5f9', minHeight: '100vh', display: 'flex', overflowX: 'hidden'}}>
       <SidebarModern />
       <Toaster position="top-center" toastOptions={{ style: { background: '#1e293b', color: '#fff' } }} />
 
@@ -297,13 +295,11 @@ export default function Students() {
         </motion.div>
 
         {/* PAGINATION */}
-        {totalPages > 1 && (
-            <div style={{display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '40px', alignItems: 'center'}}>
-                <button className="btn-secondary" style={{padding:'10px 20px', opacity: currentPage === 1 ? 0.5 : 1}} disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>◀ Prev</button>
-                <span style={{fontWeight:'800', color:'#000'}}>Page {currentPage} of {totalPages}</span>
-                <button className="btn-secondary" style={{padding:'10px 20px', opacity: currentPage === totalPages ? 0.5 : 1}} disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => p + 1)}>Next ▶</button>
-            </div>
-        )}
+        <div style={{display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '40px', alignItems: 'center'}}>
+            <button className="btn-secondary" style={{padding:'10px 20px', opacity: currentPage === 1 ? 0.5 : 1}} disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>◀ Prev</button>
+            <span style={{fontWeight:'800', color:'#000'}}>Page {currentPage} of {totalPages}</span>
+            <button className="btn-secondary" style={{padding:'10px 20px', opacity: currentPage === totalPages ? 0.5 : 1}} disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => p + 1)}>Next ▶</button>
+        </div>
 
         {/* --- ADD/EDIT MODAL --- */}
         <AnimatePresence>
@@ -319,7 +315,7 @@ export default function Students() {
                     <button className="close-btn" onClick={()=>setShowAddModal(false)}>✕</button>
                 </div>
 
-                <div className="stepper-container">
+                <div className="stepper-container hide-scrollbar">
                     {[1, 2, 3, 4].map((step) => (
                         <div key={step} className={`step-item ${formStep >= step ? 'active' : ''}`}>
                             <div className="circle">{formStep > step ? <CheckCircle size={18} /> : step}</div>
@@ -331,7 +327,7 @@ export default function Students() {
                     ))}
                 </div>
 
-                <div className="modal-body">
+                <div className="modal-body hide-scrollbar">
                     <AnimatePresence mode="wait">
                         <motion.div 
                             key={formStep} 
@@ -455,7 +451,7 @@ export default function Students() {
 
       </div>
 
-      {/* ✅ ADDED MEDIA QUERIES FOR RESPONSIVENESS WITHOUT CHANGING DESKTOP UI */}
+      {/* ✅ CSS STYLES (MOBILE RESPONSIVE ADDED) */}
       <style>{`
         :root {
             --primary: #6366f1;
@@ -468,7 +464,7 @@ export default function Students() {
             --text-muted: #475569;
         }
 
-        .main-content { flex: 1; padding: 30px 40px; overflow-y: auto; margin-left: 280px; } 
+        .main-content { flex: 1; padding: 30px 40px; overflow-y: auto; margin-left: 280px; box-sizing: border-box; transition: all 0.3s ease; } 
         .title-gradient { font-size: 2rem; font-weight: 800; background: linear-gradient(to right, #020617, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
         .subtitle { color: var(--text-muted); font-size: 0.95rem; margin-top: 5px; font-weight: 500; }
         .page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; }
@@ -485,6 +481,9 @@ export default function Students() {
         .btn-success-gradient { background: linear-gradient(to right, #10b981, #059669); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; flex: 1; }
         .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid #cbd5e1; padding: 12px 20px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .btn-ghost:hover { background: #f1f5f9; color: var(--text-main); }
+        .btn-secondary { background: white; border: 1px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: 0.2s; color: var(--text-main); font-weight: 600; }
+        .btn-secondary:hover:not(:disabled) { background: #f1f5f9; }
+
         .filters-row { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
         .filter-chip { background: white; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
         .filter-chip.active { background: #eff6ff; color: var(--primary); border-color: #bfdbfe; }
@@ -492,7 +491,7 @@ export default function Students() {
         .bulk-action-bar { background: #000; color: white; padding: 15px 25px; border-radius: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
 
         .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 24px; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.05); border: 1px solid rgba(255,255,255,0.5); overflow: hidden; }
-        .table-responsive-wrapper { width: 100%; overflow-x: auto; }
+        .table-responsive-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .modern-table { width: 100%; border-collapse: collapse; min-width: 800px; }
         .modern-table th { text-align: left; padding: 20px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #475569; font-weight: 800; border-bottom: 1px solid #e2e8f0; }
         .modern-table td { padding: 18px 20px; color: var(--text-main); font-weight: 500; font-size: 0.95rem; border-bottom: 1px solid #f8fafc; }
@@ -511,9 +510,10 @@ export default function Students() {
         .icon-btn:hover { opacity: 1; transform: scale(1.1); }
         .empty-state { text-align: center; padding: 40px; color: #94a3b8; }
 
+        /* MODALS */
         .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(5px); z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px; }
         .modal-content { background: white; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); position: relative; display: flex; flex-direction: column; max-width: 100%; }
-        .large-modal { width: 900px; height: 85vh; }
+        .large-modal { width: 900px; max-height: 90vh; }
         .small-modal { width: 400px; padding: 30px; }
         .modal-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 30px 30px 10px 30px; }
         .modal-content h2 { margin: 0; font-size: 1.5rem; font-weight: 800; color: #1e293b; }
@@ -536,12 +536,11 @@ export default function Students() {
         .form-grid.single-col { grid-template-columns: 1fr; }
         .full-width { grid-column: span 2; }
         
-        .modern-input { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #cbd5e1; background-color: #ffffff !important; color: #020617 !important; font-size: 0.95rem; font-weight: 500; transition: 0.2s; outline: none; }
+        .modern-input { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #cbd5e1; background-color: #ffffff !important; color: #020617 !important; font-size: 0.95rem; font-weight: 500; transition: 0.2s; outline: none; box-sizing: border-box; }
         select.modern-input { background-color: #ffffff !important; color: #020617 !important; }
-        ::placeholder { color: #94a3b8; opacity: 1; }
         .modern-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
         
-        .modal-footer { padding: 20px 40px; border-top: 1px solid #f1f5f9; display: flex; gap: 15px; background: white; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; }
+        .modal-footer { padding: 20px 40px; border-top: 1px solid #f1f5f9; display: flex; gap: 15px; background: white; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; flex-shrink: 0; }
 
         .profile-card { width: 400px; overflow: hidden; padding: 0; }
         .profile-header-bg { height: 100px; background: linear-gradient(135deg, #6366f1, #a855f7); }
@@ -553,14 +552,12 @@ export default function Students() {
         .info-item p { margin: 0; font-weight: 700; color: #0f172a; font-size: 0.95rem; }
         .full-btn { width: 100%; margin-top: 20px; }
 
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* ✅ RESPONSIVENESS ADDED HERE (UI remains exactly same on Desktop) */
+        /* ✅ RESPONSIVENESS ADDED HERE */
         @media (max-width: 1024px) {
-            .main-content { margin-left: 0; padding: 20px; }
+            .main-content { margin-left: 0; padding: 15px; padding-top: 90px; }
             .page-header { flex-direction: column; align-items: flex-start; gap: 20px; }
             .header-actions { flex-wrap: wrap; width: 100%; }
         }
@@ -568,10 +565,14 @@ export default function Students() {
         @media (max-width: 768px) {
             .form-grid { grid-template-columns: 1fr; }
             .full-width { grid-column: span 1; }
-            .large-modal { width: 95vw; height: 90vh; }
+            .large-modal { width: 95vw; height: 95vh; }
             .small-modal, .profile-card { width: 95vw; }
-            .stepper-container { padding: 15px 10px; }
-            .step-item .label { font-size: 0.65rem; }
+            
+            /* Responsive Stepper for Mobile */
+            .stepper-container { padding: 15px 0; overflow-x: auto; justify-content: flex-start; gap: 20px; }
+            .step-item { flex: 0 0 auto; }
+            .step-item .line { display: none; } /* Hide line on very small screens to save space */
+            
             .modal-header, .modal-body, .modal-footer { padding-left: 20px; padding-right: 20px; }
             .bulk-action-bar { flex-direction: column; gap: 15px; align-items: flex-start; }
             .search-box { width: 100%; }
