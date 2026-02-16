@@ -19,7 +19,7 @@ export default function Institutions() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const API_BASE = "http://127.0.0.1:8000/api/institutions/";
+  const API_BASE = "https://shivadda-backend-updated-software.onrender.com/api/institutions/";
 
   useEffect(() => {
       fetchInstitutions();
