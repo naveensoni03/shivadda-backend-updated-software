@@ -5,7 +5,7 @@ import Webcam from "react-webcam";
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function VirtualSpace() {
-  const [isLive, setIsLive] = useState(false); // Used for Screen Share status
+  const [isLive, setIsLive] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [camActive, setCamActive] = useState(true);
   const [micActive, setMicActive] = useState(true);
@@ -13,9 +13,9 @@ export default function VirtualSpace() {
   // --- REFS ---
   const webcamRef = useRef(null);
   const mediaRecorderRef = useRef(null);
-  const screenVideoRef = useRef(null); // New ref for screen share
+  const screenVideoRef = useRef(null);
   const [recordedChunks, setRecordedChunks] = useState([]);
-  const [stream, setStream] = useState(null); // To manage active stream (Cam or Screen)
+  const [stream, setStream] = useState(null);
 
   // --- RESOURCES STATE ---
   const [resources, setResources] = useState([
@@ -29,7 +29,6 @@ export default function VirtualSpace() {
   // --- 1. GO LIVE (SCREEN SHARE) LOGIC ---
   const startScreenShare = async () => {
     try {
-      // Browser se asli screen maangna
       const displayStream = await navigator.mediaDevices.getDisplayMedia({
         video: true,
         audio: true
@@ -42,7 +41,6 @@ export default function VirtualSpace() {
         screenVideoRef.current.srcObject = displayStream;
       }
 
-      // Jab user "Stop Sharing" dabaye browser toolbar se
       displayStream.getVideoTracks()[0].onended = () => {
         stopScreenShare();
       };
@@ -72,14 +70,13 @@ export default function VirtualSpace() {
       }
   };
 
-  // --- 2. RECORDING LOGIC (UPDATED FOR SCREEN OR CAM) ---
+  // --- 2. RECORDING LOGIC ---
   const handleStartRecording = useCallback(() => {
     setIsRecording(true);
     setRecordedChunks([]); 
 
     let recorderStream;
 
-    // Agar Screen Share chal raha hai to wo record karo, nahi to Webcam
     if (isLive && stream) {
         recorderStream = stream;
     } else if (webcamRef.current && webcamRef.current.stream) {
@@ -199,7 +196,7 @@ export default function VirtualSpace() {
     <div className="virtual-space-container">
         <SidebarModern />
         
-        {/* 🚀 Changed class structure for Responsiveness */}
+        {/* 🚀 Main Content Wrapper */}
         <div className="vs-main-content">
             <Toaster position="top-center" />
             <input type="file" ref={fileInputRef} style={{display: 'none'}} onChange={handleFileChange} />
@@ -211,7 +208,6 @@ export default function VirtualSpace() {
                     <p className="vs-subtitle">Live Classroom</p>
                 </div>
                 <div className="header-actions">
-                      {/* ASLI GO LIVE BUTTON (SCREEN SHARE) */}
                       <button onClick={toggleLive} className={`btn-action ${isLive ? 'btn-danger' : 'btn-primary'}`}>
                           {isLive ? <><StopCircle size={16}/> Stop Sharing</> : <><ScreenShare size={16}/> Go Live</>}
                       </button>
@@ -234,9 +230,7 @@ export default function VirtualSpace() {
                 {/* VIDEO AREA */}
                 <div className="video-card shadow-lg">
                     <div className="video-frame">
-                        {/* CONDITIONAL RENDERING: SCREEN VS CAMERA */}
                         {isLive ? (
-                            // Ye screen share dikhayega
                             <video 
                                 ref={screenVideoRef} 
                                 autoPlay 
@@ -245,7 +239,6 @@ export default function VirtualSpace() {
                                 style={{width: '100%', height: '100%', objectFit: 'contain', background: '#222'}} 
                             />
                         ) : (
-                            // Ye Camera dikhayega
                             camActive ? (
                                 <Webcam 
                                     audio={micActive} 
@@ -317,7 +310,7 @@ export default function VirtualSpace() {
             </div>
         </div>
 
-        {/* 🚀 CSS WITH MOBILE RESPONSIVENESS ADDED */}
+        {/* 🚀 CSS WITH MOBILE RESPONSIVENESS (PERFECT VIDEO FIX) */}
         <style>{`
             :root { --bg-body: #f8fafc; --text-main: #1e293b; --text-muted: #64748b; --primary: #3b82f6; --danger: #ef4444; --border-light: #e2e8f0; }
             .virtual-space-container { display: flex; height: 100vh; background: var(--bg-body); font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }
@@ -343,19 +336,19 @@ export default function VirtualSpace() {
             .vs-subtitle { color: var(--text-muted); margin-top: 2px; font-size: 0.85rem; font-weight: 500; }
             .pro-badge { background: var(--primary); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 8px; }
             
-            .video-card { background: black; border-radius: 16px; overflow: hidden; position: relative; border: 1px solid #334155; height: 100%; }
-            .video-frame { width: 100%; height: 100%; position: relative; display: flex; justify-content: center; alignItems: center; }
+            .video-card { background: black; border-radius: 16px; overflow: hidden; position: relative; border: 1px solid #334155; height: 100%; display: flex; flex-direction: column; }
+            .video-frame { width: 100%; height: 100%; position: relative; display: flex; justify-content: center; align-items: center; flex: 1; }
             .camera-off-placeholder { color: white; font-size: 1.2rem; opacity: 0.7; }
             
-            .control-overlay { position: absolute; bottom: 20px; width: 100%; display: flex; justify-content: center; }
+            .control-overlay { position: absolute; bottom: 20px; width: 100%; display: flex; justify-content: center; z-index: 10; }
             .control-bar { display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 8px 20px; border-radius: 40px; backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1); }
-            .ctrl-btn { color: white; background: rgba(255,255,255,0.1); border: none; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; alignItems: center; justify-content: center; transition: 0.2s; }
+            .ctrl-btn { color: white; background: rgba(255,255,255,0.1); border: none; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
             .ctrl-btn:hover { background: rgba(255,255,255,0.3); transform: scale(1.05); }
             .ctrl-btn.off { background: var(--danger); }
             .btn-hangup { background: var(--danger); }
             .divider { width: 1px; height: 25px; background: rgba(255,255,255,0.2); margin: 0 5px; align-self: center; }
             
-            .status-tags { position: absolute; top: 15px; left: 15px; display: flex; gap: 8px; }
+            .status-tags { position: absolute; top: 15px; left: 15px; display: flex; gap: 8px; z-index: 10; }
             .tag { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; color: white; }
             .tag.live { background: var(--danger); }
             .tag.rec { background: var(--primary); }
@@ -364,7 +357,7 @@ export default function VirtualSpace() {
             .text-purple { color: #8b5cf6; } .text-blue { color: #3b82f6; }
             .list-item { padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 10px; color: var(--text-main); font-size: 0.85rem; font-weight: 600; border: 1px solid transparent; transition: 0.2s; cursor: pointer; }
             .list-item:hover { background: #f1f5f9; border-color: var(--border-light); }
-            .icon-box { width: 28px; height: 28px; border-radius: 6px; display: flex; alignItems: center; justify-content: center; color: white; }
+            .icon-box { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; }
             .green { background: #10b981; } .blue { background: #3b82f6; }
             
             .resource-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: #f8fafc; border-radius: 8px; cursor: pointer; border: 1px solid transparent; transition: 0.2s; margin-bottom: 8px; }
@@ -373,7 +366,7 @@ export default function VirtualSpace() {
             .res-info { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
             .res-name { font-size: 0.8rem; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             .res-meta { font-size: 0.7rem; color: var(--text-muted); }
-            .btn-download { background: white; border: 1px solid var(--border-light); width: 26px; height: 26px; border-radius: 50%; display: flex; alignItems: center; justify-content: center; color: var(--primary); cursor: pointer; }
+            .btn-download { background: white; border: 1px solid var(--border-light); width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); cursor: pointer; }
             
             .card-footer { padding: 10px; border-top: 1px solid var(--border-light); text-align: center; background: #f8fafc; flex-shrink: 0; }
             .btn-upload { width: 100%; padding: 10px; background: white; border: 1px dashed var(--primary); color: var(--primary); border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.85rem; transition: 0.2s; }
@@ -395,7 +388,7 @@ export default function VirtualSpace() {
                     padding: 15px !important;
                     padding-top: 90px !important; /* Top space for Mobile Header */
                     width: 100% !important;
-                    height: auto !important; /* Remove fixed height for scrolling */
+                    height: auto !important; 
                     overflow: visible !important;
                 }
                 
@@ -407,12 +400,21 @@ export default function VirtualSpace() {
                 /* Stack Video and Sidebar */
                 .vs-grid-layout { grid-template-columns: 1fr; display: flex; flex-direction: column; }
                 
-                /* Video Player adjustments */
-                .video-card { min-height: 400px; height: 50vh; flex-shrink: 0; }
+                /* 🚀 PERFECT MOBILE VIDEO PLAYER FIX */
+                .video-card { 
+                    height: auto !important; 
+                    aspect-ratio: 4/3; /* Ye camera/video ko pichakne nahi dega */
+                    min-height: auto; 
+                }
+                
+                /* Make controls smaller for mobile */
+                .control-bar { padding: 5px 15px; }
+                .ctrl-btn { width: 35px; height: 35px; }
+                .control-overlay { bottom: 10px; }
                 
                 /* Sidebar panels adjustments for mobile */
                 .sidebar-panels { height: auto; }
-                .resources-card { min-height: 350px; } /* Ensures resources list is visible */
+                .resources-card { min-height: 350px; } 
             }
         `}</style>
     </div>
