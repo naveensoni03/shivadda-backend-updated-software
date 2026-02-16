@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 import SidebarModern from "../components/SidebarModern";
 import { Building2, Plus, Search, MapPin, User, Mail, MoreHorizontal, Edit, Trash2, X, Phone, Eye, CheckCircle, RefreshCw, Filter } from "lucide-react";
 import toast, { Toaster } from 'react-hot-toast';
-import axios from 'axios';
+
+// ✅ Normal axios hata kar aapka custom 'api' import kiya (Taaki Token pass ho sake)
+import api from '../api/axios'; 
 
 export default function Institutions() {
   const [institutions, setInstitutions] = useState([]);
@@ -19,7 +21,8 @@ export default function Institutions() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const API_BASE = "https://shivadda-backend-updated-software.onrender.com/api/institutions/";
+  // ✅ URL ab chota ho gaya kyunki 'https://...onrender.com/api/' aapke axios.js mein pehle se set hai
+  const API_ENDPOINT = "institutions/";
 
   useEffect(() => {
       fetchInstitutions();
@@ -28,10 +31,12 @@ export default function Institutions() {
   const fetchInstitutions = async () => {
       setLoading(true);
       try {
-          const res = await axios.get(API_BASE);
+          // ✅ axios.get ki jagah api.get use kiya
+          const res = await api.get(API_ENDPOINT);
           setInstitutions(res.data);
       } catch (error) {
-          console.error("Fetch Error");
+          console.error("Fetch Error", error);
+          toast.error("Failed to load institutions.");
       } finally {
           setLoading(false);
       }
@@ -42,14 +47,15 @@ export default function Institutions() {
 
       try {
           if (isEdit && editNode) {
-              // 🚀 FIX 1: 'put' ki jagah 'patch' use kiya. Ye 400 Error ko hamesha ke liye rok dega!
-              await axios.patch(`${API_BASE}${editNode.id}/`, formData);
+              // ✅ api.patch use kiya
+              await api.patch(`${API_ENDPOINT}${editNode.id}/`, formData);
               const updatedList = institutions.map(i => i.id === editNode.id ? { ...i, ...formData } : i);
               setInstitutions(updatedList);
               toast.success("Institution Updated!");
               setEditNode(null);
           } else {
-              const res = await axios.post(API_BASE, formData);
+              // ✅ api.post use kiya
+              const res = await api.post(API_ENDPOINT, formData);
               setInstitutions([res.data, ...institutions]);
               toast.success("New Institution Onboarded!", { icon: '🎓' });
               setIsAddOpen(false);
@@ -63,7 +69,8 @@ export default function Institutions() {
 
   const handleDelete = async (id) => {
       try {
-          await axios.delete(`${API_BASE}${id}/`);
+          // ✅ api.delete use kiya
+          await api.delete(`${API_ENDPOINT}${id}/`);
           setInstitutions(institutions.filter(i => i.id !== id));
           toast.success("Institution Removed", { icon: '🗑️' });
           setActiveActionMenu(null);
@@ -78,7 +85,6 @@ export default function Institutions() {
 
   const openEdit = (inst) => {
       setEditNode(inst);
-      // 🚀 FIX 2: Sabme || "" laga diya hai taaki React Console me laal error (uncontrolled input) na aaye
       setFormData({ 
           name: inst.name || "", 
           address: inst.address || "", 
