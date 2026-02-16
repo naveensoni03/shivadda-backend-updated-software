@@ -67,7 +67,6 @@ export default function UserManager() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [userToDelete, setUserToDelete] = useState(null);
 
-    // 🚀 NEW STATES FOR CUSTOM STATUS MODAL
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
     const [userToToggle, setUserToToggle] = useState(null);
     const [statusAction, setStatusAction] = useState(""); 
@@ -110,7 +109,6 @@ export default function UserManager() {
         }
     };
 
-    // 🚀 STEP 1: Opens the Custom UI Modal instead of browser alert
     const handleStatusToggleClick = (user) => {
         const newStatus = user.account_status === 'HIBERNATE' ? 'ACTIVE' : 'HIBERNATE';
         setUserToToggle(user);
@@ -118,7 +116,6 @@ export default function UserManager() {
         setIsStatusModalOpen(true);
     };
 
-    // 🚀 STEP 2: Executes API call after user confirms in the UI modal
     const confirmStatusToggle = async () => {
         if(!userToToggle) return;
         
@@ -129,7 +126,6 @@ export default function UserManager() {
             toast.success(`User ${statusAction === 'ACTIVE' ? 'Activated' : 'Hibernated'}!`, { id: loadToast });
             setIsStatusModalOpen(false);
         } catch (err) {
-            // 401 CATCHER: Agar khud ka hi power cut kar diya
             if (err.response && err.response.status === 401) {
                 toast.error("🚨 Self-Hibernation Detected! You are locked out.", { id: loadToast, duration: 4000 });
                 localStorage.clear(); 
@@ -212,12 +208,13 @@ export default function UserManager() {
             <SidebarModern />
             <Toaster position="top-center" toastOptions={{ style: { background: '#0f172a', color: 'white', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' } }} />
 
-            <div style={{ flex: 1, marginLeft: "280px", padding: "40px", display: "flex", flexDirection: "column", height: "100vh", overflowY: 'auto' }} className="hide-scrollbar">
+            {/* 🚀 FIXED: Replaced inline styles with 'user-main-view' class */}
+            <div className="user-main-view hide-scrollbar">
 
                 {/* 🔥 HERO HEADER */}
-                <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{duration: 0.6}} style={{ marginBottom: '40px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{duration: 0.6}} className="user-header-wrap">
                     <div>
-                        <h1 style={{ fontSize: '3rem', fontWeight: '900', letterSpacing: '-1.5px', margin: 0, lineHeight: '1.1', background: 'linear-gradient(to right, #0f172a, #334155)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display:'flex', alignItems:'center', gap:'15px' }}>
+                        <h1 className="responsive-title" style={{ fontWeight: '900', letterSpacing: '-1.5px', margin: 0, lineHeight: '1.1', background: 'linear-gradient(to right, #0f172a, #334155)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display:'flex', alignItems:'center', gap:'15px' }}>
                             User Management <span style={{fontSize:'1.5rem'}}>✨</span>
                         </h1>
                         <p style={{ color: '#64748b', fontSize: '1.1rem', marginTop: '8px', fontWeight: '500' }}>Orchestrate your team's access and permissions.</p>
@@ -247,7 +244,7 @@ export default function UserManager() {
                 </motion.div>
 
                 {/* 📋 TABLE HEADER */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1.2fr 0.8fr 1.2fr', padding: '0 30px 15px 30px', color: '#94a3b8', fontWeight: '800', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1.2px' }}>
+                <div className="user-grid-header">
                     <div>User Profile</div>
                     <div>Role</div>
                     <div>Contact Info</div>
@@ -292,6 +289,7 @@ export default function UserManager() {
                                 variants={cardVariants}
                                 whileHover={{ y: -6, scale: 1.005, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.1)' }}
                                 style={{...rowCard, borderLeft: theme.border}}
+                                className="user-card-row"
                             >
                                 {/* Profile */}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
@@ -338,8 +336,7 @@ export default function UserManager() {
                                 </div>
 
                                 {/* ✨ ACTIONS */}
-                                <div style={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                                    {/* 🚀 Updated Click Handler to open UI Modal */}
+                                <div className="user-actions-wrap" style={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                                     <motion.button whileHover={{ scale: 1.15 }} onClick={() => handleStatusToggleClick(user)} style={{...actionBtn, color: user.account_status === 'HIBERNATE' ? '#10b981' : '#8b5cf6', background:'#f3f4f6'}} title={user.account_status === 'HIBERNATE' ? "Activate" : "Hibernate"}>
                                         <Power size={18} />
                                     </motion.button>
@@ -378,6 +375,7 @@ export default function UserManager() {
                             exit={{ scale: 0.9, opacity: 0, y: 30 }} 
                             transition={{type:'spring', duration:0.5}}
                             style={modal}
+                            className="responsive-modal"
                         >
                             <div style={modalHeader}>
                                 <div>
@@ -391,7 +389,7 @@ export default function UserManager() {
                                     <label style={labelStyle}>Full Name</label>
                                     <input required placeholder="e.g. John Doe" value={formData.full_name} onChange={e => setFormData({ ...formData, full_name: e.target.value })} style={input} />
                                 </div>
-                                <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'20px'}}>
+                                <div className="user-form-split">
                                     <div style={inputGroup}>
                                         <label style={labelStyle}>Email Address</label>
                                         <input required type="email" placeholder="john@example.com" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} style={input} />
@@ -402,7 +400,7 @@ export default function UserManager() {
                                     </div>
                                 </div>
                                 
-                                <div style={{ display: 'flex', gap: '20px' }}>
+                                <div className="user-form-split-flex">
                                     <div style={{flex:1}}>
                                         <label style={labelStyle}>Role Assignment</label>
                                         <div style={{position:'relative'}}>
@@ -452,6 +450,7 @@ export default function UserManager() {
                         <motion.div 
                             initial={{ y: 50, opacity: 0, scale:0.9 }} animate={{ y: 0, opacity: 1, scale:1 }} exit={{ y: 50, opacity: 0, scale:0.9 }} 
                             style={{...modal, width:'450px', padding:'0', overflow:'hidden', border:'none'}}
+                            className="responsive-modal"
                         >
                             <div style={{background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)', padding:'40px 30px', textAlign:'center', color:'white', position:'relative'}}>
                                 <motion.button 
@@ -507,6 +506,7 @@ export default function UserManager() {
                                 borderTop: `6px solid ${statusAction === 'HIBERNATE' ? '#8b5cf6' : '#10b981'}`, 
                                 borderRadius:'24px'
                             }}
+                            className="responsive-modal"
                         >
                             <div style={{
                                 width:'70px', height:'70px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', 
@@ -553,6 +553,7 @@ export default function UserManager() {
                             animate={{ scale: 1, opacity: 1 }} 
                             exit={{ scale: 0.9, opacity: 0 }} 
                             style={{...modal, width:'400px', textAlign:'center', borderTop:'6px solid #ef4444', borderRadius:'24px'}}
+                            className="responsive-modal"
                         >
                             <div style={{width:'70px', height:'70px', background:'#fee2e2', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', color:'#ef4444'}}>
                                 <AlertTriangle size={32} />
@@ -574,18 +575,54 @@ export default function UserManager() {
                 )}
             </AnimatePresence>
 
-            {/* 🔥 CSS FOR PING ANIMATION */}
+            {/* 🔥 CSS FOR RESPONSIVENESS AND ANIMATIONS */}
             <style>{`
                 .hide-scrollbar::-webkit-scrollbar { display: none; }
                 @keyframes ping {
                     75%, 100% { transform: scale(2); opacity: 0; }
+                }
+
+                /* 💻 DESKTOP CLASSES */
+                .user-main-view { flex: 1; margin-left: 280px; padding: 40px; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; box-sizing: border-box; transition: all 0.3s ease; }
+                .user-header-wrap { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+                .responsive-title { font-size: 3rem; }
+                .user-grid-header { display: grid; grid-template-columns: 1.5fr 1fr 1.2fr 0.8fr 1.2fr; padding: 0 30px 15px 30px; color: #94a3b8; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.2px; }
+                .user-card-row { display: grid; grid-template-columns: 1.5fr 1fr 1.2fr 0.8fr 1.2fr; align-items: center; gap: 15px; }
+                .user-form-split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+                .user-form-split-flex { display: flex; gap: 20px; }
+
+                /* 📱 MOBILE RESPONSIVE STYLES */
+                @media (max-width: 850px) {
+                    .user-main-view {
+                        margin-left: 0 !important;
+                        padding: 15px !important;
+                        padding-top: 90px !important;
+                        width: 100% !important;
+                    }
+                    .user-header-wrap { flex-direction: column; align-items: flex-start; gap: 15px; }
+                    .user-header-wrap button { width: 100%; justify-content: center; }
+                    .responsive-title { font-size: 2.2rem !important; }
+                    
+                    /* Hide Table Header on Mobile */
+                    .user-grid-header { display: none !important; }
+                    
+                    /* Stack Row Cards */
+                    .user-card-row { grid-template-columns: 1fr !important; padding: 20px !important; gap: 15px; }
+                    .user-actions-wrap { justify-content: flex-start !important; margin-top: 10px; }
+                    
+                    /* Form stacking */
+                    .user-form-split { grid-template-columns: 1fr !important; }
+                    .user-form-split-flex { flex-direction: column !important; gap: 20px; }
+                    
+                    /* Modals fitting screen */
+                    .responsive-modal { width: 95% !important; padding: 25px !important; }
                 }
             `}</style>
         </div>
     );
 }
 
-// ✨ ULTRA PREMIUM STYLES
+// ✨ ULTRA PREMIUM STYLES (Cleaned for Responsive Setup)
 const DetailRow = ({ icon, label, value, color }) => (
     <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'16px 0', borderBottom:'1px dashed #e2e8f0'}}>
         <div style={{display:'flex', alignItems:'center', gap:'14px', color:'#64748b', fontSize:'1rem', fontWeight:'600'}}>
@@ -597,19 +634,19 @@ const DetailRow = ({ icon, label, value, color }) => (
 );
 
 const overlay = { position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(12px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' };
-const modal = { background: 'white', padding: '40px', borderRadius: '32px', width: '550px', boxShadow: '0 40px 80px -20px rgba(0,0,0,0.3)', position:'relative', border:'1px solid white' };
+const modal = { background: 'white', padding: '40px', borderRadius: '32px', width: '550px', maxWidth: '90%', boxShadow: '0 40px 80px -20px rgba(0,0,0,0.3)', position:'relative', border:'1px solid white' };
 const modalHeader = { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '30px' };
 const primaryBtn = { background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', color: 'white', border: 'none', padding: '12px 28px', borderRadius: '18px', cursor: 'pointer', fontWeight: '700', fontSize: '1rem', display:'flex', gap:'12px', alignItems:'center', boxShadow:'0 10px 25px -10px rgba(79, 70, 229, 0.5)', transition: 'all 0.3s' };
 const secondaryBtn = { background: '#f1f5f9', color: '#475569', border: 'none', padding: '14px 20px', borderRadius: '14px', cursor: 'pointer', fontWeight: '700', fontSize: '1rem' };
 const deleteBtnStyle = { background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: 'white', border: 'none', padding: '14px 20px', borderRadius: '14px', cursor: 'pointer', fontWeight: '700', fontSize: '1rem', boxShadow: '0 10px 20px -5px rgba(239, 68, 68, 0.4)' };
-const searchBar = { width: '100%', padding: '18px 25px 18px 65px', borderRadius: '20px', border: 'none', background: 'white', fontSize: '1rem', outline: 'none', boxShadow: '0 10px 40px -10px rgba(0,0,0,0.05)', color: '#1e293b', fontWeight:'600', transition:'all 0.3s' };
-const rowCard = { display: 'grid', gridTemplateColumns: '1.5fr 1fr 1.2fr 0.8fr 1.2fr', alignItems: 'center', background: 'white', padding: '22px 30px', borderRadius: '24px', border: '1px solid white', transition: 'all 0.3s', boxShadow:'0 4px 6px -1px rgba(0, 0, 0, 0.02)' };
-const avatar = { width: '50px', height: '50px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '900', fontSize: '1.3rem', boxShadow:'0 8px 15px rgba(0,0,0,0.1)' };
+const searchBar = { width: '100%', padding: '18px 25px 18px 65px', borderRadius: '20px', border: 'none', background: 'white', fontSize: '1rem', outline: 'none', boxSizing:'border-box', boxShadow: '0 10px 40px -10px rgba(0,0,0,0.05)', color: '#1e293b', fontWeight:'600', transition:'all 0.3s' };
+const rowCard = { background: 'white', padding: '22px 30px', borderRadius: '24px', border: '1px solid white', transition: 'all 0.3s', boxShadow:'0 4px 6px -1px rgba(0, 0, 0, 0.02)' };
+const avatar = { minWidth: '50px', height: '50px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '900', fontSize: '1.3rem', boxShadow:'0 8px 15px rgba(0,0,0,0.1)' };
 const badge = { padding: '8px 16px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.8px', textTransform:'uppercase' };
 const statusBadge = { padding: '6px 14px', borderRadius: '10px', fontSize: '0.8rem', fontWeight: '700', display:'flex', alignItems:'center', gap:'6px', width:'fit-content' };
 const actionBtn = { border: 'none', width: '42px', height: '42px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition:'all 0.2s' };
 const inputGroup = {display:'flex', flexDirection:'column', gap:'8px'};
-const input = { width: '100%', padding: '16px', borderRadius: '16px', border: '2px solid #f1f5f9', background: '#f8fafc', fontSize: '1rem', outline: 'none', color: '#1e293b', fontWeight:'600', transition:'all 0.3s' };
+const input = { width: '100%', padding: '16px', borderRadius: '16px', border: '2px solid #f1f5f9', background: '#f8fafc', fontSize: '1rem', outline: 'none', color: '#1e293b', fontWeight:'600', transition:'all 0.3s', boxSizing:'border-box' };
 const labelStyle = { fontSize:'0.9rem', color:'#64748b', fontWeight:'700', marginLeft:'5px' };
 const submitBtn = { width: '100%', padding: '18px', borderRadius: '18px', border: 'none', background: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)', color: 'white', fontWeight: '800', fontSize: '1.1rem', cursor: 'pointer', marginTop: '15px', boxShadow:'0 20px 40px -10px rgba(15, 23, 42, 0.4)' };
 const closeBtn = { background: '#f1f5f9', border: 'none', width: '40px', height: '40px', borderRadius: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color:'#64748b' };
