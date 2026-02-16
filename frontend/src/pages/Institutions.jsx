@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import SidebarModern from "../components/SidebarModern";
 import { Building2, Plus, Search, MapPin, User, Mail, MoreHorizontal, Edit, Trash2, X, Phone, Eye, CheckCircle, RefreshCw, Filter } from "lucide-react";
 import toast, { Toaster } from 'react-hot-toast';
-
-// ✅ Normal axios hata kar aapka custom 'api' import kiya (Taaki Token pass ho sake)
 import api from '../api/axios'; 
 
 export default function Institutions() {
@@ -21,7 +19,6 @@ export default function Institutions() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  // ✅ URL ab chota ho gaya kyunki 'https://...onrender.com/api/' aapke axios.js mein pehle se set hai
   const API_ENDPOINT = "institutions/";
 
   useEffect(() => {
@@ -31,7 +28,6 @@ export default function Institutions() {
   const fetchInstitutions = async () => {
       setLoading(true);
       try {
-          // ✅ axios.get ki jagah api.get use kiya
           const res = await api.get(API_ENDPOINT);
           setInstitutions(res.data);
       } catch (error) {
@@ -47,14 +43,12 @@ export default function Institutions() {
 
       try {
           if (isEdit && editNode) {
-              // ✅ api.patch use kiya
               await api.patch(`${API_ENDPOINT}${editNode.id}/`, formData);
               const updatedList = institutions.map(i => i.id === editNode.id ? { ...i, ...formData } : i);
               setInstitutions(updatedList);
               toast.success("Institution Updated!");
               setEditNode(null);
           } else {
-              // ✅ api.post use kiya
               const res = await api.post(API_ENDPOINT, formData);
               setInstitutions([res.data, ...institutions]);
               toast.success("New Institution Onboarded!", { icon: '🎓' });
@@ -69,7 +63,6 @@ export default function Institutions() {
 
   const handleDelete = async (id) => {
       try {
-          // ✅ api.delete use kiya
           await api.delete(`${API_ENDPOINT}${id}/`);
           setInstitutions(institutions.filter(i => i.id !== id));
           toast.success("Institution Removed", { icon: '🗑️' });
@@ -275,7 +268,10 @@ export default function Institutions() {
             }
 
             .waoo-app-container { display: flex; background: var(--bg-body); min-height: 100vh; font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
-            .waoo-view { flex: 1; padding: 20px 40px; margin-left: 280px; position: relative; }
+            
+            /* Desktop View */
+            .waoo-view { flex: 1; padding: 20px 40px; margin-left: 280px; position: relative; transition: all 0.3s ease; }
+            
             .waoo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
             .waoo-title { font-size: 2.5rem; font-weight: 800; color: var(--text-dark); margin: 0; letter-spacing: -1px; }
             .gradient-text { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -333,7 +329,7 @@ export default function Institutions() {
             
             /* MODALS */
             .glass-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(12px); display: flex; justify-content: center; align-items: center; z-index: 9999; }
-            .glass-modal { background: rgba(255, 255, 255, 0.98); border: 1px solid rgba(255, 255, 255, 0.8); padding: 35px; border-radius: 32px; width: 520px; box-shadow: 0 30px 60px -15px rgba(0,0,0,0.25); }
+            .glass-modal { background: rgba(255, 255, 255, 0.98); border: 1px solid rgba(255, 255, 255, 0.8); padding: 35px; border-radius: 32px; width: 520px; max-width: 90%; box-shadow: 0 30px 60px -15px rgba(0,0,0,0.25); }
             .g-modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
             .g-modal-head h3 { margin: 0; font-size: 1.6rem; font-weight: 900; color: var(--text-dark); letter-spacing: -0.5px; }
             .g-close { background: #f1f5f9; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; color: var(--text-light); display: flex; align-items: center; justify-content: center; transition: 0.2s; }
@@ -343,7 +339,7 @@ export default function Institutions() {
             .waoo-form-row .waoo-form-group { margin-bottom: 0; }
             .half { flex: 1; }
             .waoo-label { display: block; font-size: 0.85rem; font-weight: 800; color: var(--text-dark); margin-bottom: 8px; letter-spacing: 0.3px; }
-            .waoo-input-modern { width: 100%; padding: 16px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px; font-weight: 600; color: var(--text-dark); font-size: 1rem; transition: all 0.25s ease; }
+            .waoo-input-modern { width: 100%; padding: 16px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px; font-weight: 600; color: var(--text-dark); font-size: 1rem; transition: all 0.25s ease; box-sizing: border-box; }
             .waoo-input-modern:focus { background: white; border-color: var(--primary); outline: none; box-shadow: 0 4px 12px var(--primary-glow); transform: translateY(-2px); }
             .waoo-input-modern::placeholder { color: #cbd5e1; font-weight: 500; }
             
@@ -367,6 +363,40 @@ export default function Institutions() {
             @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
             @keyframes scaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
             @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+
+            /* ==========================================
+               📱 MOBILE SPECIFIC STYLES (NO UI CHANGE)
+               ========================================== */
+            @media (max-width: 850px) {
+                /* Container fix */
+                .waoo-view {
+                    margin-left: 0 !important; 
+                    padding: 15px !important;
+                    padding-top: 90px !important; /* Top bar space */
+                    width: 100% !important;
+                    box-sizing: border-box !important;
+                }
+                
+                /* Header layout */
+                .waoo-header {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 15px;
+                }
+                .waoo-fab-btn { width: 100%; justify-content: center; }
+                
+                /* Grid layout fix for mobile */
+                .grid-header { display: none !important; }
+                .waoo-card-row { grid-template-columns: 1fr !important; gap: 15px; }
+                .col-status { justify-content: flex-start !important; margin-top: 10px; }
+                
+                /* Form fix for mobile */
+                .waoo-form-row { flex-direction: column; gap: 0; }
+                .waoo-form-group.half { margin-bottom: 20px; width: 100%; }
+                
+                /* Modal padding */
+                .glass-modal { padding: 25px; }
+            }
         `}</style>
     </div>
   );
