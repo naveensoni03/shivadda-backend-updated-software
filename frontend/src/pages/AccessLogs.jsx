@@ -70,7 +70,7 @@ export default function AccessLogs() {
     );
   };
 
-  // ✅ 2. Filter Type Logic (Cycles: ALL -> CREATE -> UPDATE -> DELETE)
+  // ✅ 2. Filter Type Logic
   const toggleFilter = () => {
     const types = ["ALL", "CREATE", "UPDATE", "DELETE", "LOGIN"];
     const nextIndex = (types.indexOf(filterType) + 1) % types.length;
@@ -78,7 +78,7 @@ export default function AccessLogs() {
     toast(`Filter applied: ${types[nextIndex]}`, { icon: '🔍' });
   };
 
-  // ✅ 3. Date Range Logic (Cycles: ALL -> TODAY -> WEEK)
+  // ✅ 3. Date Range Logic
   const toggleDateRange = () => {
     const ranges = ["ALL", "TODAY", "WEEK"];
     const nextIndex = (ranges.indexOf(dateRange) + 1) % ranges.length;
@@ -92,17 +92,14 @@ export default function AccessLogs() {
 
   // 🧠 Smart Filtering Logic
   const filteredLogs = logs.filter(log => {
-    // 1. Search Text
     const matchesSearch = 
         log.target_repr?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         log.action_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         log.actor_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         log.ip_address?.includes(searchTerm);
 
-    // 2. Type Filter
     const matchesType = filterType === "ALL" || log.action_type === filterType;
 
-    // 3. Date Filter
     let matchesDate = true;
     const logDate = new Date(log.timestamp);
     const today = new Date();
@@ -117,7 +114,7 @@ export default function AccessLogs() {
     return matchesSearch && matchesType && matchesDate;
   });
 
-  // 🎨 Action Badge Styles with Glow
+  // 🎨 Action Badge Styles
   const getActionStyle = (action) => {
     switch (action) {
       case 'CREATE': return { bg: 'rgba(220, 252, 231, 0.9)', text: '#15803d', icon: <PlusCircle size={14}/>, border: '#86efac', shadow: '0 0 15px rgba(34, 197, 94, 0.25)' };
@@ -128,31 +125,19 @@ export default function AccessLogs() {
     }
   };
 
-  // 🎭 Super Smooth Animations
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1, 
-      transition: { staggerChildren: 0.08, delayChildren: 0.2 } 
-    }
+    visible: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.2 } }
   };
 
   const itemVariants = {
     hidden: { y: 30, opacity: 0, scale: 0.9 },
-    visible: { 
-      y: 0, 
-      opacity: 1, 
-      scale: 1,
-      transition: { type: 'spring', stiffness: 120, damping: 12 } 
-    }
+    visible: { y: 0, opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 120, damping: 12 } }
   };
 
   const modalVariants = {
     hidden: { opacity: 0, scale: 0.8, y: 50 },
-    visible: { 
-      opacity: 1, scale: 1, y: 0,
-      transition: { type: "spring", stiffness: 300, damping: 25 }
-    },
+    visible: { opacity: 1, scale: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 25 } },
     exit: { opacity: 0, scale: 0.8, y: 50, transition: { duration: 0.2 } }
   };
 
@@ -160,29 +145,19 @@ export default function AccessLogs() {
     <div style={{display: "flex", background: "#f8fafc", height: "100vh", fontFamily: "'Inter', sans-serif", overflow: "hidden"}}>
       <SidebarModern />
       <Toaster position="top-center" reverseOrder={false} />
-      
-      {/* 🔮 CSS Trick to Hide Scrollbars but Keep Scrolling */}
-      <style>{`
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
 
-      <div style={{flex: 1, marginLeft: "280px", padding: "30px 40px", display: "flex", flexDirection: "column", height: "100vh"}}>
+      {/* 🚀 FIXED: Mobile responsive container class added */}
+      <div className="access-main-view hide-scrollbar">
         
         {/* 🔥 Header Section */}
         <motion.div 
           initial={{opacity:0, y:-30}} 
           animate={{opacity:1, y:0}} 
           transition={{type: "spring", stiffness: 100, damping: 20}} 
-          style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '25px', flexShrink: 0}}
+          className="access-header-wrap"
         >
           <div>
-            <h1 style={{fontSize: '2.4rem', fontWeight: '800', background: 'linear-gradient(to right, #1e293b, #334155)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '6px', display:'flex', alignItems:'center', gap:'16px', letterSpacing:'-0.5px'}}>
+            <h1 className="responsive-title" style={{fontWeight: '800', background: 'linear-gradient(to right, #1e293b, #334155)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '6px', display:'flex', alignItems:'center', gap:'16px', letterSpacing:'-0.5px'}}>
               <motion.div 
                 initial={{ rotate: -90, scale: 0 }}
                 animate={{ rotate: 0, scale: 1 }}
@@ -197,7 +172,7 @@ export default function AccessLogs() {
             <p style={{color: '#64748b', fontSize: '1rem', fontWeight: '500', marginLeft:'4px'}}>Real-time monitoring of system security & user actions.</p>
           </div>
           
-          <div style={{display:'flex', gap:'12px'}}>
+          <div className="access-header-actions">
             <motion.button whileHover={{scale:1.05, y:-2}} whileTap={{scale:0.95}} onClick={fetchLogs} style={secondaryBtn}><RefreshCw size={18} className={loading ? "animate-spin" : ""}/> Sync Data</motion.button>
             <motion.button whileHover={{scale:1.05, y:-2, boxShadow:'0 10px 25px -5px rgba(79, 70, 229, 0.4)'}} whileTap={{scale:0.95}} onClick={handleExport} style={primaryBtn}><Download size={18}/> Export Report</motion.button>
           </div>
@@ -207,7 +182,7 @@ export default function AccessLogs() {
         <motion.div 
           initial="hidden" animate="visible" 
           variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
-          style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:'25px', marginBottom:'25px', flexShrink: 0}}
+          className="access-stats-grid"
         >
             <motion.div variants={itemVariants}><StatCard title="Total Events" value={logs.length} icon={<ShieldCheck size={26}/>} color="#0ea5e9" bg="linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)" desc="Actions logged this month" trend="+12%" trendColor="#0284c7" /></motion.div>
             <motion.div variants={itemVariants}><StatCard title="Active Sessions" value="24" icon={<Monitor size={26}/>} color="#8b5cf6" bg="linear-gradient(135deg, #f3e8ff 0%, #d8b4fe 100%)" desc="Users currently online" trend="+5%" trendColor="#7c3aed" /></motion.div>
@@ -225,8 +200,8 @@ export default function AccessLogs() {
             }}
         >
             {/* Toolbar */}
-            <div style={{padding:'15px 25px', borderBottom:'1px solid #f1f5f9', display:'flex', justifyContent:'space-between', alignItems:'center', background:'rgba(255,255,255,0.8)', backdropFilter:'blur(10px)'}}>
-                <div style={{position:'relative', width:'350px'}}>
+            <div className="access-toolbar">
+                <div className="access-search-wrap">
                     <Search size={18} style={{position:'absolute', left:'15px', top:'50%', transform:'translateY(-50%)', color:'#94a3b8'}}/>
                     <input 
                         placeholder="Search logs by User, IP, or Module..." 
@@ -235,7 +210,7 @@ export default function AccessLogs() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <div style={{display:'flex', gap:'10px'}}>
+                <div className="access-toolbar-actions">
                     <motion.button 
                         whileHover={{y:-2, backgroundColor:'#f8fafc'}} whileTap={{scale:0.95}} 
                         onClick={toggleFilter} 
@@ -254,126 +229,131 @@ export default function AccessLogs() {
                 </div>
             </div>
 
-            {/* Table Header (Sticky) */}
-            <div style={{overflow: 'hidden', borderBottom:'2px solid #f1f5f9'}}>
-                <table style={{width:'100%', borderCollapse:'collapse'}}>
-                    <thead style={{display:'table', width:'100%', tableLayout:'fixed'}}>
-                        <tr style={{background:'#f8fafc', textAlign:'left'}}>
-                            <th style={{...thStyle, width:'15%'}}>EVENT TYPE</th>
-                            <th style={{...thStyle, width:'20%'}}>TARGET ENTITY</th>
-                            <th style={{...thStyle, width:'20%'}}>INITIATED BY</th>
-                            <th style={{...thStyle, width:'15%'}}>SOURCE IP</th>
-                            <th style={{...thStyle, width:'15%'}}>TIMESTAMP</th>
-                            <th style={{...thStyle, width:'15%', textAlign: 'center'}}>ACTION</th>
-                        </tr>
-                    </thead>
-                </table>
-            </div>
+            {/* 🚀 FIXED: Mobile Scrollable Table Wrapper */}
+            <div className="access-table-scroll hide-scrollbar">
+                <div className="access-table-min-width">
+                    {/* Table Header (Sticky) */}
+                    <div style={{overflow: 'hidden', borderBottom:'2px solid #f1f5f9'}}>
+                        <table style={{width:'100%', borderCollapse:'collapse'}}>
+                            <thead style={{display:'table', width:'100%', tableLayout:'fixed'}}>
+                                <tr style={{background:'#f8fafc', textAlign:'left'}}>
+                                    <th style={{...thStyle, width:'15%'}}>EVENT TYPE</th>
+                                    <th style={{...thStyle, width:'20%'}}>TARGET ENTITY</th>
+                                    <th style={{...thStyle, width:'20%'}}>INITIATED BY</th>
+                                    <th style={{...thStyle, width:'15%'}}>SOURCE IP</th>
+                                    <th style={{...thStyle, width:'15%'}}>TIMESTAMP</th>
+                                    <th style={{...thStyle, width:'15%', textAlign: 'center'}}>ACTION</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
 
-            {/* Scrollable Body - Hidden Scrollbar */}
-            <div className="hide-scrollbar" style={{overflowY: 'auto', flex: 1}}> 
-                <table style={{width:'100%', borderCollapse:'collapse'}}>
-                    <motion.tbody 
-                        variants={containerVariants} 
-                        initial="hidden" 
-                        animate="visible" 
-                        style={{display:'table', width:'100%', tableLayout:'fixed'}}
-                    >
-                        {loading ? (
-                            <tr><td colSpan="6" style={{padding:'60px', textAlign:'center', color:'#94a3b8'}}>
-                                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} style={{display:'inline-block'}}>
-                                    <RefreshCw size={32} />
-                                </motion.div>
-                                <div style={{marginTop:'12px', fontWeight:'500', fontSize:'0.9rem'}}>Fetching latest logs...</div>
-                            </td></tr>
-                        ) : filteredLogs.length === 0 ? (
-                            <tr><td colSpan="6" style={{padding:'60px', textAlign:'center', color:'#94a3b8'}}>
-                                <ShieldCheck size={48} style={{marginBottom:'12px', opacity:0.4}}/>
-                                <div style={{fontSize:'1rem', fontWeight:'500'}}>No logs found for this filter.</div>
-                            </td></tr>
-                        ) : filteredLogs.map((log, i) => {
-                            const style = getActionStyle(log.action_type);
-                            return (
-                                <motion.tr 
-                                    variants={itemVariants}
-                                    key={log.id} 
-                                    style={{borderBottom:'1px solid #f1f5f9', cursor:'default'}}
-                                    whileHover={{ backgroundColor: '#f8fafc', scale: 1.002, x: 4, transition: { duration: 0.1 } }}
-                                >
-                                    <td style={{...tdStyle, width:'15%'}}>
-                                        <motion.span whileHover={{scale:1.05}} style={{
-                                            background: style.bg, color: style.text, border: `1px solid ${style.border}`,
-                                            padding:'6px 12px', borderRadius:'10px', fontSize:'0.7rem', fontWeight:'800',
-                                            display:'inline-flex', alignItems:'center', gap:'6px', letterSpacing:'0.5px',
-                                            boxShadow: style.shadow
-                                        }}>
-                                            {style.icon} {log.action_type}
-                                        </motion.span>
-                                    </td>
-                                    <td style={{...tdStyle, width:'20%'}}>
-                                        <div style={{fontWeight:'700', color:'#1e293b', fontSize:'0.9rem'}}>{log.target_repr || 'System Process'}</div>
-                                        <div style={{fontSize:'0.75rem', color:'#64748b', marginTop:'4px', display:'flex', alignItems:'center', gap:'6px'}}>
-                                            <div style={{width:'5px', height:'5px', borderRadius:'50%', background:'#94a3b8'}}></div>
-                                            {log.target_model} <span style={{opacity:0.4}}>|</span> ID: {log.target_object_id}
-                                        </div>
-                                    </td>
-                                    <td style={{...tdStyle, width:'20%'}}>
-                                        <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-                                            <div style={{
-                                                width:'32px', height:'32px', borderRadius:'10px', 
-                                                background: 'linear-gradient(135deg, #f3f4f6, #e5e7eb)', 
-                                                display:'flex', alignItems:'center', justifyContent:'center', 
-                                                fontSize:'0.85rem', fontWeight:'800', color:'#4b5563',
-                                                boxShadow:'0 2px 5px rgba(0,0,0,0.05)'
-                                            }}>
-                                                {log.actor_name ? log.actor_name.charAt(0).toUpperCase() : 'S'}
-                                            </div>
-                                            <div>
-                                                <div style={{color:'#334155', fontWeight:'700', fontSize:'0.85rem'}}>{log.actor_name || 'System Admin'}</div>
-                                                <div style={{fontSize:'0.7rem', color:'#94a3b8', fontWeight:'600'}}>Super Administrator</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td style={{...tdStyle, width:'15%'}}>
-                                        <div style={{display:'flex', alignItems:'center', gap:'8px', background:'#f1f5f9', padding:'5px 10px', borderRadius:'8px', width:'fit-content', border:'1px solid #e2e8f0'}}>
-                                            <Monitor size={12} color="#64748b"/> 
-                                            <span style={{fontFamily:'monospace', color:'#475569', fontWeight:'700', fontSize:'0.8rem'}}>{log.ip_address || '127.0.0.1'}</span>
-                                        </div>
-                                    </td>
-                                    <td style={{...tdStyle, width:'15%'}}>
-                                        <div style={{color:'#64748b', fontSize:'0.8rem', fontWeight:'600', display:'flex', alignItems:'center', gap:'6px'}}>
-                                            <Clock size={14} color="#94a3b8"/>
-                                            {new Date(log.timestamp).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
-                                        </div>
-                                    </td>
-                                    <td style={{...tdStyle, width:'15%', textAlign: 'center'}}>
-                                        <motion.button 
-                                            whileHover={{ scale: 1.15, backgroundColor: '#eef2ff', color: '#4f46e5', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)' }}
-                                            whileTap={{ scale: 0.95 }}
-                                            onClick={() => handleViewLog(log)}
-                                            style={viewBtn}
+                    {/* Scrollable Body */}
+                    <div className="hide-scrollbar" style={{overflowY: 'auto', flex: 1}}> 
+                        <table style={{width:'100%', borderCollapse:'collapse'}}>
+                            <motion.tbody 
+                                variants={containerVariants} 
+                                initial="hidden" 
+                                animate="visible" 
+                                style={{display:'table', width:'100%', tableLayout:'fixed'}}
+                            >
+                                {loading ? (
+                                    <tr><td colSpan="6" style={{padding:'60px', textAlign:'center', color:'#94a3b8'}}>
+                                        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} style={{display:'inline-block'}}>
+                                            <RefreshCw size={32} />
+                                        </motion.div>
+                                        <div style={{marginTop:'12px', fontWeight:'500', fontSize:'0.9rem'}}>Fetching latest logs...</div>
+                                    </td></tr>
+                                ) : filteredLogs.length === 0 ? (
+                                    <tr><td colSpan="6" style={{padding:'60px', textAlign:'center', color:'#94a3b8'}}>
+                                        <ShieldCheck size={48} style={{marginBottom:'12px', opacity:0.4}}/>
+                                        <div style={{fontSize:'1rem', fontWeight:'500'}}>No logs found for this filter.</div>
+                                    </td></tr>
+                                ) : filteredLogs.map((log, i) => {
+                                    const style = getActionStyle(log.action_type);
+                                    return (
+                                        <motion.tr 
+                                            variants={itemVariants}
+                                            key={log.id} 
+                                            style={{borderBottom:'1px solid #f1f5f9', cursor:'default'}}
+                                            whileHover={{ backgroundColor: '#f8fafc', scale: 1.002, x: 4, transition: { duration: 0.1 } }}
                                         >
-                                            <Eye size={18} /> <span style={{fontSize:'0.8rem', fontWeight:'600', marginLeft:'5px'}}>View</span>
-                                        </motion.button>
-                                    </td>
-                                </motion.tr>
-                            );
-                        })}
-                    </motion.tbody>
-                </table>
+                                            <td style={{...tdStyle, width:'15%'}}>
+                                                <motion.span whileHover={{scale:1.05}} style={{
+                                                    background: style.bg, color: style.text, border: `1px solid ${style.border}`,
+                                                    padding:'6px 12px', borderRadius:'10px', fontSize:'0.7rem', fontWeight:'800',
+                                                    display:'inline-flex', alignItems:'center', gap:'6px', letterSpacing:'0.5px',
+                                                    boxShadow: style.shadow
+                                                }}>
+                                                    {style.icon} {log.action_type}
+                                                </motion.span>
+                                            </td>
+                                            <td style={{...tdStyle, width:'20%'}}>
+                                                <div style={{fontWeight:'700', color:'#1e293b', fontSize:'0.9rem'}}>{log.target_repr || 'System Process'}</div>
+                                                <div style={{fontSize:'0.75rem', color:'#64748b', marginTop:'4px', display:'flex', alignItems:'center', gap:'6px'}}>
+                                                    <div style={{width:'5px', height:'5px', borderRadius:'50%', background:'#94a3b8'}}></div>
+                                                    {log.target_model} <span style={{opacity:0.4}}>|</span> ID: {log.target_object_id}
+                                                </div>
+                                            </td>
+                                            <td style={{...tdStyle, width:'20%'}}>
+                                                <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+                                                    <div style={{
+                                                        width:'32px', height:'32px', borderRadius:'10px', 
+                                                        background: 'linear-gradient(135deg, #f3f4f6, #e5e7eb)', 
+                                                        display:'flex', alignItems:'center', justifyContent:'center', 
+                                                        fontSize:'0.85rem', fontWeight:'800', color:'#4b5563',
+                                                        boxShadow:'0 2px 5px rgba(0,0,0,0.05)'
+                                                    }}>
+                                                        {log.actor_name ? log.actor_name.charAt(0).toUpperCase() : 'S'}
+                                                    </div>
+                                                    <div>
+                                                        <div style={{color:'#334155', fontWeight:'700', fontSize:'0.85rem'}}>{log.actor_name || 'System Admin'}</div>
+                                                        <div style={{fontSize:'0.7rem', color:'#94a3b8', fontWeight:'600'}}>Super Administrator</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td style={{...tdStyle, width:'15%'}}>
+                                                <div style={{display:'flex', alignItems:'center', gap:'8px', background:'#f1f5f9', padding:'5px 10px', borderRadius:'8px', width:'fit-content', border:'1px solid #e2e8f0'}}>
+                                                    <Monitor size={12} color="#64748b"/> 
+                                                    <span style={{fontFamily:'monospace', color:'#475569', fontWeight:'700', fontSize:'0.8rem'}}>{log.ip_address || '127.0.0.1'}</span>
+                                                </div>
+                                            </td>
+                                            <td style={{...tdStyle, width:'15%'}}>
+                                                <div style={{color:'#64748b', fontSize:'0.8rem', fontWeight:'600', display:'flex', alignItems:'center', gap:'6px'}}>
+                                                    <Clock size={14} color="#94a3b8"/>
+                                                    {new Date(log.timestamp).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                                                </div>
+                                            </td>
+                                            <td style={{...tdStyle, width:'15%', textAlign: 'center'}}>
+                                                <motion.button 
+                                                    whileHover={{ scale: 1.15, backgroundColor: '#eef2ff', color: '#4f46e5', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)' }}
+                                                    whileTap={{ scale: 0.95 }}
+                                                    onClick={() => handleViewLog(log)}
+                                                    style={viewBtn}
+                                                >
+                                                    <Eye size={18} /> <span style={{fontSize:'0.8rem', fontWeight:'600', marginLeft:'5px'}}>View</span>
+                                                </motion.button>
+                                            </td>
+                                        </motion.tr>
+                                    );
+                                })}
+                            </motion.tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </motion.div>
 
       </div>
 
-      {/* ✨ Glassmorphism Detail Modal (Springy Animation) */}
+      {/* ✨ Glassmorphism Detail Modal */}
       <AnimatePresence>
         {selectedLog && (
             <div style={{position:'fixed', inset:0, zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(15, 23, 42, 0.6)', backdropFilter:'blur(12px)'}}>
                 <motion.div 
                     variants={modalVariants}
                     initial="hidden" animate="visible" exit="exit"
-                    style={{width:'550px', background:'white', borderRadius:'24px', padding:'35px', boxShadow:'0 25px 50px -12px rgba(0,0,0,0.4)', position:'relative'}}
+                    className="access-modal-content"
                 >
                     <motion.button 
                         whileHover={{rotate:90, scale:1.1, backgroundColor:'#e2e8f0'}} 
@@ -406,7 +386,7 @@ export default function AccessLogs() {
                     </motion.div>
 
                     <div style={{fontSize:'0.9rem', fontWeight:'700', color:'#475569', marginBottom:'10px', display:'flex', alignItems:'center', gap:'8px'}}><Activity size={16}/> System Changes Log:</div>
-                    <motion.div initial={{y:10, opacity:0}} animate={{y:0, opacity:1}} transition={{delay:0.2}} style={{background:'#1e293b', color:'#e2e8f0', padding:'20px', borderRadius:'16px', fontFamily:'monospace', fontSize:'0.9rem', lineHeight:'1.6', border:'1px solid #334155', boxShadow:'inset 0 2px 10px rgba(0,0,0,0.2)'}}>
+                    <motion.div className="hide-scrollbar" initial={{y:10, opacity:0}} animate={{y:0, opacity:1}} transition={{delay:0.2}} style={{background:'#1e293b', color:'#e2e8f0', padding:'20px', borderRadius:'16px', fontFamily:'monospace', fontSize:'0.9rem', lineHeight:'1.6', border:'1px solid #334155', boxShadow:'inset 0 2px 10px rgba(0,0,0,0.2)', maxHeight:'150px', overflowY:'auto'}}>
                         {selectedLog.details || "No detailed system changes recorded for this event."}
                     </motion.div>
 
@@ -423,6 +403,50 @@ export default function AccessLogs() {
         )}
       </AnimatePresence>
 
+      {/* 🔥 CSS FOR RESPONSIVENESS */}
+      <style>{`
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 💻 Desktop Styles */
+        .access-main-view { flex: 1; margin-left: 280px; padding: 30px 40px; display: flex; flex-direction: column; height: 100vh; transition: all 0.3s ease; }
+        .access-header-wrap { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; flex-shrink: 0; }
+        .access-header-actions { display: flex; gap: 12px; }
+        .access-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 25px; flex-shrink: 0; }
+        .access-toolbar { padding: 15px 25px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); }
+        .access-search-wrap { position: relative; width: 350px; }
+        .access-toolbar-actions { display: flex; gap: 10px; }
+        .access-table-scroll { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .access-table-min-width { width: 100%; display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        .access-modal-content { width: 550px; background: white; border-radius: 24px; padding: 35px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); position: relative; }
+        .responsive-title { font-size: 2.4rem; }
+
+        /* 📱 Mobile Styles */
+        @media (max-width: 850px) {
+            .access-main-view {
+                margin-left: 0 !important;
+                padding: 15px !important;
+                padding-top: 90px !important;
+                width: 100% !important;
+                box-sizing: border-box;
+            }
+            .access-header-wrap { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .access-header-actions { width: 100%; justify-content: space-between; flex-wrap: wrap; }
+            .access-header-actions button { flex: 1; justify-content: center; }
+            .access-stats-grid { grid-template-columns: 1fr; gap: 15px; }
+            .access-toolbar { flex-direction: column; align-items: stretch; gap: 15px; padding: 15px; }
+            .access-search-wrap { width: 100%; }
+            .access-toolbar-actions { flex-wrap: wrap; }
+            .access-toolbar-actions button { flex: 1; justify-content: center; }
+            
+            /* Table Horizontal Scroll for Mobile */
+            .access-table-scroll { overflow-x: auto !important; display: block !important; }
+            .access-table-min-width { min-width: 850px; display: block !important; }
+            
+            .access-modal-content { width: 95% !important; padding: 25px !important; }
+            .responsive-title { font-size: 1.8rem !important; }
+        }
+      `}</style>
     </div>
   );
 }
@@ -454,7 +478,7 @@ const StatCard = ({ title, value, icon, color, bg, desc, trend, trendColor }) =>
                 </div>
             )}
         </div>
-        <div style={{fontSize:'2rem', fontWeight:'900', color:'#1e293b', lineHeight:'1', marginBottom:'6px'}}>{value}</div>
+        <div style={{fontSize:'2rem', fontWeight:'900', color:'#1e293b', lineHeight:'1', margin:'0 0 6px 0'}}>{value}</div>
         <div style={{fontSize:'0.9rem', color:'#64748b', fontWeight:'700'}}>{title}</div>
         <div style={{fontSize:'0.75rem', color:'#94a3b8', marginTop:'4px', fontWeight:'500'}}>{desc}</div>
         
@@ -466,7 +490,7 @@ const StatCard = ({ title, value, icon, color, bg, desc, trend, trendColor }) =>
 // ✨ Premium Styles
 const primaryBtn = { display:'flex', alignItems:'center', gap:'10px', background:'linear-gradient(135deg, #0f172a 0%, #334155 100%)', color:'white', border:'none', padding:'10px 20px', borderRadius:'12px', cursor:'pointer', fontWeight:'700', fontSize:'0.85rem', boxShadow:'0 8px 20px -5px rgba(15, 23, 42, 0.3)' };
 const secondaryBtn = { display:'flex', alignItems:'center', gap:'10px', background:'white', color:'#475569', border:'1px solid #e2e8f0', padding:'10px 20px', borderRadius:'12px', cursor:'pointer', fontWeight:'700', fontSize:'0.85rem', boxShadow:'0 4px 10px -2px rgba(0,0,0,0.02)' };
-const searchInput = { width:'100%', padding:'12px 14px 12px 45px', borderRadius:'12px', border:'1px solid #e2e8f0', fontSize:'0.9rem', outline:'none', background:'#f8fafc', color:'#1e293b', fontWeight:'600', transition:'all 0.3s' };
+const searchInput = { width:'100%', padding:'12px 14px 12px 45px', borderRadius:'12px', border:'1px solid #e2e8f0', fontSize:'0.9rem', outline:'none', background:'#f8fafc', color:'#1e293b', fontWeight:'600', transition:'all 0.3s', boxSizing:'border-box' };
 const filterBtn = { display:'flex', alignItems:'center', gap:'8px', background:'white', border:'1px solid #e2e8f0', padding:'10px 16px', borderRadius:'12px', cursor:'pointer', fontWeight:'700', color:'#64748b', fontSize:'0.8rem', boxShadow:'0 2px 5px rgba(0,0,0,0.02)' };
 const thStyle = { padding:'18px 24px', fontSize:'0.7rem', fontWeight:'900', color:'#94a3b8', textTransform:'uppercase', letterSpacing:'0.8px', borderBottom:'none' };
 const tdStyle = { padding:'18px 24px', verticalAlign:'middle' };
