@@ -126,6 +126,7 @@ export default function AccessLogs() {
       <SidebarModern />
       <Toaster position="top-center" reverseOrder={false} />
 
+      {/* 🚀 Container setup for smooth vertical scroll on mobile */}
       <div className="access-main-view hide-scrollbar">
         
         {/* 🔥 Header Section */}
@@ -175,12 +176,12 @@ export default function AccessLogs() {
                 <table className="custom-data-table">
                     <thead>
                         <tr>
-                            <th style={{width:'15%'}}>EVENT TYPE</th>
-                            <th style={{width:'20%'}}>TARGET ENTITY</th>
-                            <th style={{width:'20%'}}>INITIATED BY</th>
-                            <th style={{width:'15%'}}>SOURCE IP</th>
-                            <th style={{width:'15%'}}>TIMESTAMP</th>
-                            <th style={{width:'15%', textAlign: 'center'}}>ACTION</th>
+                            <th style={{minWidth:'150px'}}>EVENT TYPE</th>
+                            <th style={{minWidth:'200px'}}>TARGET ENTITY</th>
+                            <th style={{minWidth:'200px'}}>INITIATED BY</th>
+                            <th style={{minWidth:'150px'}}>SOURCE IP</th>
+                            <th style={{minWidth:'150px'}}>TIMESTAMP</th>
+                            <th style={{minWidth:'100px', textAlign: 'center'}}>ACTION</th>
                         </tr>
                     </thead>
                     <motion.tbody variants={containerVariants} initial="hidden" animate="visible">
@@ -198,50 +199,50 @@ export default function AccessLogs() {
                             const style = getActionStyle(log.action_type);
                             return (
                                 <motion.tr variants={itemVariants} key={log.id} whileHover={{ backgroundColor: '#f8fafc' }}>
-                                    <td>
+                                    <td style={tdStyle}>
                                         <motion.span whileHover={{scale:1.05}} style={{
                                             background: style.bg, color: style.text, border: `1px solid ${style.border}`,
                                             padding:'6px 12px', borderRadius:'10px', fontSize:'0.7rem', fontWeight:'800',
                                             display:'inline-flex', alignItems:'center', gap:'6px', letterSpacing:'0.5px',
-                                            boxShadow: style.shadow
+                                            boxShadow: style.shadow, whiteSpace: 'nowrap'
                                         }}>
                                             {style.icon} {log.action_type}
                                         </motion.span>
                                     </td>
-                                    <td>
-                                        <div style={{fontWeight:'700', color:'#1e293b', fontSize:'0.9rem'}}>{log.target_repr || 'System Process'}</div>
-                                        <div style={{fontSize:'0.75rem', color:'#64748b', marginTop:'4px', display:'flex', alignItems:'center', gap:'6px'}}>
+                                    <td style={tdStyle}>
+                                        <div style={{fontWeight:'700', color:'#1e293b', fontSize:'0.9rem', whiteSpace: 'nowrap'}}>{log.target_repr || 'System Process'}</div>
+                                        <div style={{fontSize:'0.75rem', color:'#64748b', marginTop:'4px', display:'flex', alignItems:'center', gap:'6px', whiteSpace: 'nowrap'}}>
                                             <div style={{width:'5px', height:'5px', borderRadius:'50%', background:'#94a3b8'}}></div>
                                             {log.target_model} <span style={{opacity:0.4}}>|</span> ID: {log.target_object_id}
                                         </div>
                                     </td>
-                                    <td>
+                                    <td style={tdStyle}>
                                         <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
                                             <div style={{
                                                 width:'32px', height:'32px', borderRadius:'10px', background: 'linear-gradient(135deg, #f3f4f6, #e5e7eb)', 
-                                                display:'flex', alignItems:'center', justifyContent:'center', fontSize:'0.85rem', fontWeight:'800', color:'#4b5563', boxShadow:'0 2px 5px rgba(0,0,0,0.05)'
+                                                display:'flex', alignItems:'center', justifyContent:'center', fontSize:'0.85rem', fontWeight:'800', color:'#4b5563', boxShadow:'0 2px 5px rgba(0,0,0,0.05)', flexShrink: 0
                                             }}>
                                                 {log.actor_name ? log.actor_name.charAt(0).toUpperCase() : 'S'}
                                             </div>
                                             <div>
-                                                <div style={{color:'#334155', fontWeight:'700', fontSize:'0.85rem'}}>{log.actor_name || 'System Admin'}</div>
-                                                <div style={{fontSize:'0.7rem', color:'#94a3b8', fontWeight:'600'}}>Super Administrator</div>
+                                                <div style={{color:'#334155', fontWeight:'700', fontSize:'0.85rem', whiteSpace: 'nowrap'}}>{log.actor_name || 'System Admin'}</div>
+                                                <div style={{fontSize:'0.7rem', color:'#94a3b8', fontWeight:'600', whiteSpace: 'nowrap'}}>Super Administrator</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td>
-                                        <div style={{display:'flex', alignItems:'center', gap:'8px', background:'#f1f5f9', padding:'5px 10px', borderRadius:'8px', width:'fit-content', border:'1px solid #e2e8f0'}}>
+                                    <td style={tdStyle}>
+                                        <div style={{display:'flex', alignItems:'center', gap:'8px', background:'#f1f5f9', padding:'5px 10px', borderRadius:'8px', width:'fit-content', border:'1px solid #e2e8f0', whiteSpace: 'nowrap'}}>
                                             <Monitor size={12} color="#64748b"/> 
                                             <span style={{fontFamily:'monospace', color:'#475569', fontWeight:'700', fontSize:'0.8rem'}}>{log.ip_address || '127.0.0.1'}</span>
                                         </div>
                                     </td>
-                                    <td>
-                                        <div style={{color:'#64748b', fontSize:'0.8rem', fontWeight:'600', display:'flex', alignItems:'center', gap:'6px'}}>
+                                    <td style={tdStyle}>
+                                        <div style={{color:'#64748b', fontSize:'0.8rem', fontWeight:'600', display:'flex', alignItems:'center', gap:'6px', whiteSpace: 'nowrap'}}>
                                             <Clock size={14} color="#94a3b8"/>
                                             {new Date(log.timestamp).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
                                         </div>
                                     </td>
-                                    <td style={{textAlign: 'center'}}>
+                                    <td style={{...tdStyle, textAlign: 'center'}}>
                                         <motion.button whileHover={{ scale: 1.15, backgroundColor: '#eef2ff', color: '#4f46e5', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)' }} whileTap={{ scale: 0.95 }} onClick={() => handleViewLog(log)} style={viewBtn}>
                                             <Eye size={18} /> <span style={{fontSize:'0.8rem', fontWeight:'600', marginLeft:'5px'}}>View</span>
                                         </motion.button>
@@ -295,12 +296,27 @@ export default function AccessLogs() {
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         /* 💻 Desktop Styles */
-        .access-main-view { flex: 1; margin-left: 280px; padding: 30px 40px; display: flex; flex-direction: column; height: 100vh; transition: all 0.3s ease; box-sizing: border-box; }
+        .access-main-view { 
+            flex: 1; 
+            margin-left: 280px; 
+            padding: 30px 40px; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            transition: all 0.3s ease; 
+            box-sizing: border-box; 
+            overflow-y: auto; /* Fallback for desktop scroll */
+        }
+        
         .access-header-wrap { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; flex-shrink: 0; }
         .access-header-actions { display: flex; gap: 12px; }
         .access-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 25px; flex-shrink: 0; }
         
-        .table-main-wrapper { background: white; border-radius: 24px; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        .table-main-wrapper { 
+            background: white; border-radius: 24px; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; 
+            display: flex; flex-direction: column; flex: 1; overflow: hidden; 
+        }
+        
         .access-toolbar { padding: 15px 25px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); }
         .access-search-wrap { position: relative; width: 350px; }
         .access-toolbar-actions { display: flex; gap: 10px; }
@@ -315,7 +331,7 @@ export default function AccessLogs() {
         }
         .custom-data-table { 
             width: 100%; 
-            min-width: 900px; /* Minimum width force karega scroll aane ke liye */
+            min-width: 900px; 
             border-collapse: collapse; 
         }
         .custom-data-table thead { 
@@ -334,28 +350,37 @@ export default function AccessLogs() {
             letter-spacing: 0.8px; 
             text-align: left;
             border-bottom: 2px solid #e2e8f0;
-        }
-        .custom-data-table td { 
-            padding: 18px 24px; 
-            vertical-align: middle; 
-            border-bottom: 1px solid #f1f5f9; 
+            white-space: nowrap;
         }
         
         .access-modal-content { width: 550px; background: white; border-radius: 24px; padding: 35px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); position: relative; }
         .responsive-title { font-size: 2.4rem; }
 
-        /* 📱 Mobile Styles */
+        /* 📱 Mobile Styles (THE MAGIC FIX) */
         @media (max-width: 850px) {
             .access-main-view {
                 margin-left: 0 !important;
                 padding: 15px !important;
                 padding-top: 90px !important;
                 width: 100% !important;
+                /* ✨ Removes flex restriction so vertical scroll works natively ✨ */
+                display: block !important; 
+                height: 100vh !important;
+                overflow-y: auto !important; 
             }
-            .access-header-wrap { flex-direction: column; align-items: flex-start; gap: 15px; }
+            
+            .access-header-wrap { flex-direction: column; align-items: flex-start; gap: 15px; margin-bottom: 20px; }
             .access-header-actions { width: 100%; justify-content: space-between; flex-wrap: wrap; }
             .access-header-actions button { flex: 1; justify-content: center; }
-            .access-stats-grid { grid-template-columns: 1fr; gap: 15px; }
+            .access-stats-grid { grid-template-columns: 1fr; gap: 15px; margin-bottom: 25px; }
+            
+            .table-main-wrapper { 
+                /* ✨ Stops table from shrinking to 0 height ✨ */
+                display: block !important; 
+                height: auto !important; 
+                margin-bottom: 40px; 
+                overflow: hidden !important; 
+            }
             
             .access-toolbar { flex-direction: column; align-items: stretch; gap: 15px; padding: 15px; }
             .access-search-wrap { width: 100%; }
@@ -370,7 +395,7 @@ export default function AccessLogs() {
   );
 }
 
-// ✨ Helper Components & Styles (FIXED SYNTAX)
+// ✨ Helper Components & Styles
 const DetailRow = ({ label, value, highlight }) => (
     <div style={{display:'flex', justifyContent:'space-between', marginBottom:'14px', borderBottom:'1px dashed #e2e8f0', paddingBottom:'10px'}}>
         <span style={{color:'#64748b', fontSize:'0.95rem', fontWeight:'500'}}>{label}</span>
@@ -409,4 +434,5 @@ const primaryBtn = { display:'flex', alignItems:'center', gap:'10px', background
 const secondaryBtn = { display:'flex', alignItems:'center', gap:'10px', background:'white', color:'#475569', border:'1px solid #e2e8f0', padding:'10px 20px', borderRadius:'12px', cursor:'pointer', fontWeight:'700', fontSize:'0.85rem', boxShadow:'0 4px 10px -2px rgba(0,0,0,0.02)' };
 const searchInput = { width:'100%', padding:'12px 14px 12px 45px', borderRadius:'12px', border:'1px solid #e2e8f0', fontSize:'0.9rem', outline:'none', background:'#f8fafc', color:'#1e293b', fontWeight:'600', transition:'all 0.3s', boxSizing:'border-box' };
 const filterBtn = { display:'flex', alignItems:'center', gap:'8px', background:'white', border:'1px solid #e2e8f0', padding:'10px 16px', borderRadius:'12px', cursor:'pointer', fontWeight:'700', color:'#64748b', fontSize:'0.8rem', boxShadow:'0 2px 5px rgba(0,0,0,0.02)' };
+const tdStyle = { padding:'18px 24px', verticalAlign:'middle', borderBottom:'1px solid #f1f5f9' };
 const viewBtn = { background:'white', border:'1px solid #e2e8f0', padding:'6px 12px', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:'#64748b', gap:'5px', boxShadow:'0 2px 5px rgba(0,0,0,0.02)' };
