@@ -1,9 +1,5 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
+/* 🔥 Is code ko poora blank kar diya gaya hai aur iski settings index.css mein bhej di gayi hain.
+   Is wajah se ab aapka UI kisi chote box mein shrink nahi hoga, balki poori screen use karega! */
 
 .logo {
   height: 6em;

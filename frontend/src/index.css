@@ -1,36 +1,113 @@
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #f3f4f6; /* Dashboard theme color */
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+/* 🔥 FIX 1: Body ko theek kiya taaki content center mein na atke */
+body {
+  margin: 0;
+  display: block !important; 
+  place-items: unset !important;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #f3f4f6 !important;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+/* 🔥 FIX 2: Root container ko full screen kiya */
+#root {
+  max-width: 100% !important;
+  margin: 0;
+  padding: 0 !important;
+  text-align: left !important;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+
 /* =========================================
    📱 MOBILE RESPONSIVENESS (Global Fixes)
 ========================================= */
 
-/* Desktop par ye sab hidden rahenge */
+/* Desktop par Header & Close Button chhupe rahenge */
 .mobile-header { display: none; }
 .mobile-overlay { display: none; }
 .mobile-close-btn { display: none; }
 .custom-sidebar { left: 0; transition: left 0.3s ease-in-out; }
 
-/* Desktop Body Fix */
-body {
-    margin: 0;
-    display: block !important; /* Center hataya taaki UI left se shuru ho */
-    place-items: unset !important;
-    min-width: 320px;
-    min-height: 100vh;
-    background-color: #f3f4f6 !important; /* Light background */
-}
-
-#root {
-    max-width: 100% !important; /* Center limitation hatayi */
-    margin: 0;
-    padding: 0 !important;
-    text-align: left !important;
-}
-
+/* Mobile Screen (Jab screen choti ho) */
 @media (max-width: 850px) {
-    /* Main Area Adjustments (Institutions/Dashboard page ke liye) */
+    
+    /* 🚀 THE MASTER HACK: Ye code bina kisi React file ko chhede, 
+       us 280px ki empty space ko mobile par hamesha ke liye mita dega! */
+    div[style*="margin-left: 280px"],
+    div[style*="marginLeft: 280px"],
+    div[style*="margin-left:280px"] {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding-top: 90px !important;
+        padding-left: 15px !important;
+        padding-right: 15px !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Institutions ya baaki pages ke liye bhi same fix */
     .waoo-view {
-        margin-left: 0 !important; /* Sidebar ki jagah khatam */
+        margin-left: 0 !important;
         padding: 15px !important;
-        padding-top: 90px !important; /* Header ke liye jagah chodi */
+        padding-top: 90px !important; 
         width: 100% !important;
         box-sizing: border-box;
     }
@@ -54,11 +131,11 @@ body {
 
     /* Hide Sidebar by Default on Mobile */
     .custom-sidebar {
-        left: -320px !important; /* Screen ke bahar nikal diya */
+        left: -320px !important; 
         box-shadow: 20px 0 50px rgba(0,0,0,0.1);
     }
     
-    /* Show Sidebar when 'open' state is true */
+    /* Open Sidebar */
     .custom-sidebar.open {
         left: 0 !important; 
     }
@@ -85,11 +162,4 @@ body {
         border-radius: 10px;
         cursor: pointer;
     }
-
-    /* Fix Institutions Grid for Mobile */
-    .grid-header { display: none !important; }
-    .waoo-card-row { grid-template-columns: 1fr !important; gap: 15px; }
-    .col-status { justify-content: flex-start !important; margin-top: 10px; }
-    .waoo-header { flex-direction: column; align-items: flex-start; gap: 15px; }
-    .waoo-fab-btn { width: 100%; justify-content: center; }
 }
