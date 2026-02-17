@@ -149,13 +149,13 @@ export default function Teachers() {
   const existingDepartments = deptStats.map(stat => stat.department);
 
   return (
-    <div className="dashboard-container" style={{background: '#f8fafc', height: '100vh', overflow: 'hidden', display: 'flex'}}>
+    <div className="teachers-page-wrapper" style={{background: '#f8fafc', height: '100vh', display: 'flex', overflowX: 'hidden'}}>
       <SidebarModern />
       <Toaster position="top-center" />
       
-      <div className="main-content" style={{flex: 1, padding: '30px 40px', position: 'relative', display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto'}}>
+      <div className="teachers-main-content" style={{flex: 1, padding: '30px 40px', position: 'relative', display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', boxSizing: 'border-box'}}>
         
-        <header className="fade-in-down" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexShrink: 0 }}>
+        <header className="fade-in-down page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexShrink: 0 }}>
           <div>
             <h1 style={{ fontSize: '2.2rem', fontWeight: '800', color: '#1e293b', letterSpacing: '-1px', margin: 0 }}>
               Teachers Hub
@@ -168,49 +168,52 @@ export default function Teachers() {
           </button>
         </header>
 
-        <div style={{ display: 'flex', gap: '30px' }}>
+        <div className="flex-container" style={{ display: 'flex', gap: '30px' }}>
           
-          <div className="glass-card fade-in-up" style={{ flex: 2, background: 'white', padding: '25px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', animationDelay: '0.1s', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          {/* Main Table Area */}
+          <div className="glass-card table-card fade-in-up" style={{ flex: 2, background: 'white', padding: '25px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', animationDelay: '0.1s', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
                 <h3 style={{marginBottom: '20px', color: '#0f172a'}}>Staff Directory</h3>
-                <table className="modern-table">
-                <thead>
-                    <tr>
-                    <th>INSTRUCTOR</th>
-                    <th>DEPARTMENT / SUBJECT</th>
-                    <th>CONTACT</th>
-                    <th>ACTION</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {currentItems.map((t, idx) => (
-                    <tr key={t.id} className="floating-row stagger-animation" style={{ animationDelay: `${idx * 0.1}s` }}>
-                        <td>
-                        <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
-                            <div className="mini-avatar">{t.full_name ? t.full_name.charAt(0).toUpperCase() : 'T'}</div>
-                            <div>
-                                <div style={{color: '#0f172a', fontWeight: '700', fontSize: '0.95rem'}}>{t.full_name}</div>
-                                <div style={{fontSize: '0.75rem', color: '#6366f1'}}>#{t.employee_id}</div>
+                <div className="table-wrapper">
+                    <table className="modern-table">
+                    <thead>
+                        <tr>
+                        <th>INSTRUCTOR</th>
+                        <th>DEPARTMENT / SUBJECT</th>
+                        <th>CONTACT</th>
+                        <th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {currentItems.map((t, idx) => (
+                        <tr key={t.id} className="floating-row stagger-animation" style={{ animationDelay: `${idx * 0.1}s` }}>
+                            <td>
+                            <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+                                <div className="mini-avatar">{t.full_name ? t.full_name.charAt(0).toUpperCase() : 'T'}</div>
+                                <div>
+                                    <div style={{color: '#0f172a', fontWeight: '700', fontSize: '0.95rem'}}>{t.full_name}</div>
+                                    <div style={{fontSize: '0.75rem', color: '#6366f1'}}>#{t.employee_id}</div>
+                                </div>
                             </div>
-                        </div>
-                        </td>
-                        <td>
-                            <span className="dept-badge">{t.department || "General"}</span>
-                            <div style={{fontSize: '0.8rem', color: '#64748b', marginTop:'4px'}}>{t.subject || "N/A"}</div>
-                        </td>
-                        <td>
-                            <div style={{fontSize: '0.85rem', color: '#334155'}}>{t.phone || "--"}</div>
-                            <div style={{fontSize: '0.75rem', color: '#94a3b8'}}>{t.email}</div>
-                        </td>
-                        <td>
-                        <button className="btn-view-detail hover-scale" onClick={() => handleViewTeacher(t)}>
-                            View ↗
-                        </button>
-                        </td>
-                    </tr>
-                    ))}
-                </tbody>
-                </table>
+                            </td>
+                            <td>
+                                <span className="dept-badge">{t.department || "General"}</span>
+                                <div style={{fontSize: '0.8rem', color: '#64748b', marginTop:'4px'}}>{t.subject || "N/A"}</div>
+                            </td>
+                            <td>
+                                <div style={{fontSize: '0.85rem', color: '#334155'}}>{t.phone || "--"}</div>
+                                <div style={{fontSize: '0.75rem', color: '#94a3b8'}}>{t.email}</div>
+                            </td>
+                            <td>
+                            <button className="btn-view-detail hover-scale" onClick={() => handleViewTeacher(t)}>
+                                View ↗
+                            </button>
+                            </td>
+                        </tr>
+                        ))}
+                    </tbody>
+                    </table>
+                </div>
             </div>
 
             {totalPages > 1 && (
@@ -222,7 +225,8 @@ export default function Teachers() {
             )}
           </div>
 
-          <div className="glass-card fade-in-up" style={{ flex: 1, background: 'white', padding: '30px', borderRadius: '24px', height: 'fit-content', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', animationDelay: '0.3s' }}>
+          {/* Dept Stats Area */}
+          <div className="glass-card stat-card fade-in-up" style={{ flex: 1, background: 'white', padding: '30px', borderRadius: '24px', height: 'fit-content', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', animationDelay: '0.3s' }}>
              <h3 style={{marginBottom: '25px', color: '#0f172a'}}>Department Stats</h3>
              
              {deptStats.length === 0 ? (
@@ -285,7 +289,7 @@ export default function Teachers() {
         {/* --- ADD / EDIT MODAL --- */}
         {showAddModal && (
           <div className="overlay-blur centered-flex" style={{zIndex: 3000}} onClick={() => setShowAddModal(false)}>
-            <div className="luxe-modal zoom-in" style={{width: '600px'}} onClick={(e) => e.stopPropagation()}>
+            <div className="luxe-modal zoom-in" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
                     <div>
                         <h2 style={{fontSize: '1.5rem', color: '#0f172a', margin: 0}}>{editMode ? "Edit Profile" : "New Instructor"}</h2>
@@ -295,7 +299,7 @@ export default function Teachers() {
                 </div>
                 
                 <div className="modal-body" style={{marginTop: '20px'}}>
-                    <div style={{display: 'flex', gap: '15px', marginBottom: '15px'}}>
+                    <div className="modal-row" style={{display: 'flex', gap: '15px', marginBottom: '15px'}}>
                         <div style={{flex: 1}}>
                             <label className="form-label">Full Name</label>
                             <input type="text" name="full_name" className="luxe-input" placeholder="Dr. A.K. Gupta" value={formData.full_name} onChange={handleInput} />
@@ -306,7 +310,7 @@ export default function Teachers() {
                         </div>
                     </div>
 
-                    <div style={{display: 'flex', gap: '15px', marginBottom: '15px'}}>
+                    <div className="modal-row" style={{display: 'flex', gap: '15px', marginBottom: '15px'}}>
                         <div style={{flex: 1}}>
                             <label className="form-label">Email ID</label>
                             <input type="email" name="email" className="luxe-input" placeholder="official@school.com" value={formData.email} onChange={handleInput} />
@@ -317,7 +321,7 @@ export default function Teachers() {
                         </div>
                     </div>
 
-                    <div style={{display: 'flex', gap: '15px', marginBottom: '15px'}}>
+                    <div className="modal-row" style={{display: 'flex', gap: '15px', marginBottom: '15px'}}>
                         <div style={{flex: 1}}>
                             <label className="form-label">Designation</label>
                             <select name="designation" className="luxe-input" value={formData.designation} onChange={handleInput}>
@@ -333,7 +337,7 @@ export default function Teachers() {
                         </div>
                     </div>
 
-                    <div style={{display: 'flex', gap: '15px', marginBottom: '15px'}}>
+                    <div className="modal-row" style={{display: 'flex', gap: '15px', marginBottom: '15px'}}>
                         <div style={{flex: 1}}>
                             <label className="form-label">Subject Taught</label>
                             <input type="text" name="subject" className="luxe-input" placeholder="e.g. Physics, History" value={formData.subject} onChange={handleInput} />
@@ -344,7 +348,7 @@ export default function Teachers() {
                         </div>
                     </div>
 
-                    <div style={{display: 'flex', gap: '15px'}}>
+                    <div className="modal-row" style={{display: 'flex', gap: '15px'}}>
                         <div style={{flex: 1}}>
                             <label className="form-label">Experience</label>
                             <input type="text" name="experience" className="luxe-input" placeholder="5 Years" value={formData.experience} onChange={handleInput} />
@@ -359,7 +363,7 @@ export default function Teachers() {
                         </div>
                     </div>
                     
-                    <div style={{marginTop: '30px', display: 'flex', gap: '10px'}}>
+                    <div className="modal-action-row" style={{marginTop: '30px', display: 'flex', gap: '10px'}}>
                         <button className="btn-confirm-gradient" style={{marginTop: 0, flex: 1}} onClick={handleOnboardSubmit} disabled={loading}>
                             {loading ? 'Saving...' : (editMode ? 'Update Profile' : 'Save Profile')}
                         </button>
@@ -382,7 +386,11 @@ export default function Teachers() {
 
       </div>
 
+      {/* 🚀 CSS FOR 100% RESPONSIVENESS AND TABLE HORIZONTAL SCROLL */}
       <style>{`
+        /* Avoid Body scroll locking */
+        .teachers-page-wrapper { overflow-x: hidden; width: 100%; display: flex; flex-direction: row; }
+
         @keyframes fadeDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -402,13 +410,15 @@ export default function Teachers() {
         .hover-rotate { transition: transform 0.3s; }
         .hover-rotate:hover { transform: rotate(90deg); background: #e2e8f0; }
 
-        .modern-table { width: 100%; border-collapse: separate; border-spacing: 0 12px; }
-        .modern-table th { color: #94a3b8; font-size: 0.75rem; letter-spacing: 1px; text-align: left; padding: 0 20px; font-weight: 700; }
+        /* ✅ TABLE WRAPPER FOR HORIZONTAL SCROLL */
+        .table-wrapper { overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; display: block; }
+        .modern-table { width: 100%; border-collapse: separate; border-spacing: 0 12px; min-width: 600px; }
+        .modern-table th { color: #94a3b8; font-size: 0.75rem; letter-spacing: 1px; text-align: left; padding: 0 20px; font-weight: 700; white-space: nowrap; }
         .floating-row { background: white; transition: all 0.2s ease; cursor: pointer; }
-        .floating-row td { padding: 16px 20px; border-top: 1px solid transparent; border-bottom: 1px solid transparent; }
+        .floating-row td { padding: 16px 20px; border-top: 1px solid transparent; border-bottom: 1px solid transparent; white-space: nowrap; }
         .floating-row:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(148, 163, 184, 0.1); }
         
-        .mini-avatar { width: 36px; height: 36px; background: #e0e7ff; color: #4f46e5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
+        .mini-avatar { width: 36px; height: 36px; background: #e0e7ff; color: #4f46e5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
         .dept-badge { background: #f0fdf4; color: #166534; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; display: inline-block; }
         
         .btn-view-detail { background: #eef2ff; color: #4f46e5; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 0.8rem; }
@@ -427,7 +437,7 @@ export default function Teachers() {
         .centered-flex { justify-content: center; align-items: center; }
         
         .luxe-panel { width: 400px; height: 100%; background: white; padding: 30px; display: flex; flex-direction: column; box-shadow: -15px 0 45px rgba(0,0,0,0.08); overflow-y: auto; }
-        .luxe-modal { background: white; padding: 30px; border-radius: 24px; width: 450px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+        .luxe-modal { background: white; padding: 30px; border-radius: 24px; width: 600px; max-width: 90vw; box-shadow: 0 20px 60px rgba(0,0,0,0.2); overflow-y: auto; max-height: 90vh; box-sizing: border-box; }
         .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; }
         .close-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #94a3b8; }
 
@@ -456,7 +466,7 @@ export default function Teachers() {
         .btn-suspend-pro:hover { background: #fee2e2; }
 
         .form-label { display: block; font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 6px; }
-        .luxe-input { width: 100%; padding: 12px; border: 1px solid #334155; border-radius: 10px; outline: none; transition: 0.2s; background: #ffffff; color: #0f172a; font-weight: 500; border-color: #cbd5e1; }
+        .luxe-input { width: 100%; padding: 12px; border: 1px solid #334155; border-radius: 10px; outline: none; transition: 0.2s; background: #ffffff; color: #0f172a; font-weight: 500; border-color: #cbd5e1; box-sizing: border-box; }
         .luxe-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
         .btn-confirm-gradient { width: 100%; padding: 14px; margin-top: 20px; background: #0f172a; color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }
         .btn-ghost { background: transparent; color: #64748b; border: 1px solid #e2e8f0; padding: 14px; border-radius: 12px; font-weight: 700; cursor: pointer; }
@@ -467,6 +477,50 @@ export default function Teachers() {
         .stat-card-mini { background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; transition: all 0.3s; }
         .progress-bar-bg { background: #e2e8f0; height: 6px; border-radius: 3px; overflow: hidden; }
         .progress-bar-fill { height: 100%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        /* 📱 TABLET & MOBILE MEDIA QUERIES */
+        @media (max-width: 1024px) {
+            .teachers-main-content { margin-left: 0 !important; width: 100%; }
+            .flex-container { flex-direction: column; }
+            .table-card { width: 100%; }
+            .stat-card { width: 100%; }
+        }
+
+        @media (max-width: 850px) {
+            /* Unlock Scroll on Mobile */
+            html, body, #root { height: auto !important; min-height: 100vh !important; overflow-y: visible !important; }
+            
+            .teachers-page-wrapper {
+                display: block !important; 
+                height: auto !important;
+                min-height: 100vh !important;
+            }
+
+            .teachers-main-content {
+                margin-left: 0 !important;
+                padding: 15px !important;
+                padding-top: 85px !important; 
+                padding-bottom: 150px !important; /* Space for chatbot */
+                width: 100vw !important;
+                max-width: 100vw !important;
+                height: auto !important;
+                min-height: 100vh !important;
+                overflow: visible !important;
+                display: block !important; /* Break Flex lock */
+            }
+
+            .page-header { flex-direction: column; align-items: flex-start !important; gap: 15px; }
+            .flex-container { display: flex; flex-direction: column; gap: 20px; width: 100%; }
+            
+            .table-card { padding: 15px !important; width: 100%; box-sizing: border-box; overflow: hidden; }
+            
+            /* Add/Edit Modal mobile adjustments */
+            .modal-row { flex-direction: column; gap: 15px !important; }
+            .modal-action-row { flex-direction: column; }
+            
+            /* Slide Panel mobile fix */
+            .luxe-panel { width: 100%; }
+        }
       `}</style>
     </div>
   );
