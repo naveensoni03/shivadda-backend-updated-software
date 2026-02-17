@@ -30,11 +30,9 @@ export default function Attendance() {
     setLoading(true);
     try {
         if (activeTab === 'daily') {
-            // Fetch Daily Log
             const res = await api.get(`attendance/daily/?batch_id=${selectedBatchId}&date=${selectedDate}`);
             setStudents(res.data);
         } else {
-            // 🚀 FIX: Changed URL from 'report' to 'eligibility' to match Django urls.py
             const res = await api.get(`attendance/eligibility/${selectedBatchId}/`);
             setReport(res.data);
         }
@@ -42,7 +40,6 @@ export default function Attendance() {
         console.error("Error fetching attendance:", error);
         toast.error("API Error: Backend Connection Failed.");
         
-        // Fallback for UI testing if backend is down
         if (activeTab === 'report') {
             setReport([
                 { student: "Amit Verma", percentage: 85, eligible: true },
@@ -113,20 +110,17 @@ export default function Attendance() {
   const absent = students.filter(s => s.status === "Absent").length;
   const late = students.filter(s => s.status === "Late").length;
 
-  // Helper for Report Logic
   const getAvg = () => report.length > 0 ? Math.round(report.reduce((acc, curr) => acc + curr.percentage, 0) / report.length) : 0;
   const getTopStudent = () => report.length > 0 ? report.reduce((prev, current) => (prev.percentage > current.percentage) ? prev : current) : {student: "None", percentage: 0};
 
   return (
-    <div className="app-container">
+    <div className="app-container app-mobile-fix">
       <SidebarModern />
       <Toaster position="bottom-right" reverseOrder={false} />
 
-      {/* MAIN BACKGROUND DECORATION */}
       <div className="bg-shape shape-1"></div>
       <div className="bg-shape shape-2"></div>
 
-      {/* MAIN CONTENT AREA */}
       <div className="main-content hide-scrollbar">
         
         {/* 🚀 HEADER & TABS */}
@@ -262,11 +256,10 @@ export default function Attendance() {
                 </div>
             )}
 
-            {/* ======================= VIEW 2: ANALYTICS (CONNECTED) ======================= */}
+            {/* ======================= VIEW 2: ANALYTICS ======================= */}
             {activeTab === 'report' && (
                 <div className="content-wrapper fade-in-up">
                     
-                    {/* 1. INSIGHTS HEADER */}
                     <div className="insights-header">
                         <div className="insight-card primary">
                             <div className="ic-icon"><Target size={24}/></div>
@@ -296,7 +289,6 @@ export default function Attendance() {
                         </div>
                     </div>
 
-                    {/* 2. LEADERBOARD LIST */}
                     <div className="analytics-card-pro">
                         <div className="card-header-pro">
                             <div>
@@ -310,7 +302,6 @@ export default function Attendance() {
                              {report.sort((a,b) => b.percentage - a.percentage).map((r, idx) => (
                                 <div key={idx} className="leaderboard-row" style={{animationDelay: `${idx * 0.1}s`}}>
                                     
-                                    {/* Rank / Avatar */}
                                     <div className="lb-rank">
                                         {idx === 0 ? <div className="rank-badge gold">1</div> : 
                                          idx === 1 ? <div className="rank-badge silver">2</div> :
@@ -318,7 +309,6 @@ export default function Attendance() {
                                          <div className="rank-badge normal">#{idx+1}</div>}
                                     </div>
 
-                                    {/* Name */}
                                     <div className="lb-info">
                                         <div className="lb-name">
                                             {r.student}
@@ -332,7 +322,6 @@ export default function Attendance() {
                                         </div>
                                     </div>
 
-                                    {/* Progress Bar Visual */}
                                     <div className="lb-progress">
                                         <div className="lb-bar-bg">
                                             <div 
@@ -344,7 +333,6 @@ export default function Attendance() {
                                         </div>
                                     </div>
 
-                                    {/* Percentage */}
                                     <div className="lb-score">
                                         <span className="score-big">{r.percentage}%</span>
                                         <span className="trend-icon">
@@ -361,7 +349,7 @@ export default function Attendance() {
         )}
       </div>
 
-      {/* ✨ CSS STYLES (THE MAGIC SAUCE & MOBILE FIX) */}
+      {/* ✨ MOBILE UNLOCKED CSS FIX */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
         
@@ -377,12 +365,11 @@ export default function Attendance() {
             display: flex;
             background: #F8FAFC;
             height: 100vh;
-            overflow: hidden;
+            overflow: hidden; /* Kept for Desktop */
             font-family: 'Outfit', sans-serif;
             position: relative;
         }
 
-        /* BACKGROUND SHAPES */
         .bg-shape { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.6; z-index: 0; pointer-events: none; }
         .shape-1 { width: 400px; height: 400px; background: #C7D2FE; top: -100px; left: 200px; animation: float 10s infinite alternate; }
         .shape-2 { width: 300px; height: 300px; background: #FECACA; bottom: -50px; right: 100px; animation: float 12s infinite alternate-reverse; }
@@ -392,12 +379,11 @@ export default function Attendance() {
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* MAIN CONTENT - Desktop */
         .main-content {
             flex: 1;
             padding: 20px 40px;
             margin-left: 280px; 
-            overflow-y: auto;
+            overflow-y: auto; /* Desktop scroll */
             height: 100vh;
             position: relative;
             z-index: 10;
@@ -407,15 +393,8 @@ export default function Attendance() {
 
         /* HEADER */
         .glass-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding: 15px 0;
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            backdrop-filter: blur(10px); 
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;
+            padding: 15px 0; position: sticky; top: 0; z-index: 50; backdrop-filter: blur(10px); 
         }
         .header-left h1 { font-size: 2rem; font-weight: 800; color: #1E293B; margin: 0; letter-spacing: -1px; }
         .header-left p { color: #64748B; font-weight: 500; font-size: 0.9rem; margin-top: 5px; }
@@ -427,13 +406,8 @@ export default function Attendance() {
 
         /* TABS */
         .glass-tab-container {
-            background: rgba(255,255,255,0.8);
-            padding: 5px;
-            border-radius: 16px;
-            display: flex;
-            gap: 5px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-            border: 1px solid white;
+            background: rgba(255,255,255,0.8); padding: 5px; border-radius: 16px; display: flex; gap: 5px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid white;
         }
         .tab-btn {
             display: flex; align-items: center; gap: 8px; padding: 10px 20px; border: none; background: transparent;
@@ -473,14 +447,10 @@ export default function Attendance() {
             text-align: left; padding: 0 20px 10px 20px; color: #94A3B8; font-size: 0.75rem; 
             text-transform: uppercase; letter-spacing: 1px; font-weight: 700; 
         }
-        .table-row { 
-            background: white; box-shadow: var(--shadow-sm); transition: 0.3s;
-            animation: fadeInUp 0.5s backwards;
-        }
+        .table-row { background: white; box-shadow: var(--shadow-sm); transition: 0.3s; animation: fadeInUp 0.5s backwards; }
         .table-row td { padding: 15px 20px; vertical-align: middle; border-top: 1px solid #F1F5F9; border-bottom: 1px solid #F1F5F9; }
         .table-row td:first-child { border-top-left-radius: 16px; border-bottom-left-radius: 16px; border-left: 1px solid #F1F5F9; }
         .table-row td:last-child { border-top-right-radius: 16px; border-bottom-right-radius: 16px; border-right: 1px solid #F1F5F9; }
-        
         .table-row:hover { transform: translateY(-3px) scale(1.005); box-shadow: var(--shadow-lg); z-index: 5; position: relative; }
 
         .roll-pill { background: #F8FAFC; color: #64748B; padding: 6px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; border: 1px solid #E2E8F0; }
@@ -493,20 +463,14 @@ export default function Attendance() {
 
         /* STATUS BUTTONS */
         .status-selector { background: #F1F5F9; padding: 4px; border-radius: 12px; display: inline-flex; gap: 5px; }
-        .st-btn { 
-            width: 38px; height: 38px; border-radius: 10px; border: none; font-weight: 800; cursor: pointer; 
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); color: #94A3B8; background: transparent; font-size: 0.9rem;
-        }
+        .st-btn { width: 38px; height: 38px; border-radius: 10px; border: none; font-weight: 800; cursor: pointer; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); color: #94A3B8; background: transparent; font-size: 0.9rem; }
         .st-btn:hover { background: rgba(255,255,255,0.5); }
         .st-btn.present.active { background: linear-gradient(135deg, #10B981, #059669); color: white; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); transform: scale(1.05); }
         .st-btn.absent.active { background: linear-gradient(135deg, #EF4444, #DC2626); color: white; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); transform: scale(1.05); }
         .st-btn.late.active { background: linear-gradient(135deg, #F59E0B, #D97706); color: white; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4); transform: scale(1.05); }
         .st-btn:active { transform: scale(0.9); }
 
-        .remark-input { 
-            width: 100%; border: 1px solid transparent; background: #F8FAFC; padding: 10px 15px; border-radius: 10px; 
-            outline: none; transition: 0.3s; color: #334155; font-size: 0.9rem;
-        }
+        .remark-input { width: 100%; border: 1px solid transparent; background: #F8FAFC; padding: 10px 15px; border-radius: 10px; outline: none; transition: 0.3s; color: #334155; font-size: 0.9rem; }
         .remark-input:focus { background: white; border-color: #CBD5E1; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
         .remark-input.required { background: #FEF2F2; border-color: #FECACA; }
         .remark-input.required:focus { border-color: #EF4444; }
@@ -520,20 +484,13 @@ export default function Attendance() {
         .summary-text { font-size: 0.9rem; font-weight: 600; color: #64748B; }
         .save-btn-glowing {
             background: #0F172A; color: white; padding: 12px 24px; border-radius: 14px; border: none; font-weight: 700;
-            display: flex; align-items: center; gap: 10px; cursor: pointer; transition: 0.3s;
-            box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.1);
+            display: flex; align-items: center; gap: 10px; cursor: pointer; transition: 0.3s; box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.1);
         }
         .save-btn-glowing:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(15, 23, 42, 0.3); }
 
         /* ================= NEW ANALYTICS UI ================= */
-        
-        .insights-header {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px;
-        }
-        .insight-card {
-            background: white; border-radius: 20px; padding: 25px; position: relative; overflow: hidden;
-            display: flex; align-items: center; gap: 20px; box-shadow: var(--shadow-sm); transition: 0.3s;
-        }
+        .insights-header { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+        .insight-card { background: white; border-radius: 20px; padding: 25px; position: relative; overflow: hidden; display: flex; align-items: center; gap: 20px; box-shadow: var(--shadow-sm); transition: 0.3s; }
         .insight-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
         
         .ic-icon { width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; position: relative; z-index: 2; flex-shrink:0; }
@@ -543,25 +500,17 @@ export default function Attendance() {
 
         .ic-label { font-size: 0.85rem; color: #64748B; font-weight: 600; margin-bottom: 4px; position: relative; z-index: 2; }
         .ic-val { font-size: 1.5rem; font-weight: 800; color: #1E293B; position: relative; z-index: 2; }
-        
         .ic-bg-icon { position: absolute; right: -15px; bottom: -15px; color: rgba(0,0,0,0.05); transform: rotate(-15deg); z-index: 1; }
 
         .analytics-card-pro { background: white; border-radius: 24px; padding: 35px; box-shadow: var(--shadow-sm); border: 1px solid white; }
         .card-header-pro { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; }
-        .filter-btn-pro { 
-            background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px 20px; border-radius: 12px; 
-            font-weight: 600; color: #475569; display: flex; gap: 8px; cursor: pointer; transition: 0.2s;
-        }
+        .filter-btn-pro { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px 20px; border-radius: 12px; font-weight: 600; color: #475569; display: flex; gap: 8px; cursor: pointer; transition: 0.2s; }
         .filter-btn-pro:hover { background: #F1F5F9; color: #0F172A; }
 
         .leaderboard-list { display: flex; flex-direction: column; gap: 15px; }
-        .leaderboard-row {
-            display: flex; align-items: center; background: #F8FAFC; padding: 15px 25px; border-radius: 18px;
-            transition: 0.3s; border: 1px solid transparent; animation: fadeInUp 0.5s backwards;
-        }
+        .leaderboard-row { display: flex; align-items: center; background: #F8FAFC; padding: 15px 25px; border-radius: 18px; transition: 0.3s; border: 1px solid transparent; animation: fadeInUp 0.5s backwards; }
         .leaderboard-row:hover { background: white; border-color: #E2E8F0; box-shadow: 0 8px 25px -5px rgba(0,0,0,0.08); transform: scale(1.01); }
 
-        /* Rank Badge */
         .lb-rank { width: 40px; }
         .rank-badge { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; }
         .gold { background: linear-gradient(135deg, #FFD700, #FDB931); color: #78350F; box-shadow: 0 2px 10px rgba(255, 215, 0, 0.4); }
@@ -569,7 +518,6 @@ export default function Attendance() {
         .bronze { background: linear-gradient(135deg, #CD7F32, #A0522D); color: #3E2723; }
         .normal { color: #94A3B8; background: transparent; }
 
-        /* Info */
         .lb-info { flex: 2; margin-left: 15px; }
         .lb-name { font-weight: 700; color: #334155; font-size: 1rem; display: flex; align-items: center; gap: 6px; }
         .icon-zap { color: #F59E0B; animation: pulse 2s infinite; }
@@ -578,40 +526,27 @@ export default function Attendance() {
         .safe { background: #ECFDF5; color: #059669; }
         .danger { background: #FEF2F2; color: #B91C1C; }
 
-        /* Progress Bar (Glow) */
         .lb-progress { flex: 3; padding: 0 40px; }
         .lb-bar-bg { height: 10px; background: #E2E8F0; border-radius: 20px; overflow: hidden; position: relative; }
         .lb-bar-fill { height: 100%; border-radius: 20px; position: relative; overflow: hidden; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
         .safe-fill { background: linear-gradient(90deg, #10B981, #34D399); box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
         .warn-fill { background: linear-gradient(90deg, #EF4444, #F87171); box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
 
-        .shimmer-effect {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            transform: skewX(-20deg) translateX(-150%);
-            animation: shimmer 2s infinite;
-        }
+        .shimmer-effect { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); transform: skewX(-20deg) translateX(-150%); animation: shimmer 2s infinite; }
 
-        /* Score */
         .lb-score { text-align: right; width: 80px; }
         .score-big { display: block; font-weight: 800; font-size: 1.2rem; color: #1E293B; }
         .trend-icon { display: block; margin-top: 2px; }
 
-        /* ANIMATIONS */
         @keyframes shimmer { 100% { transform: skewX(-20deg) translateX(150%); } }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
         
         /* CUSTOM TOAST */
-        .glass-toast { 
-            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border: 1px solid white;
-            padding: 15px 20px; border-radius: 20px; display: flex; gap: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.15);
-            align-items: center; max-width: 400px;
-        }
+        .glass-toast { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border: 1px solid white; padding: 15px 20px; border-radius: 20px; display: flex; gap: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); align-items: center; max-width: 400px; }
         .icon-box { font-size: 1.5rem; }
         .content-box b { display: block; color: #0F172A; }
         .content-box p { margin: 2px 0 0; font-size: 0.85rem; color: #64748B; }
 
-        /* KEYFRAMES */
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
@@ -620,22 +555,22 @@ export default function Attendance() {
         .slide-down { animation: slideDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .slide-up-reveal { animation: fadeInUp 0.8s 0.5s backwards; }
 
-        /* LOADER */
         .loader-container { display: flex; justify-content: center; align-items: center; height: 50vh; }
         .loader { width: 40px; height: 40px; border: 4px solid #E2E8F0; border-top-color: #4F46E5; border-radius: 50%; animation: spin 1s linear infinite; }
         
 
         /* =========================================================
-           📱 100% BULLETPROOF MOBILE SCROLL FIX
+           📱 100% BULLETPROOF MOBILE SCROLL FIX 
            ========================================================= */
         @media (max-width: 850px) {
             
             /* Break the layout flex behavior to force natural page scroll */
-            .app-container, .main-content, .content-wrapper {
+            .app-mobile-fix {
                 display: block !important;
                 height: auto !important;
                 min-height: 100vh !important;
-                overflow: visible !important;
+                overflow-x: hidden !important; 
+                overflow-y: auto !important; /* ENABLE NATIVE SCROLL */
                 position: static !important;
             }
 
@@ -643,9 +578,19 @@ export default function Attendance() {
                 margin-left: 0 !important;
                 padding: 15px !important;
                 padding-top: 90px !important; 
-                padding-bottom: 100px !important; /* Extra Space for Save Action Bar */
+                padding-bottom: 120px !important; /* Space for Save Button */
                 width: 100% !important;
                 box-sizing: border-box !important;
+                height: auto !important; 
+                overflow: visible !important; /* IMPORTANT: Unlock content height */
+            }
+
+            /* Content Wrapper */
+            .content-wrapper {
+                height: auto !important;
+                min-height: auto !important;
+                display: block !important;
+                overflow: visible !important;
             }
 
             /* Analytics View UI Adjustments */
@@ -668,10 +613,10 @@ export default function Attendance() {
             .profile-bubble { display: none; }
             
             .controls-bar { flex-direction: column; align-items: stretch; gap: 15px; }
-            .control-group { width: 100%; box-sizing: border-box; }
+            .control-group { width: 100%; box-sizing: border-box; justify-content: space-between;}
             .spacer { display: none; }
             
-            .stats-grid { grid-template-columns: 1fr; gap: 15px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; } /* 2 columns on mobile */
 
             /* Save Button floating fixed at bottom */
             .floating-action-bar {
@@ -682,7 +627,16 @@ export default function Attendance() {
                 justify-content: space-between !important;
                 padding: 15px !important;
                 box-sizing: border-box !important;
+                position: fixed !important;
             }
+
+            .summary-text { font-size: 0.8rem; }
+            .save-btn-glowing { padding: 10px 15px; font-size: 0.9rem;}
+        }
+
+        /* For very small phones */
+        @media (max-width: 400px) {
+             .stats-grid { grid-template-columns: 1fr; } /* 1 column on tiny screens */
         }
       `}</style>
     </div>
@@ -700,7 +654,7 @@ const StatCard = ({ label, value, icon, color, delay }) => {
     const theme = colors[color];
 
     return (
-        <div style={{ animation: `scaleIn 0.5s ${delay} backwards` }}>
+        <div style={{ animation: `scaleIn 0.5s ${delay} backwards`, height: '100%' }}>
             <div 
                 style={{ 
                     background: theme.bg, 
@@ -710,10 +664,11 @@ const StatCard = ({ label, value, icon, color, delay }) => {
                     position: 'relative', 
                     overflow: 'hidden',
                     boxShadow: `0 10px 25px -5px ${theme.shadow}`,
-                    transition: 'transform 0.3s'
+                    transition: 'transform 0.3s',
+                    height: '100%',
+                    boxSizing: 'border-box'
                 }}
             >
-                {/* Decorative Circle */}
                 <div style={{position:'absolute', top:'-20px', right:'-20px', width:'80px', height:'80px', background:'rgba(255,255,255,0.15)', borderRadius:'50%'}}></div>
                 
                 <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
