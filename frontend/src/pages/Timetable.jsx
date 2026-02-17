@@ -18,7 +18,7 @@ export default function Timetable() {
   const [showModal, setShowModal] = useState(false);
   const [showFilterMenu, setShowFilterMenu] = useState(false); 
   const [activeDayIndex, setActiveDayIndex] = useState(null);
-  const [selectedFilter, setSelectedFilter] = useState("All Classes"); // ✅ Added Filter State
+  const [selectedFilter, setSelectedFilter] = useState("All Classes"); 
 
   const [newSlot, setNewSlot] = useState({
       subject: "", teacher: "", room: "", time: "", color: "blue", icon: "📚"
@@ -75,7 +75,6 @@ export default function Timetable() {
       setShowFilterMenu(!showFilterMenu);
   };
 
-  // ✅ New: Handle Filter Selection
   const handleSelectFilter = (filter) => {
       setSelectedFilter(filter);
       setShowFilterMenu(false);
@@ -164,10 +163,10 @@ export default function Timetable() {
                     {isEditMode ? <CheckCircle size={18} color="#10B981"/> : <Edit3 size={18}/>}
                 </button>
                 
-                <div className="separator"></div>
+                <div className="separator no-mobile"></div>
                 
-                {/* ✅ FILTER DROPDOWN FIXED (Z-INDEX 100) */}
-                <div style={{position: 'relative'}}>
+                {/* ✅ FILTER DROPDOWN */}
+                <div className="filter-wrapper">
                     <button 
                         className={`icon-btn-glass ${showFilterMenu ? 'active-btn' : ''}`} 
                         onClick={handleFilterClick}
@@ -181,7 +180,7 @@ export default function Timetable() {
                                 <div 
                                     key={item}
                                     className={`menu-item ${selectedFilter === item ? 'active' : ''}`}
-                                    onClick={() => handleSelectFilter(item)} // ✅ Now Clickable
+                                    onClick={() => handleSelectFilter(item)}
                                 >
                                     {item}
                                 </div>
@@ -350,7 +349,7 @@ export default function Timetable() {
           </div>
       )}
 
-      {/* ✨ PREMIUM STYLES ✨ */}
+      {/* ✨ PREMIUM STYLES WITH MOBILE/DESKTOP RESPONSIVENESS ✨ */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
@@ -361,7 +360,11 @@ export default function Timetable() {
             --primary: #4F46E5;
         }
 
+        /* Basic Setup */
+        html, body, #root { margin: 0; padding: 0; height: 100%; }
+        
         .timetable-app { display: flex; height: 100vh; background: #F8FAFC; font-family: 'Outfit', sans-serif; overflow: hidden; position: relative; }
+        
         .main-content { 
             flex: 1; margin-left: 280px; padding: 30px 40px; 
             position: relative; z-index: 10; 
@@ -382,13 +385,13 @@ export default function Timetable() {
         .glass-header { 
             display: flex; justify-content: space-between; align-items: center; 
             background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border);
-            padding: 16px 24px; borderRadius: 24px; margin-bottom: 30px; box-shadow: var(--glass-shadow);
-            position: relative; z-index: 500; /* ✅ HIGH Z-INDEX FOR DROPDOWN */
+            padding: 16px 24px; border-radius: 24px; margin-bottom: 30px; box-shadow: var(--glass-shadow);
+            position: relative; z-index: 500; 
         }
         .header-left { display: flex; align-items: center; gap: 20px; }
         .calendar-badge { 
             background: white; padding: 8px 16px; border-radius: 16px; text-align: center; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #E2E8F0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; flex-shrink: 0;
         }
         .cb-month { display: block; font-size: 0.7rem; font-weight: 800; color: #EF4444; letter-spacing: 1px; }
         .cb-date { display: block; font-size: 1.4rem; font-weight: 800; color: #1E293B; line-height: 1; }
@@ -401,22 +404,21 @@ export default function Timetable() {
         
         .separator { width: 1px; height: 30px; background: #CBD5E1; margin: 0 5px; }
         
-        /* ✅ FIXED BUTTON VISIBILITY */
+        .filter-wrapper { position: relative; }
+        
         .icon-btn-glass { 
             width: 40px; height: 40px; border-radius: 12px; border: 1px solid #CBD5E1; background: #FFFFFF;
             display: flex; align-items: center; justify-content: center; cursor: pointer; color: #475569; transition: 0.2s;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); flex-shrink: 0;
         }
         .icon-btn-glass:hover { background: #F8FAFC; transform: translateY(-2px); color: #1E293B; border-color: #94A3B8; }
         .icon-btn-glass.active-edit { background: #ECFDF5; border-color: #10B981; color: #047857; box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); }
         .icon-btn-glass.active-btn { background: #EEF2FF; border-color: #6366F1; color: #4F46E5; }
 
-        /* ✅ DROPDOWN MENU FIX */
         .dropdown-menu {
             position: absolute; top: 55px; right: 0; width: 200px; background: white; 
             border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); border: 1px solid #E2E8F0; 
-            z-index: 9999; /* Super high z-index */
-            overflow: hidden; animation: popIn 0.2s;
+            z-index: 9999; overflow: hidden; animation: popIn 0.2s;
         }
         .menu-item { padding: 12px 15px; font-size: 0.85rem; font-weight: 600; color: #475569; cursor: pointer; transition: 0.2s; }
         .menu-item:hover { background: #F8FAFC; color: #1E293B; }
@@ -424,8 +426,8 @@ export default function Timetable() {
 
         .ai-btn-glow {
             background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); color: white; border: none;
-            padding: 10px 20px; border-radius: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px;
-            cursor: pointer; box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25); transition: 0.3s;
+            padding: 10px 20px; border-radius: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;
+            cursor: pointer; box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25); transition: 0.3s; white-space: nowrap;
         }
         .ai-btn-glow:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(15, 23, 42, 0.35); }
         .spin { animation: spin 1s linear infinite; }
@@ -434,10 +436,14 @@ export default function Timetable() {
         .timeline-wrapper {
             background: var(--glass-bg); backdrop-filter: blur(20px); border-radius: 30px;
             border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); padding: 30px;
-            position: relative; overflow: visible; /* ✅ ALLOW DROPDOWN OVERFLOW IF NEEDED */
+            position: relative; 
+            /* ✅ HORIZONTAL SCROLL ENABLED FOR TIMETABLE ONLY */
+            overflow-x: auto; 
+            -webkit-overflow-scrolling: touch;
         }
 
-        .timeline-header { display: flex; margin-bottom: 20px; position: relative; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 15px; }
+        /* Ensure internals don't squish */
+        .timeline-header { display: flex; margin-bottom: 20px; position: relative; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 15px; min-width: 800px; }
         .corner-cell { width: 120px; flex-shrink: 0; }
         .class-selector { 
             display: inline-flex; align-items: center; gap: 8px; background: white; padding: 6px 12px;
@@ -446,16 +452,15 @@ export default function Timetable() {
         }
         
         .time-marker { flex: 1; text-align: center; position: relative; }
-        .tm-text { font-size: 0.85rem; font-weight: 700; color: #94A3B8; background: #F8FAFC; padding: 0 10px; position: relative; z-index: 2; }
+        .tm-text { font-size: 0.85rem; font-weight: 700; color: #94A3B8; background: #F8FAFC; padding: 0 10px; position: relative; z-index: 2; border-radius: 10px; }
         .tm-line { position: absolute; left: 50%; top: 25px; bottom: -500px; width: 1px; border-left: 2px dashed #E2E8F0; z-index: 0; }
 
-        /* CURRENT TIME LINE */
         .current-time-line { position: absolute; top: 0; bottom: 0; width: 2px; z-index: 5; display: flex; flex-direction: column; align-items: center; transition: left 1s linear; }
         .ctl-badge { background: #EF4444; color: white; font-size: 0.7rem; font-weight: 800; padding: 2px 8px; border-radius: 10px; margin-bottom: 5px; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4); }
         .ctl-stroke { width: 2px; height: 100%; background: #EF4444; }
 
         /* --- ROUTINE GRID --- */
-        .routine-grid { display: flex; flex-direction: column; gap: 15px; }
+        .routine-grid { display: flex; flex-direction: column; gap: 15px; min-width: 800px; }
         .day-track { display: flex; align-items: center; animation: slideInLeft 0.5s backwards; }
         
         .day-cell { width: 120px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; }
@@ -464,12 +469,8 @@ export default function Timetable() {
 
         .slots-track { 
             flex: 1; display: flex; gap: 15px; 
-            overflow-x: auto; padding-bottom: 5px;
-            /* Hide scrollbar for this container too */
-            scrollbar-width: none;
-            -ms-overflow-style: none;
+            overflow-x: visible; padding-bottom: 5px;
         }
-        .slots-track::-webkit-scrollbar { display: none; }
         
         /* SLOT ITEM */
         .slot-item { 
@@ -491,7 +492,7 @@ export default function Timetable() {
         .slot-subject.emerald { background: linear-gradient(145deg, #ECFDF5, #D1FAE5); border-left: 4px solid #10B981; }
         .slot-subject.indigo { background: linear-gradient(145deg, #EEF2FF, #E0E7FF); border-left: 4px solid #6366F1; }
 
-        .slot-inner { padding: 15px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; position: relative; z-index: 2; }
+        .slot-inner { padding: 15px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; position: relative; z-index: 2; box-sizing: border-box;}
         .slot-glow { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 70%); opacity: 0; transition: 0.3s; pointer-events: none; }
         .slot-subject:hover .slot-glow { opacity: 1; }
 
@@ -529,15 +530,15 @@ export default function Timetable() {
         .delete-badge:hover { transform: scale(1.1); }
 
         /* MODAL */
-        .glass-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(5px); z-index: 100; display: flex; align-items: center; justify-content: center; }
-        .glass-modal { background: white; width: 400px; border-radius: 24px; padding: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.8); animation: popIn 0.3s; }
+        .glass-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(5px); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .glass-modal { background: white; width: 400px; border-radius: 24px; padding: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.8); animation: popIn 0.3s; box-sizing: border-box; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .modal-header h3 { margin: 0; font-size: 1.2rem; color: #1E293B; }
         .close-btn { background: transparent; border: none; cursor: pointer; color: #64748B; }
         
         .input-group { margin-bottom: 15px; }
         .input-group label { display: block; font-size: 0.8rem; font-weight: 600; color: #64748B; margin-bottom: 5px; }
-        .input-group input, .input-group select { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #E2E8F0; outline: none; background: #F8FAFC; color: #1E293B; }
+        .input-group input, .input-group select { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #E2E8F0; outline: none; background: #F8FAFC; color: #1E293B; box-sizing: border-box; }
         .input-group input:focus { border-color: var(--primary); background: white; }
         .row-group { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         
@@ -554,11 +555,77 @@ export default function Timetable() {
         .slide-down { animation: slideDown 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
         .fade-in-up { animation: fadeUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
         
-        /* RESPONSIVE */
+        /* 📱 RESPONSIVE MEDIA QUERIES (Mobile & Desktop) */
         @media (max-width: 1024px) {
-            .timeline-wrapper { overflow-x: auto; }
-            .routine-grid { min-width: 800px; }
-            .timeline-header { min-width: 800px; }
+            .main-content { margin-left: 0 !important; width: 100%; }
+        }
+
+        @media (max-width: 850px) {
+            /* Unlock Scroll on Mobile completely */
+            html, body, #root { height: auto !important; min-height: 100vh !important; overflow-y: visible !important; }
+            
+            .timetable-app {
+                display: block !important; 
+                height: auto !important;
+                min-height: 100vh !important;
+                overflow: visible !important;
+            }
+
+            .main-content {
+                margin-left: 0 !important;
+                padding: 15px !important;
+                padding-top: 85px !important; 
+                /* ✅ Extra bottom padding so chatbot doesn't overlap the scrollable table */
+                padding-bottom: 150px !important; 
+                width: 100vw !important;
+                max-width: 100vw !important;
+                height: auto !important;
+                min-height: 100vh !important;
+                overflow: visible !important;
+                display: block !important;
+            }
+
+            /* Responsive Header */
+            .glass-header { 
+                flex-direction: column; 
+                align-items: flex-start; 
+                gap: 15px; 
+            }
+            .header-actions { 
+                width: 100%; 
+                flex-wrap: wrap; 
+                gap: 10px;
+                justify-content: flex-start;
+            }
+
+            /* ✅ FIXED DROPDOWN POSITION FOR MOBILE */
+            .filter-wrapper { position: static; /* Removes relative wrapper constraint */ }
+            .dropdown-menu {
+                top: 200px; /* Force it below the buttons */
+                left: 15px; /* Snap to left edge */
+                right: auto;
+                width: 250px; 
+            }
+
+            .separator.no-mobile { display: none; }
+            .ai-btn-glow { flex: 1; justify-content: center; }
+
+            /* Ensure Timetable wrapper triggers horizontal scroll */
+            .timeline-wrapper {
+                padding: 15px !important;
+                border-radius: 20px !important;
+            }
+
+            /* Responsive Modal */
+            .glass-modal {
+                width: 90vw !important;
+                max-width: 400px;
+                padding: 20px;
+            }
+            .row-group {
+                grid-template-columns: 1fr !important;
+                gap: 0;
+            }
         }
       `}</style>
     </div>
