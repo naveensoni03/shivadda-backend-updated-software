@@ -335,6 +335,10 @@ export default function Attendance() {
             )}
         </>
         )}
+
+        {/* 🚀 100% GUARANTEED INLINE SCROLL SPACER (Invisible but forces page height) */}
+        <div style={{ height: "220px", width: "100%", clear: "both", display: "block" }}></div>
+
       </div>
 
       <style>{`
@@ -532,14 +536,17 @@ export default function Attendance() {
         .loader-container { display: flex; justify-content: center; align-items: center; height: 50vh; }
         .loader { width: 40px; height: 40px; border: 4px solid #E2E8F0; border-top-color: #4F46E5; border-radius: 50%; animation: spin 1s linear infinite; }
 
-        /* 📱 100% PROPER MOBILE SCROLL FIX + BUTTON FIX MERGED */
+        /* ==============================================
+           📱 100% PROPER MOBILE SCROLL FIX (MERGED FIX)
+           ============================================== */
         @media (max-width: 850px) {
             .app-mobile-scroll {
                 display: block !important;
-                height: auto !important;
+                height: 100dvh !important; 
                 min-height: 100vh !important;
                 overflow-x: hidden !important;
-                overflow-y: visible !important; /* Lets body handle the scroll natively */
+                overflow-y: auto !important; /* LETS THE PAGE SCROLL */
+                -webkit-overflow-scrolling: touch;
             }
 
             .main-content {
@@ -547,7 +554,7 @@ export default function Attendance() {
                 padding: 15px !important;
                 padding-top: 80px !important; 
                 width: 100% !important;
-                height: auto !important;
+                height: max-content !important; /* ALLOWS CONTENT TO GROW */
                 overflow: visible !important; 
             }
 
@@ -562,7 +569,7 @@ export default function Attendance() {
             .tab-btn { flex: 1; justify-content: center; }
             .profile-bubble { display: none; }
             
-            /* 🚀 EXACT FIX: Date & Class Buttons COMPACT SIZE */
+            /* 🚀 FIX 1: CLASS AND DATE BUTTONS EXACTLY HALF-WIDTH */
             .controls-bar { 
                 flex-direction: row !important; 
                 flex-wrap: wrap !important; 
@@ -570,20 +577,20 @@ export default function Attendance() {
                 gap: 10px !important; 
             }
             .control-group { 
-                width: auto !important; 
-                flex: 0 0 auto !important; 
+                width: 48% !important; /* Makes them sit side by side */
+                flex: 0 0 48% !important; 
                 justify-content: flex-start !important; 
-                padding: 8px 14px !important; 
+                padding: 10px 14px !important; 
+                box-sizing: border-box !important;
             }
-            .ghost-select, .ghost-input { font-size: 0.85rem !important; }
+            .ghost-select, .ghost-input { width: 100%; font-size: 0.85rem !important; }
             .spacer { display: none; }
-            .toggle-pill { width: auto !important; padding: 6px 12px !important; margin-left: auto;}
+            .toggle-pill { width: 100% !important; padding: 10px 12px !important; justify-content: center !important; margin-top: 5px;}
             
             .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; } 
-            
-            /* 🚀 EXACT FIX FOR SCROLL: ADDING 180px MARGIN BOTTOM TO AVOID BUTTON OVERLAP */
-            .table-container { margin-bottom: 180px !important; }
-            .leaderboard-list { margin-bottom: 180px !important; }
+
+            .table-container { margin-bottom: 0 !important; }
+            .leaderboard-list { margin-bottom: 0 !important; }
 
             .insights-header { grid-template-columns: 1fr; gap: 15px; }
             .analytics-card-pro { padding: 20px; }
@@ -593,11 +600,12 @@ export default function Attendance() {
             .lb-progress { padding: 10px 0; width: 100%; order: 3; }
             .lb-score { order: 2; margin-left: auto;}
             
+            /* 🚀 FIX 2: FLOATING BAR LIFTED ABOVE CHATBOT */
             .floating-action-bar {
                 width: calc(100% - 30px);
                 left: 15px;
                 right: 15px;
-                bottom: 15px;
+                bottom: 95px !important; /* LIFTED UP TO AVOID CHATBOT */
                 justify-content: space-between;
                 padding: 15px;
                 box-sizing: border-box;
@@ -609,6 +617,7 @@ export default function Attendance() {
 
         @media (max-width: 400px) {
             .stats-grid { grid-template-columns: 1fr; }
+            .control-group { width: 100% !important; flex: 0 0 100% !important;} /* Stack on extremely tiny screens */
         }
       `}</style>
     </div>

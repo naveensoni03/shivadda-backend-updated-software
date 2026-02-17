@@ -88,6 +88,9 @@ export default function AttendanceReport() {
             </table>
           </div>
         </div>
+
+        {/* 🚀 BULLETPROOF SCROLL SPACER (Invisible but creates space at bottom) */}
+        <div className="report-mobile-bottom-spacer"></div>
       </div>
 
       {/* ✨ 100% BULLETPROOF CSS */}
@@ -99,7 +102,7 @@ export default function AttendanceReport() {
             min-height: 100vh;
             width: 100%;
             max-width: 100vw;
-            overflow-x: hidden; /* X-axis scroll lock */
+            overflow-x: hidden; 
             font-family: 'Inter', sans-serif;
         }
 
@@ -107,7 +110,7 @@ export default function AttendanceReport() {
             flex: 1;
             padding: 40px;
             margin-left: 280px;
-            width: calc(100% - 280px); /* Strict width to prevent overflow */
+            width: calc(100% - 280px); 
             box-sizing: border-box;
             transition: all 0.3s ease;
         }
@@ -142,7 +145,7 @@ export default function AttendanceReport() {
         .table-responsive-wrapper {
             width: 100%;
             overflow-x: auto;
-            -webkit-overflow-scrolling: touch; /* Smooth mobile scroll */
+            -webkit-overflow-scrolling: touch; 
         }
 
         .hide-scrollbar::-webkit-scrollbar { display: none; }
@@ -168,6 +171,9 @@ export default function AttendanceReport() {
         @keyframes spin { 100% { transform: rotate(360deg); } }
         .animate-spin { animation: spin 1s linear infinite; }
 
+        /* Spacer hidden on desktop */
+        .report-mobile-bottom-spacer { display: none; }
+
         /* =========================================================
            📱 MOBILE RESPONSIVE FIX (All Devices)
            ========================================================= */
@@ -175,12 +181,19 @@ export default function AttendanceReport() {
             .report-mobile-fix {
                 display: block !important;
                 width: 100vw !important;
+                height: 100dvh !important;
+                min-height: 100vh !important;
+                overflow-x: hidden !important;
+                overflow-y: auto !important; /* ALLOW NATIVE SCROLL */
+                -webkit-overflow-scrolling: touch;
             }
 
             .report-main-content {
                 margin-left: 0 !important;
                 width: 100% !important;
-                padding: 85px 15px 30px 15px !important; /* Top padding adjust for mobile navbar */
+                padding: 85px 15px 20px 15px !important; 
+                height: max-content !important;
+                overflow: visible !important;
             }
 
             .mobile-header-spacing {
@@ -201,7 +214,14 @@ export default function AttendanceReport() {
             }
 
             .modern-table td, .modern-table th {
-                padding: 12px 10px !important; /* Tighter spacing for mobile */
+                padding: 12px 10px !important; 
+            }
+
+            /* 🚀 EXACT FIX: SPACE AT BOTTOM FOR EASY SCROLLING */
+            .report-mobile-bottom-spacer {
+                display: block !important;
+                height: 100px !important; /* Safe clearance space */
+                width: 100% !important;
             }
         }
 
