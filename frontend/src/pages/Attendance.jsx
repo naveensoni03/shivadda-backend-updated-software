@@ -21,7 +21,7 @@ export default function Attendance() {
   // --- REPORT STATES ---
   const [report, setReport] = useState([]);
 
-  // --- INITIAL DATA LOAD (PROPERLY CONNECTED TO DB) ---
+  // --- INITIAL DATA LOAD (CONNECTED TO DB) ---
   useEffect(() => {
     fetchData();
   }, [selectedBatchId, selectedDate, activeTab]);
@@ -38,21 +38,13 @@ export default function Attendance() {
         }
     } catch (error) {
         console.error("Error fetching attendance:", error);
-        toast.error("API Error: Backend Connection Failed.");
-        
-        if (activeTab === 'report') {
-            setReport([
-                { student: "Amit Verma", percentage: 85, eligible: true },
-                { student: "Sanjana Roy", percentage: 62, eligible: false },
-                { student: "Rahul Das", percentage: 78, eligible: true },
-                { student: "Karan Singh", percentage: 92, eligible: true }
-            ]);
-        } else {
-            setStudents([
+        toast.error("Failed to load data.");
+        // Fallback for visual testing if DB is down
+        if(activeTab === 'daily' && students.length === 0){
+             setStudents([
                 { id: 1, roll: 101, name: "Aarav Sharma", status: "Present", remarks: "", attendance_record: "95%", color: "#6366F1", img: "A" },
                 { id: 2, roll: 102, name: "Isha Verma", status: "Absent", remarks: "", attendance_record: "80%", color: "#EC4899", img: "I" },
-                { id: 3, roll: 103, name: "Rohan Mehta", status: "Late", remarks: "Traffic", attendance_record: "88%", color: "#F59E0B", img: "R" },
-            ]);
+             ]);
         }
     } finally {
         setTimeout(() => setLoading(false), 500); 
@@ -114,7 +106,7 @@ export default function Attendance() {
   const getTopStudent = () => report.length > 0 ? report.reduce((prev, current) => (prev.percentage > current.percentage) ? prev : current) : {student: "None", percentage: 0};
 
   return (
-    <div className="app-container app-mobile-fix">
+    <div className="app-container app-mobile-scroll">
       <SidebarModern />
       <Toaster position="bottom-right" reverseOrder={false} />
 
@@ -123,7 +115,6 @@ export default function Attendance() {
 
       <div className="main-content hide-scrollbar">
         
-        {/* 🚀 HEADER & TABS */}
         <header className="glass-header slide-down">
             <div className="header-left">
                 <h1>Attendance<span className="text-gradient">Hub</span></h1>
@@ -161,7 +152,6 @@ export default function Attendance() {
             {activeTab === 'daily' && (
                 <div className="content-wrapper">
                     
-                    {/* 🎛️ CONTROLS BAR */}
                     <div className="controls-bar fade-in-up" style={{animationDelay: '0.1s'}}>
                         <div className="control-group">
                             <Users size={18} className="text-slate-400"/>
@@ -188,7 +178,6 @@ export default function Attendance() {
                         </div>
                     </div>
 
-                    {/* 📊 3D STAT CARDS */}
                     <div className="stats-grid">
                         <StatCard delay="0.1s" label="Total Students" value={total} icon={<Users size={24}/>} color="indigo" />
                         <StatCard delay="0.2s" label="Present" value={present} icon={<CheckCircle size={24}/>} color="emerald" />
@@ -196,7 +185,6 @@ export default function Attendance() {
                         <StatCard delay="0.4s" label="Late Arrivals" value={late} icon={<Clock size={24}/>} color="amber" />
                     </div>
 
-                    {/* 📝 ATTENDANCE TABLE */}
                     <div className="table-container fade-in-up" style={{animationDelay: '0.5s'}}>
                         <table className="floating-table">
                             <thead>
@@ -232,14 +220,14 @@ export default function Attendance() {
                                                 <input 
                                                     className={`remark-input ${s.status === 'Absent' ? 'required' : ''}`} 
                                                     placeholder={s.status === 'Absent' ? "Reason required..." : "Optional note"} 
-                                                    value={s.remarks}
+                                                    value={s.remarks || ''}
                                                     onChange={(e) => handleRemarkChange(s.id, e.target.value)}
                                                 />
                                             </div>
                                         </td>
                                     </tr>
                                 )) : (
-                                    <tr><td colSpan="4" style={{textAlign:'center', padding:'20px'}}>No students found for this batch.</td></tr>
+                                    <tr><td colSpan="4" style={{textAlign:'center', padding:'30px', color: '#64748B'}}>No students found for this batch.</td></tr>
                                 )}
                             </tbody>
                         </table>
@@ -349,7 +337,6 @@ export default function Attendance() {
         )}
       </div>
 
-      {/* ✨ MOBILE UNLOCKED CSS FIX */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
         
@@ -365,7 +352,7 @@ export default function Attendance() {
             display: flex;
             background: #F8FAFC;
             height: 100vh;
-            overflow: hidden; /* Kept for Desktop */
+            overflow: hidden;
             font-family: 'Outfit', sans-serif;
             position: relative;
         }
@@ -383,7 +370,7 @@ export default function Attendance() {
             flex: 1;
             padding: 20px 40px;
             margin-left: 280px; 
-            overflow-y: auto; /* Desktop scroll */
+            overflow-y: auto;
             height: 100vh;
             position: relative;
             z-index: 10;
@@ -391,7 +378,6 @@ export default function Attendance() {
             transition: all 0.3s ease;
         }
 
-        /* HEADER */
         .glass-header {
             display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;
             padding: 15px 0; position: sticky; top: 0; z-index: 50; backdrop-filter: blur(10px); 
@@ -404,7 +390,6 @@ export default function Attendance() {
         .profile-bubble img { width: 45px; height: 45px; border-radius: 50%; border: 3px solid white; box-shadow: var(--shadow-sm); cursor: pointer; transition: 0.3s; }
         .profile-bubble img:hover { transform: scale(1.1); }
 
-        /* TABS */
         .glass-tab-container {
             background: rgba(255,255,255,0.8); padding: 5px; border-radius: 16px; display: flex; gap: 5px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid white;
@@ -416,7 +401,6 @@ export default function Attendance() {
         .tab-btn.active { background: #EEF2FF; color: #4F46E5; box-shadow: 0 2px 10px rgba(79, 70, 229, 0.1); }
         .tab-btn:hover:not(.active) { background: #F1F5F9; }
 
-        /* CONTROLS */
         .controls-bar { display: flex; gap: 15px; margin-bottom: 30px; align-items: center; flex-wrap: wrap; }
         .control-group { 
             display: flex; align-items: center; gap: 10px; background: white; padding: 10px 20px; 
@@ -437,16 +421,11 @@ export default function Attendance() {
         .toggle-pill.off { color: #64748B; }
         .toggle-pill.off .toggle-circle { background: #F1F5F9; color: #94A3B8; }
 
-        /* STATS GRID */
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
 
-        /* TABLE STYLING */
         .table-container { overflow-x: auto; padding-bottom: 10px; -webkit-overflow-scrolling: touch; }
         .floating-table { width: 100%; border-collapse: separate; border-spacing: 0 12px; min-width: 800px; }
-        .floating-table th { 
-            text-align: left; padding: 0 20px 10px 20px; color: #94A3B8; font-size: 0.75rem; 
-            text-transform: uppercase; letter-spacing: 1px; font-weight: 700; 
-        }
+        .floating-table th { text-align: left; padding: 0 20px 10px 20px; color: #94A3B8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
         .table-row { background: white; box-shadow: var(--shadow-sm); transition: 0.3s; animation: fadeInUp 0.5s backwards; }
         .table-row td { padding: 15px 20px; vertical-align: middle; border-top: 1px solid #F1F5F9; border-bottom: 1px solid #F1F5F9; }
         .table-row td:first-child { border-top-left-radius: 16px; border-bottom-left-radius: 16px; border-left: 1px solid #F1F5F9; }
@@ -454,14 +433,12 @@ export default function Attendance() {
         .table-row:hover { transform: translateY(-3px) scale(1.005); box-shadow: var(--shadow-lg); z-index: 5; position: relative; }
 
         .roll-pill { background: #F8FAFC; color: #64748B; padding: 6px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; border: 1px solid #E2E8F0; }
-        
         .student-info { display: flex; align-items: center; gap: 15px; }
-        .avatar { width: 42px; height: 42px; border-radius: 12px; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.1); flex-shrink:0; }
+        .avatar { min-width: 42px; height: 42px; border-radius: 12px; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .info-text { display: flex; flex-direction: column; }
-        .info-text .name { font-weight: 700; color: #1E293B; font-size: 1rem; white-space: nowrap; }
+        .info-text .name { font-weight: 700; color: #1E293B; font-size: 1rem; }
         .info-text .sub-text { font-size: 0.75rem; color: #94A3B8; font-weight: 500; }
 
-        /* STATUS BUTTONS */
         .status-selector { background: #F1F5F9; padding: 4px; border-radius: 12px; display: inline-flex; gap: 5px; }
         .st-btn { width: 38px; height: 38px; border-radius: 10px; border: none; font-weight: 800; cursor: pointer; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); color: #94A3B8; background: transparent; font-size: 0.9rem; }
         .st-btn:hover { background: rgba(255,255,255,0.5); }
@@ -470,16 +447,15 @@ export default function Attendance() {
         .st-btn.late.active { background: linear-gradient(135deg, #F59E0B, #D97706); color: white; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4); transform: scale(1.05); }
         .st-btn:active { transform: scale(0.9); }
 
-        .remark-input { width: 100%; border: 1px solid transparent; background: #F8FAFC; padding: 10px 15px; border-radius: 10px; outline: none; transition: 0.3s; color: #334155; font-size: 0.9rem; }
+        .remark-input { width: 100%; border: 1px solid transparent; background: #F8FAFC; padding: 10px 15px; border-radius: 10px; outline: none; transition: 0.3s; color: #334155; font-size: 0.9rem; min-width: 150px; }
         .remark-input:focus { background: white; border-color: #CBD5E1; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
         .remark-input.required { background: #FEF2F2; border-color: #FECACA; }
         .remark-input.required:focus { border-color: #EF4444; }
 
-        /* FLOATING ACTION BAR */
         .floating-action-bar {
             position: fixed; bottom: 30px; right: 40px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px);
             padding: 12px 15px 12px 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.8);
-            display: flex; align-items: center; gap: 20px; z-index: 100;
+            display: flex; align-items: center; gap: 20px; z-index: 1000;
         }
         .summary-text { font-size: 0.9rem; font-weight: 600; color: #64748B; }
         .save-btn-glowing {
@@ -488,12 +464,11 @@ export default function Attendance() {
         }
         .save-btn-glowing:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(15, 23, 42, 0.3); }
 
-        /* ================= NEW ANALYTICS UI ================= */
         .insights-header { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
         .insight-card { background: white; border-radius: 20px; padding: 25px; position: relative; overflow: hidden; display: flex; align-items: center; gap: 20px; box-shadow: var(--shadow-sm); transition: 0.3s; }
         .insight-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
         
-        .ic-icon { width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; position: relative; z-index: 2; flex-shrink:0; }
+        .ic-icon { width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; position: relative; z-index: 2; flex-shrink: 0;}
         .primary .ic-icon { background: linear-gradient(135deg, #6366F1, #4F46E5); box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); }
         .gold .ic-icon { background: linear-gradient(135deg, #F59E0B, #D97706); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4); }
         .danger .ic-icon { background: linear-gradient(135deg, #EF4444, #B91C1C); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); }
@@ -502,13 +477,13 @@ export default function Attendance() {
         .ic-val { font-size: 1.5rem; font-weight: 800; color: #1E293B; position: relative; z-index: 2; }
         .ic-bg-icon { position: absolute; right: -15px; bottom: -15px; color: rgba(0,0,0,0.05); transform: rotate(-15deg); z-index: 1; }
 
-        .analytics-card-pro { background: white; border-radius: 24px; padding: 35px; box-shadow: var(--shadow-sm); border: 1px solid white; }
+        .analytics-card-pro { background: white; border-radius: 24px; padding: 35px; box-shadow: var(--shadow-sm); border: 1px solid white;}
         .card-header-pro { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; }
         .filter-btn-pro { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px 20px; border-radius: 12px; font-weight: 600; color: #475569; display: flex; gap: 8px; cursor: pointer; transition: 0.2s; }
         .filter-btn-pro:hover { background: #F1F5F9; color: #0F172A; }
 
         .leaderboard-list { display: flex; flex-direction: column; gap: 15px; }
-        .leaderboard-row { display: flex; align-items: center; background: #F8FAFC; padding: 15px 25px; border-radius: 18px; transition: 0.3s; border: 1px solid transparent; animation: fadeInUp 0.5s backwards; }
+        .leaderboard-row { display: flex; align-items: center; background: #F8FAFC; padding: 15px 25px; border-radius: 18px; transition: 0.3s; border: 1px solid transparent; animation: fadeInUp 0.5s backwards; flex-wrap: wrap; }
         .leaderboard-row:hover { background: white; border-color: #E2E8F0; box-shadow: 0 8px 25px -5px rgba(0,0,0,0.08); transform: scale(1.01); }
 
         .lb-rank { width: 40px; }
@@ -518,7 +493,7 @@ export default function Attendance() {
         .bronze { background: linear-gradient(135deg, #CD7F32, #A0522D); color: #3E2723; }
         .normal { color: #94A3B8; background: transparent; }
 
-        .lb-info { flex: 2; margin-left: 15px; }
+        .lb-info { flex: 2; margin-left: 15px; min-width: 150px; }
         .lb-name { font-weight: 700; color: #334155; font-size: 1rem; display: flex; align-items: center; gap: 6px; }
         .icon-zap { color: #F59E0B; animation: pulse 2s infinite; }
         .lb-status { margin-top: 4px; }
@@ -526,7 +501,7 @@ export default function Attendance() {
         .safe { background: #ECFDF5; color: #059669; }
         .danger { background: #FEF2F2; color: #B91C1C; }
 
-        .lb-progress { flex: 3; padding: 0 40px; }
+        .lb-progress { flex: 3; padding: 0 20px; min-width: 150px;}
         .lb-bar-bg { height: 10px; background: #E2E8F0; border-radius: 20px; overflow: hidden; position: relative; }
         .lb-bar-fill { height: 100%; border-radius: 20px; position: relative; overflow: hidden; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
         .safe-fill { background: linear-gradient(90deg, #10B981, #34D399); box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
@@ -541,7 +516,6 @@ export default function Attendance() {
         @keyframes shimmer { 100% { transform: skewX(-20deg) translateX(150%); } }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
         
-        /* CUSTOM TOAST */
         .glass-toast { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border: 1px solid white; padding: 15px 20px; border-radius: 20px; display: flex; gap: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); align-items: center; max-width: 400px; }
         .icon-box { font-size: 1.5rem; }
         .content-box b { display: block; color: #0F172A; }
@@ -557,86 +531,84 @@ export default function Attendance() {
 
         .loader-container { display: flex; justify-content: center; align-items: center; height: 50vh; }
         .loader { width: 40px; height: 40px; border: 4px solid #E2E8F0; border-top-color: #4F46E5; border-radius: 50%; animation: spin 1s linear infinite; }
-        
 
-        /* =========================================================
-           📱 100% BULLETPROOF MOBILE SCROLL FIX 
-           ========================================================= */
+        /* 📱 100% PROPER MOBILE SCROLL FIX + BUTTON FIX MERGED */
         @media (max-width: 850px) {
-            
-            /* Break the layout flex behavior to force natural page scroll */
-            .app-mobile-fix {
+            .app-mobile-scroll {
                 display: block !important;
                 height: auto !important;
                 min-height: 100vh !important;
-                overflow-x: hidden !important; 
-                overflow-y: auto !important; /* ENABLE NATIVE SCROLL */
-                position: static !important;
+                overflow-x: hidden !important;
+                overflow-y: visible !important; /* Lets body handle the scroll natively */
             }
 
             .main-content {
                 margin-left: 0 !important;
                 padding: 15px !important;
-                padding-top: 90px !important; 
-                padding-bottom: 120px !important; /* Space for Save Button */
+                padding-top: 80px !important; 
                 width: 100% !important;
-                box-sizing: border-box !important;
-                height: auto !important; 
-                overflow: visible !important; /* IMPORTANT: Unlock content height */
+                height: auto !important;
+                overflow: visible !important; 
             }
 
-            /* Content Wrapper */
             .content-wrapper {
                 height: auto !important;
-                min-height: auto !important;
-                display: block !important;
                 overflow: visible !important;
             }
 
-            /* Analytics View UI Adjustments */
-            .insights-header { grid-template-columns: 1fr !important; gap: 15px !important; }
-            .insight-card { padding: 20px !important; }
-            .analytics-card-pro { padding: 20px !important; margin-bottom: 30px !important; }
-            .card-header-pro { flex-direction: column !important; align-items: flex-start !important; gap: 15px !important; }
-            
-            /* Leaderboard Fixes */
-            .leaderboard-row { flex-wrap: wrap !important; padding: 15px !important; gap: 10px !important; }
-            .lb-info { min-width: 150px !important; }
-            .lb-progress { padding: 10px 0 !important; width: 100% !important; order: 3 !important; min-width: 100% !important; }
-            .lb-score { order: 2 !important; margin-left: auto !important; }
-
-            /* Header & Control Fixes */
-            .glass-header { flex-direction: column; align-items: flex-start; gap: 15px; margin-bottom: 20px; }
+            .glass-header { flex-direction: column; align-items: flex-start; gap: 15px; }
             .header-actions { width: 100%; justify-content: space-between; }
             .glass-tab-container { width: 100%; display: flex; }
-            .tab-btn { flex: 1; justify-content: center; text-align: center; }
+            .tab-btn { flex: 1; justify-content: center; }
             .profile-bubble { display: none; }
             
-            .controls-bar { flex-direction: column; align-items: stretch; gap: 15px; }
-            .control-group { width: 100%; box-sizing: border-box; justify-content: space-between;}
-            .spacer { display: none; }
-            
-            .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; } /* 2 columns on mobile */
-
-            /* Save Button floating fixed at bottom */
-            .floating-action-bar {
-                width: calc(100% - 30px) !important;
-                left: 15px !important;
-                right: 15px !important;
-                bottom: 15px !important;
-                justify-content: space-between !important;
-                padding: 15px !important;
-                box-sizing: border-box !important;
-                position: fixed !important;
+            /* 🚀 EXACT FIX: Date & Class Buttons COMPACT SIZE */
+            .controls-bar { 
+                flex-direction: row !important; 
+                flex-wrap: wrap !important; 
+                align-items: center !important; 
+                gap: 10px !important; 
             }
+            .control-group { 
+                width: auto !important; 
+                flex: 0 0 auto !important; 
+                justify-content: flex-start !important; 
+                padding: 8px 14px !important; 
+            }
+            .ghost-select, .ghost-input { font-size: 0.85rem !important; }
+            .spacer { display: none; }
+            .toggle-pill { width: auto !important; padding: 6px 12px !important; margin-left: auto;}
+            
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; } 
+            
+            /* 🚀 EXACT FIX FOR SCROLL: ADDING 180px MARGIN BOTTOM TO AVOID BUTTON OVERLAP */
+            .table-container { margin-bottom: 180px !important; }
+            .leaderboard-list { margin-bottom: 180px !important; }
 
+            .insights-header { grid-template-columns: 1fr; gap: 15px; }
+            .analytics-card-pro { padding: 20px; }
+            .card-header-pro { flex-direction: column; align-items: flex-start; gap: 15px; }
+            
+            .leaderboard-row { padding: 15px; gap: 10px; }
+            .lb-progress { padding: 10px 0; width: 100%; order: 3; }
+            .lb-score { order: 2; margin-left: auto;}
+            
+            .floating-action-bar {
+                width: calc(100% - 30px);
+                left: 15px;
+                right: 15px;
+                bottom: 15px;
+                justify-content: space-between;
+                padding: 15px;
+                box-sizing: border-box;
+                position: fixed; 
+            }
             .summary-text { font-size: 0.8rem; }
-            .save-btn-glowing { padding: 10px 15px; font-size: 0.9rem;}
+            .save-btn-glowing { padding: 10px 15px; font-size: 0.85rem; }
         }
 
-        /* For very small phones */
         @media (max-width: 400px) {
-             .stats-grid { grid-template-columns: 1fr; } /* 1 column on tiny screens */
+            .stats-grid { grid-template-columns: 1fr; }
         }
       `}</style>
     </div>
@@ -668,9 +640,10 @@ const StatCard = ({ label, value, icon, color, delay }) => {
                     height: '100%',
                     boxSizing: 'border-box'
                 }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-5px)"}
+                onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}
             >
                 <div style={{position:'absolute', top:'-20px', right:'-20px', width:'80px', height:'80px', background:'rgba(255,255,255,0.15)', borderRadius:'50%'}}></div>
-                
                 <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
                     <div>
                         <p style={{margin:0, opacity:0.9, fontSize:'0.9rem', fontWeight:'600'}}>{label}</p>
