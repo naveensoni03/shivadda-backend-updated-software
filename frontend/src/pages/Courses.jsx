@@ -427,7 +427,7 @@ export default function Courses() {
                                     {/* Create New Batch Section */}
                                     <div style={{background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '20px', marginBottom: '20px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'}}>
                                         <h4 style={{margin: '0 0 15px', color: '#0f172a'}}>Create New Batch</h4>
-                                        <div className="grid-2-col" style={{marginBottom: 0}}>
+                                        <div className="grid-2-col batch-inputs-container" style={{marginBottom: 0}}>
                                             <input type="text" placeholder="Batch Name (e.g. Morning 2026)" value={newBatchName} onChange={(e)=>setNewBatchName(e.target.value)} style={inputStyleLight} />
                                             <input type="date" value={newBatchDate} onChange={(e)=>setNewBatchDate(e.target.value)} style={inputStyleLight} />
                                         </div>
@@ -556,6 +556,8 @@ export default function Courses() {
         .btn-confirm-gradient { background: linear-gradient(135deg, #0f172a 0%, #334155 100%); border: none; color: white; border-radius: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2); }
         .btn-glow { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); border: none; color: white; padding: 10px 22px; border-radius: 50px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 15px rgba(99, 102, 241, 0.25); display: flex; align-items: center; font-size: 0.9rem; }
         .hover-scale-press:hover { transform: scale(1.03); transition: 0.1s; }
+        
+        /* Desktop Grid Default */
         .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
         
         .batch-list-item:hover { background: #ffffff !important; border-color: #cbd5e1 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.03); transform: translateY(-2px); }
@@ -597,8 +599,15 @@ export default function Courses() {
 
             .courses-grid { grid-template-columns: 1fr !important; }
             
-            /* Add/Edit Modal & Right Panel mobile adjustments */
-            .grid-2-col { grid-template-columns: 1fr !important; gap: 15px !important; }
+            /* ✅ FIXED: Mobile par calendar aur inputs cut-off nahi honge */
+            .grid-2-col { 
+                grid-template-columns: 1fr !important; 
+                gap: 15px !important; 
+            }
+            .batch-inputs-container {
+                display: flex !important;
+                flex-direction: column !important;
+            }
             .panel-footer-actions { flex-direction: column; }
             
             /* Slide Panel mobile fix */
