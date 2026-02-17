@@ -151,12 +151,12 @@ Thank you for learning with us!
   const totalPages = Math.max(1, Math.ceil(filteredEnrollments.length / itemsPerPage)); 
 
   return (
-    <div className="dashboard-container" style={{ display: 'flex', background: '#f8fafc', minHeight: '100vh', position: 'relative', overflowX: 'hidden' }}>
+    <div className="enrollment-page-wrapper">
       
       <SidebarModern />
       <Toaster position="top-right" />
       
-      {/* 🚀 Changed class to match global mobile setup */}
+      {/* 🚀 Wrapper class for unlocking scroll on mobile */}
       <div className="enrollment-main-content" style={{ filter: showDeletePrompt ? 'blur(4px)' : 'none' }}>
         
         {/* Header */}
@@ -202,7 +202,7 @@ Thank you for learning with us!
           </div>
 
           {/* Right: List Table */}
-          <div className="card-glass table-card" style={{ flex: 2 }}>
+          <div className="card-glass table-card" style={{ flex: 2, display: 'flex', flexDirection: 'column' }}>
             <div className="table-header">
                 <h3>Active Enrollments</h3>
                 <select 
@@ -215,7 +215,8 @@ Thank you for learning with us!
                 </select>
             </div>
 
-            <div className="table-wrapper">
+            {/* ✅ UPDATED: Added width 100% to this wrapper to fix scroll on mobile */}
+            <div className="table-wrapper" style={{ width: '100%' }}>
                 <table className="modern-table">
                     <thead>
                         <tr>
@@ -328,13 +329,24 @@ Thank you for learning with us!
         </div>
       )}
 
+      {/* 🚀 UPDATED CSS FOR 100% RESPONSIVENESS & HORIZONTAL SCROLL */}
       <style>{`
+        /* Base layout preventing overflow and allowing scroll */
+        .enrollment-page-wrapper { display: flex; background: #f8fafc; min-height: 100vh; width: 100%; overflow-x: hidden; flex-direction: column; }
+
         /* Global & Layout */
         .gradient-text { background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .card-glass { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid #f1f5f9; }
         
-        .enrollment-main-content { flex: 1; padding: 40px; margin-left: 280px; transition: 0.3s; box-sizing: border-box; }
-        .flex-container { display: flex; gap: 30px; }
+        .enrollment-main-content { 
+            flex: 1; 
+            padding: 40px; 
+            margin-left: 280px; 
+            transition: 0.3s; 
+            box-sizing: border-box; 
+            max-width: 100%;
+        }
+        .flex-container { display: flex; gap: 30px; align-items: flex-start; }
         .page-header { margin-bottom: 35px; }
 
         /* Search & Form */
@@ -343,24 +355,30 @@ Thank you for learning with us!
         .search-box input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
         .search-box span { position: absolute; left: 15px; top: 12px; opacity: 0.5; }
 
-        .form-card { flex: 1; position: sticky; top: 40px; height: fit-content; }
+        .form-card { flex: 1; position: sticky; top: 40px; height: fit-content; min-width: 300px; }
         .section-title { margin-bottom: 20px; border-left: 4px solid #3b82f6; padding-left: 15px; color: #1e293b; font-weight: 800; }
         .input-group { margin-bottom: 20px; }
         .input-group label { display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 8px; letter-spacing: 0.5px; }
         .modern-input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; outline: none; font-size: 0.95rem; background: #f8fafc; color: #1e293b !important; box-sizing: border-box;}
         .modern-input:focus { border-color: #3b82f6; background: white; }
         
-        .btn-primary { width: 100%; padding: 14px; background: #0f172a; color: white; border: none; border-radius: 14px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .btn-primary { width: 100%; padding: 14px; background: #0f172a; color: white; border: none; border-radius: 14px; font-weight: 700; cursor: pointer; transition: 0.3s; box-sizing: border-box; }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(15, 23, 42, 0.2); }
 
         /* Table Styling */
         .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .filter-select { padding: 8px 15px; border-radius: 10px; border: 1px solid #e2e8f0; cursor: pointer; outline: none; color: #1e293b; background: white; }
         
-        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .modern-table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        .modern-table th { text-align: left; color: #94a3b8; font-size: 0.75rem; padding: 15px; border-bottom: 2px solid #f1f5f9; letter-spacing: 0.5px; }
-        .modern-table td { padding: 15px; border-bottom: 1px solid #f8fafc; vertical-align: middle; }
+        /* ✅ FIXED: Corrected Table Wrapper to allow Horizontal Scroll */
+        .table-wrapper { 
+            overflow-x: auto; 
+            -webkit-overflow-scrolling: touch; 
+            width: 100%; /* Ensures wrapper spans full width */
+            display: block; 
+        }
+        .modern-table { width: 100%; border-collapse: collapse; min-width: 700px; /* Forces table to be wide enough to scroll */ }
+        .modern-table th { text-align: left; color: #94a3b8; font-size: 0.75rem; padding: 15px; border-bottom: 2px solid #f1f5f9; letter-spacing: 0.5px; white-space: nowrap; }
+        .modern-table td { padding: 15px; border-bottom: 1px solid #f8fafc; vertical-align: middle; white-space: nowrap; }
         .modern-table tr:hover { background: #fcfdfe; }
 
         .student-cell { display: flex; align-items: center; gap: 12px; }
@@ -413,7 +431,7 @@ Thank you for learning with us!
         .info-val.active-text { color: #16a34a; }
 
         .panel-footer { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
-        .btn-full-width { width: 100%; padding: 12px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .btn-full-width { width: 100%; padding: 12px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; box-sizing: border-box; }
         .btn-full-width.secondary { background: #e2e8f0; color: #475569; }
         .btn-full-width.secondary:hover { background: #cbd5e1; }
         .btn-full-width.danger { background: #fee2e2; color: #dc2626; }
@@ -436,16 +454,56 @@ Thank you for learning with us!
         @keyframes bounceIn { 0% { transform: scale(0.8); opacity: 0; } 60% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); } }
         .bounce-in { animation: bounceIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
-        /* 📱 MEDIA QUERIES FOR RESPONSIVENESS */
+        /* 📱 MEDIA QUERIES FOR 100% RESPONSIVENESS & SCROLL UNLOCK */
         @media (max-width: 1024px) {
-            .enrollment-main-content { margin-left: 0 !important; padding: 15px !important; padding-top: 90px !important; width: 100%; }
-            .flex-container { flex-direction: column; gap: 20px; }
+            .enrollment-main-content { 
+                margin-left: 0 !important; 
+                padding: 15px !important; 
+                padding-top: 85px !important; /* Top bar space */
+                width: 100%; 
+            }
+            .flex-container { flex-direction: column; gap: 25px; }
             .form-card { position: static; width: 100%; }
             .page-header { flex-direction: column; align-items: flex-start !important; gap: 15px; }
             .search-box { width: 100%; }
             .search-box input { width: 100%; }
             .table-header { flex-direction: column; align-items: flex-start; gap: 10px; }
             .filter-select { width: 100%; }
+        }
+
+        @media (max-width: 850px) {
+            /* ✅ UNLOCK SCROLL COMPLETELY */
+            html, body, #root { 
+                height: auto !important; 
+                min-height: 100vh !important; 
+                overflow-y: visible !important; 
+            }
+
+            .enrollment-page-wrapper {
+                display: block !important; 
+                height: auto !important;
+                min-height: 100vh !important;
+            }
+
+            .enrollment-main-content {
+                margin-left: 0 !important;
+                padding: 15px !important;
+                padding-top: 85px !important; 
+                padding-bottom: 150px !important; /* ✅ Prevents Chatbot from overlapping the button */
+                width: 100vw !important;
+                max-width: 100vw !important;
+                height: auto !important;
+                min-height: 100vh !important;
+                overflow: visible !important;
+                display: block !important;
+            }
+
+            /* ✅ Table is now perfectly scrollable horizontally */
+            .table-card {
+                width: 100%;
+                overflow: hidden; /* Parent prevents global scroll */
+                padding: 15px !important;
+            }
         }
       `}</style>
     </div>
