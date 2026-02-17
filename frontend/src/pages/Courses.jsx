@@ -226,31 +226,31 @@ export default function Courses() {
     width: '100%', padding: '12px', borderRadius: '12px', 
     border: '1px solid #334155', background: '#1e293b', 
     color: '#ffffff', outline: 'none', fontSize: '0.9rem',
-    transition: '0.3s'
+    transition: '0.3s', boxSizing: 'border-box'
   };
 
   const inputStyleLight = {
     width: '100%', padding: '10px 15px', borderRadius: '10px', 
     border: '1px solid #e2e8f0', background: '#f8fafc', 
     color: '#0f172a', outline: 'none', fontSize: '0.9rem',
-    marginBottom: '10px'
+    marginBottom: '10px', boxSizing: 'border-box'
   };
 
   return (
-    <div className="dashboard-container" style={{background: '#f8fafc', height: '100vh', display: 'flex', overflow: 'hidden', position: 'relative'}}>
+    <div className="courses-page-wrapper" style={{background: '#f8fafc', height: '100vh', display: 'flex', overflow: 'hidden', position: 'relative'}}>
       <div className="ambient-bg"></div>
       <SidebarModern />
       <Toaster position="top-center" />
 
-      <div className="main-content" style={{flex: 1, padding: '30px 40px', overflowY: 'auto', position: 'relative', display: 'flex', flexDirection: 'column', zIndex: 1}}>
+      <div className="courses-main-content" style={{flex: 1, padding: '30px 40px', overflowY: 'auto', position: 'relative', display: 'flex', flexDirection: 'column', zIndex: 1, boxSizing: 'border-box'}}>
         
-        <header className="slide-in-down" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px', flexShrink: 0 }}>
+        <header className="slide-in-down courses-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px', flexShrink: 0 }}>
           <div>
             <h1 className="gradient-text" style={{ fontSize: '2.5rem', fontWeight: '900', letterSpacing: '-1px', margin: 0 }}>Course Manager</h1>
             <p style={{ color: '#64748b', fontSize: '0.95rem', fontWeight: '500', margin: '5px 0 0' }}>Create, manage and publish learning content.</p>
           </div>
           
-          <div style={{display:'flex', gap:'15px'}}>
+          <div className="header-actions" style={{display:'flex', gap:'15px'}}>
              <select 
                 value={categoryFilter} 
                 onChange={(e) => setCategoryFilter(e.target.value)} 
@@ -422,56 +422,51 @@ export default function Courses() {
                                 </div>
                             )}
 
-                            {/* ... Baaki ka upar wala code waisa hi rahega ... */}
+                            {panelTab === 'batches' && (
+                                <div className="fade-in-up">
+                                    {/* Create New Batch Section */}
+                                    <div style={{background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '20px', marginBottom: '20px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'}}>
+                                        <h4 style={{margin: '0 0 15px', color: '#0f172a'}}>Create New Batch</h4>
+                                        <div className="grid-2-col" style={{marginBottom: 0}}>
+                                            <input type="text" placeholder="Batch Name (e.g. Morning 2026)" value={newBatchName} onChange={(e)=>setNewBatchName(e.target.value)} style={inputStyleLight} />
+                                            <input type="date" value={newBatchDate} onChange={(e)=>setNewBatchDate(e.target.value)} style={inputStyleLight} />
+                                        </div>
+                                        <button onClick={handleCreateBatch} className="btn-confirm-gradient hover-lift" style={{width: '100%', padding: '10px', marginTop: '10px', borderRadius: '10px'}}>+ Add Batch</button>
+                                    </div>
 
-{panelTab === 'batches' && (
-    <div className="fade-in-up">
-        {/* Create New Batch Section */}
-        <div style={{background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '20px', marginBottom: '20px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'}}>
-            <h4 style={{margin: '0 0 15px', color: '#0f172a'}}>Create New Batch</h4>
-            <div className="grid-2-col" style={{marginBottom: 0}}>
-                <input type="text" placeholder="Batch Name (e.g. Morning 2026)" value={newBatchName} onChange={(e)=>setNewBatchName(e.target.value)} style={inputStyleLight} />
-                <input type="date" value={newBatchDate} onChange={(e)=>setNewBatchDate(e.target.value)} style={inputStyleLight} />
-            </div>
-            <button onClick={handleCreateBatch} className="btn-confirm-gradient hover-lift" style={{width: '100%', padding: '10px', marginTop: '10px', borderRadius: '10px'}}>+ Add Batch</button>
-        </div>
+                                    <h4 style={{color:'#64748b', fontSize:'0.85rem', fontWeight:'700', marginBottom:'10px', textTransform:'uppercase'}}>Active Batches</h4>
+                                    
+                                    {courseBatches.length > 0 ? courseBatches.map((b, i) => (
+                                        <div key={i} className="batch-list-item" style={{padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px', marginBottom: '10px', display:'flex', justifyContent:'space-between', alignItems:'center', background: '#f8fafc', transition: '0.2s'}}>
+                                            <div>
+                                                <h5 style={{margin:0, color:'#0f172a', fontSize:'1rem'}}>{b.name}</h5>
+                                                <small style={{color:'#64748b', fontWeight:'500'}}>Starts: {b.start_date}</small>
+                                            </div>
+                                            
+                                            <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                                                <span style={{background: '#e0e7ff', color: '#4f46e5', padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '700'}}>Active</span>
+                                                
+                                                <button 
+                                                    className="eye-action-btn"
+                                                    title="View Batch Details"
+                                                    onClick={() => handleViewBatch(b)}
+                                                    style={{
+                                                        fontSize: '1.2rem', 
+                                                        lineHeight: '1',    
+                                                        paddingBottom: '2px' 
+                                                    }}
+                                                >
+                                                    👁️
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )) : (
+                                        <p style={{textAlign: 'center', color: '#94a3b8', padding: '20px'}}>No active batches found for this course.</p>
+                                    )}
+                                </div>
+                            )}
 
-        <h4 style={{color:'#64748b', fontSize:'0.85rem', fontWeight:'700', marginBottom:'10px', textTransform:'uppercase'}}>Active Batches</h4>
-        
-        {courseBatches.length > 0 ? courseBatches.map((b, i) => (
-            <div key={i} className="batch-list-item" style={{padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px', marginBottom: '10px', display:'flex', justifyContent:'space-between', alignItems:'center', background: '#f8fafc', transition: '0.2s'}}>
-                <div>
-                    <h5 style={{margin:0, color:'#0f172a', fontSize:'1rem'}}>{b.name}</h5>
-                    <small style={{color:'#64748b', fontWeight:'500'}}>Starts: {b.start_date}</small>
-                </div>
-                
-                <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-                    <span style={{background: '#e0e7ff', color: '#4f46e5', padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '700'}}>Active</span>
-                    
-                    {/* 🚀 FIXED EYE BUTTON: Ab SVG ki jagah Emoji use kiya hai jo 100% har browser me show hoga */}
-                    <button 
-                        className="eye-action-btn"
-                        title="View Batch Details"
-                        onClick={() => handleViewBatch(b)}
-                        style={{
-                            fontSize: '1.2rem', // Thoda bada size
-                            lineHeight: '1',     // Perfect centering
-                            paddingBottom: '2px' // Visual tweak
-                        }}
-                    >
-                        👁️
-                    </button>
-                </div>
-            </div>
-        )) : (
-            <p style={{textAlign: 'center', color: '#94a3b8', padding: '20px'}}>No active batches found for this course.</p>
-        )}
-    </div>
-)}
-
-{/* ... Baaki ka niche wala code waisa hi rahega ... */}
-
-                            <div style={{marginTop: '30px', display:'flex', gap:'10px'}}>
+                            <div className="panel-footer-actions" style={{marginTop: '30px', display:'flex', gap:'10px'}}>
                                 <button className="btn-confirm-gradient hover-lift" style={{flex: 1}} onClick={handleEdit}>Edit Course ✏️</button>
                                 <button className="btn-glow hover-lift" style={{flex: 1, background:'#fee2e2', color:'#dc2626'}} onClick={handleDelete}>Delete 🗑️</button>
                             </div>
@@ -484,7 +479,7 @@ export default function Courses() {
         {/* 🚀 NEW MODAL: BATCH VIEW UI */}
         {viewingBatch && (
             <div className="overlay-blur" style={{ zIndex: 3000, justifyContent: 'center', alignItems: 'center' }} onClick={() => setViewingBatch(null)}>
-                <div className="luxe-panel fade-in-up" style={{ width: '400px', height: 'auto', borderRadius: '24px', padding: '30px', position: 'relative', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }} onClick={(e) => e.stopPropagation()}>
+                <div className="luxe-modal fade-in-up" style={{ width: '400px', height: 'auto', borderRadius: '24px', padding: '30px', position: 'relative', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }} onClick={(e) => e.stopPropagation()}>
                     
                     <button className="close-circle-btn hover-rotate" style={{ position: 'absolute', top: '20px', right: '20px' }} onClick={() => setViewingBatch(null)}>✕</button>
                     
@@ -516,24 +511,31 @@ export default function Courses() {
 
       </div>
 
+      {/* 🚀 CSS FOR 100% RESPONSIVENESS (MOBILE FIRST APPROACH) */}
       <style>{`
-        /* 🚀 BATCH LIST & EYE BUTTON CSS */
-        .batch-list-item:hover {
-            background: #ffffff !important;
-            border-color: #cbd5e1 !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-            transform: translateY(-2px);
-        }
-        .eye-action-btn {
-            background: white; border: 1px solid #e2e8f0; border-radius: 8px; 
-            width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; 
-            color: #4f46e5; cursor: pointer; transition: 0.2s;
-        }
-        .eye-action-btn:hover {
-            background: #f8fafc; border-color: #cbd5e1; transform: scale(1.05); box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        }
+        /* Avoid Body scroll locking */
+        .courses-page-wrapper { overflow-x: hidden; width: 100%; display: flex; flex-direction: row; }
 
-        /* EXISTING CSS (UNCHANGED) */
+        @keyframes fadeDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes pulseBlue { 0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); } 70% { box-shadow: 0 0 0 12px rgba(99, 102, 241, 0); } 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); } }
+        @keyframes rotateAmbient { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .slide-in-down { animation: fadeDown 0.7s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .fade-in-up { animation: fadeUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; } 
+        .slide-in-right { animation: slideRight 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .pulse-animation { animation: pulseBlue 2s infinite; }
+        
+        .ambient-bg { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at center, rgba(99,102,241,0.08) 0%, rgba(248,250,252,0) 60%), radial-gradient(circle at 80% 20%, rgba(16,185,129,0.05) 0%, transparent 50%); animation: rotateAmbient 60s linear infinite; z-index: 0; pointer-events: none; }
+
+        .hover-scale { transition: transform 0.2s; }
+        .hover-scale:hover { transform: scale(1.05); }
+        .hover-lift { transition: transform 0.2s, box-shadow 0.2s; }
+        .hover-lift:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .hover-rotate { transition: transform 0.3s; }
+        .hover-rotate:hover { transform: rotate(90deg); background: #e2e8f0; }
+
         .gradient-text { background: linear-gradient(135deg, #0f172a 0%, #334155 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .course-card { border-radius: 20px; transition: 0.3s; cursor: pointer; background: white; overflow: hidden; }
         .course-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1); }
@@ -544,25 +546,67 @@ export default function Courses() {
         .tab-text { background: transparent; border: none; font-weight: 600; color: #94a3b8; font-size: 1rem; padding: 0 10px 10px; cursor: pointer; transition: 0.2s; border-bottom: 2px solid transparent; }
         .tab-text.active { color: #0f172a; border-bottom: 2px solid #0f172a; }
         .filter-select { padding: 10px 15px; border-radius: 30px; border: 1px solid #cbd5e1; outline: none; background: white; color: #334155; font-weight: 600; cursor: pointer; }
-        @keyframes slideInDown { from { opacity: 0; transform: translateY(-40px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes pulseBlue { 0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); } 70% { box-shadow: 0 0 0 12px rgba(99, 102, 241, 0); } 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); } }
-        @keyframes rotateAmbient { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .slide-in-down { animation: slideInDown 0.7s cubic-bezier(0.2, 0.8, 0.2, 1); }
-        .fade-in-up { animation: fadeUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-        .slide-in-right { animation: slideRight 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        .pulse-animation { animation: pulseBlue 2s infinite; }
-        .ambient-bg { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at center, rgba(99,102,241,0.08) 0%, rgba(248,250,252,0) 60%), radial-gradient(circle at 80% 20%, rgba(16,185,129,0.05) 0%, transparent 50%); animation: rotateAmbient 60s linear infinite; z-index: 0; pointer-events: none; }
+        
         .overlay-blur { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); z-index: 2000; display: flex; justify-content: flex-end; }
-        .luxe-panel { width: 500px; height: 100%; background: white; padding: 35px; display: flex; flex-direction: column; box-shadow: -20px 0 60px rgba(0,0,0,0.15); overflow-y: auto; }
-        .close-circle-btn { width: 36px; height: 36px; border-radius: 50%; background: #f1f5f9; border: none; cursor: pointer; color: #64748b; font-size: 1rem; transition: 0.2s; }
+        .luxe-panel { width: 500px; height: 100%; background: white; padding: 35px; display: flex; flex-direction: column; box-shadow: -20px 0 60px rgba(0,0,0,0.15); overflow-y: auto; box-sizing: border-box; }
+        .luxe-modal { background: white; max-width: 90vw; }
+        .close-circle-btn { width: 36px; height: 36px; border-radius: 50%; background: #f1f5f9; border: none; cursor: pointer; color: #64748b; font-size: 1rem; transition: 0.2s; display: flex; align-items: center; justify-content: center;}
         .close-circle-btn:hover { background: #e2e8f0; color: #0f172a; transform: rotate(90deg); }
+        
         .btn-confirm-gradient { background: linear-gradient(135deg, #0f172a 0%, #334155 100%); border: none; color: white; border-radius: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2); }
         .btn-glow { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); border: none; color: white; padding: 10px 22px; border-radius: 50px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 15px rgba(99, 102, 241, 0.25); display: flex; align-items: center; font-size: 0.9rem; }
         .hover-scale-press:hover { transform: scale(1.03); transition: 0.1s; }
         .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .input-group label { display: block; font-size: 0.85rem; color: #64748b; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.3px; }
+        
+        .batch-list-item:hover { background: #ffffff !important; border-color: #cbd5e1 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.03); transform: translateY(-2px); }
+        .eye-action-btn { background: white; border: 1px solid #e2e8f0; border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; color: #4f46e5; cursor: pointer; transition: 0.2s; }
+        .eye-action-btn:hover { background: #f8fafc; border-color: #cbd5e1; transform: scale(1.05); box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+
+        /* 📱 TABLET & MOBILE MEDIA QUERIES */
+        @media (max-width: 1024px) {
+            .courses-main-content { margin-left: 0 !important; width: 100%; }
+        }
+
+        @media (max-width: 850px) {
+            /* Unlock Scroll on Mobile */
+            html, body, #root { height: auto !important; min-height: 100vh !important; overflow-y: visible !important; }
+            
+            .courses-page-wrapper {
+                display: block !important; 
+                height: auto !important;
+                min-height: 100vh !important;
+            }
+
+            .courses-main-content {
+                margin-left: 0 !important;
+                padding: 15px !important;
+                padding-top: 85px !important; 
+                padding-bottom: 150px !important; /* Space for chatbot */
+                width: 100vw !important;
+                max-width: 100vw !important;
+                height: auto !important;
+                min-height: 100vh !important;
+                overflow: visible !important;
+                display: block !important; /* Break Flex lock */
+            }
+
+            .courses-header { flex-direction: column; align-items: flex-start !important; gap: 15px; }
+            .header-actions { width: 100%; flex-direction: column; align-items: stretch !important; }
+            .filter-select { width: 100%; }
+            .btn-glow { justify-content: center; }
+
+            .courses-grid { grid-template-columns: 1fr !important; }
+            
+            /* Add/Edit Modal & Right Panel mobile adjustments */
+            .grid-2-col { grid-template-columns: 1fr !important; gap: 15px !important; }
+            .panel-footer-actions { flex-direction: column; }
+            
+            /* Slide Panel mobile fix */
+            .luxe-panel { width: 100%; padding: 20px; }
+            
+            /* Custom Scrollbar for Panel */
+            .panel-content-scroll { overflow-y: auto; padding-bottom: 50px;}
+        }
       `}</style>
     </div>
   );
