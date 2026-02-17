@@ -101,16 +101,23 @@ Status:        ${selectedPass.is_checked_out ? "Checked Out" : "Inside Campus"}
   };
 
   const insideCount = visitors.filter(v => !v.is_checked_out).length;
-  const filteredVisitors = visitors.filter(v => v.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  
+  // ✅ UPDATED: Advanced Search Logic (Name, Phone, and To Meet)
+  const filteredVisitors = visitors.filter(v => 
+      (v.name && v.name.toLowerCase().includes(searchTerm.toLowerCase())) || 
+      (v.phone && v.phone.includes(searchTerm)) ||
+      (v.person_to_meet && v.person_to_meet.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   return (
     <div style={{ display: "flex", background: "#f8fafc", minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="visitor-page-wrapper">
       <SidebarModern />
       
+      {/* 🚀 Fully Mobile Responsive Main Content */}
       <div className="visitor-main-content">
         <Toaster position="top-center" />
 
-        {/* 🌟 Header (Search Bar is now here) */}
+        {/* 🌟 Header */}
         <div className="visitor-header">
             <div>
                 <h1 style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.5px', margin: 0 }}>Visitor Access</h1>
@@ -309,7 +316,7 @@ Status:        ${selectedPass.is_checked_out ? "Checked Out" : "Inside Campus"}
 
       </div>
       
-      {/* 🚀 CSS FOR 100% RESPONSIVENESS (Scroll Lock Removed) */}
+      {/* 🚀 CSS FOR 100% RESPONSIVENESS */}
       <style>{`
             /* Base layout preventing overflow */
             .visitor-page-wrapper { overflow-x: hidden; width: 100%; display: flex; flex-direction: column; min-height: 100vh; }
@@ -340,12 +347,8 @@ Status:        ${selectedPass.is_checked_out ? "Checked Out" : "Inside Campus"}
 
             /* 📱 MOBILE SPECIFIC STYLES (Perfectly Resized for Full Scroll & Fit) */
             @media (max-width: 850px) {
-                /* ✅ UNLOCK SCROLL COMPLETELY */
-                html, body, #root { 
-                    height: auto !important; 
-                    min-height: 100vh !important; 
-                    overflow-y: visible !important; 
-                }
+                /* Unlock Scroll on Body and Wrappers */
+                html, body, #root { height: auto !important; min-height: 100vh !important; overflow-y: auto !important; }
                 
                 .visitor-page-wrapper {
                     display: block !important; 
@@ -357,7 +360,7 @@ Status:        ${selectedPass.is_checked_out ? "Checked Out" : "Inside Campus"}
                     margin-left: 0 !important;
                     padding: 15px !important;
                     padding-top: 85px !important; /* Top bar space for mobile */
-                    padding-bottom: 120px !important; /* ✅ Prevents Chatbot from overlapping the form/buttons */
+                    padding-bottom: 150px !important; /* ✅ Prevents Chatbot from overlapping the form/buttons */
                     width: 100vw !important;
                     max-width: 100vw !important;
                     height: auto !important;
