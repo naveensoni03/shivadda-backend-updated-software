@@ -104,23 +104,35 @@ Status:        ${selectedPass.is_checked_out ? "Checked Out" : "Inside Campus"}
   const filteredVisitors = visitors.filter(v => v.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
-    <div style={{ display: "flex", background: "#f8fafc", minHeight: "100vh", fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ display: "flex", background: "#f8fafc", minHeight: "100vh", fontFamily: "'Inter', sans-serif" }} className="visitor-page-wrapper">
       <SidebarModern />
       
-      {/* 🚀 Changed class structure for Mobile Responsiveness */}
       <div className="visitor-main-content">
         <Toaster position="top-center" />
 
-        {/* 🌟 Header */}
+        {/* 🌟 Header (Search Bar is now here) */}
         <div className="visitor-header">
             <div>
                 <h1 style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.5px', margin: 0 }}>Visitor Access</h1>
                 <p style={{ color: '#64748b', fontSize: '0.95rem', margin: '5px 0 0 0' }}>Secure Gate Management System</p>
             </div>
             
-            <div style={{ background: 'white', padding: '8px 12px', borderRadius: '10px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Calendar size={16} color="#6366f1" />
-                <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} style={{ border: 'none', outline: 'none', fontWeight: '600', color: '#334155', fontSize: '0.9rem', cursor: 'pointer' }} />
+            {/* ✅ Search Bar Moved to Top Header */}
+            <div className="header-actions" style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                <div style={{ position: 'relative', width: '250px' }} className="top-search-bar">
+                    <Search size={18} style={{ position: 'absolute', left: '15px', top: '10px', color: '#94a3b8' }} />
+                    <input 
+                        placeholder="Search visitors..." 
+                        value={searchTerm} 
+                        onChange={e => setSearchTerm(e.target.value)} 
+                        style={{ width: '100%', padding: '10px 10px 10px 40px', borderRadius: '10px', border: '1px solid #e2e8f0', background: 'white', boxSizing: 'border-box', fontSize: '0.9rem', color: '#1e293b', outline: 'none' }}
+                    />
+                </div>
+
+                <div style={{ background: 'white', padding: '8px 12px', borderRadius: '10px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '10px' }} className="date-picker-box">
+                    <Calendar size={16} color="#6366f1" style={{flexShrink: 0}} />
+                    <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} style={{ border: 'none', outline: 'none', fontWeight: '600', color: '#334155', fontSize: '0.9rem', cursor: 'pointer', background: 'transparent', width: '100%' }} />
+                </div>
             </div>
         </div>
 
@@ -143,7 +155,7 @@ Status:        ${selectedPass.is_checked_out ? "Checked Out" : "Inside Campus"}
         <div className="visitor-content-grid">
             
             {/* 📝 COMPACT FORM PANEL */}
-            <div style={{ background: 'white', borderRadius: '20px', padding: '25px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9', position: 'relative' }}>
+            <div className="new-entry-card" style={{ background: 'white', borderRadius: '20px', padding: '25px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9', position: 'relative', height: 'fit-content' }}>
                 
                 <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{ background: '#f1f5f9', padding: '8px', borderRadius: '10px' }}>
@@ -155,24 +167,24 @@ Status:        ${selectedPass.is_checked_out ? "Checked Out" : "Inside Campus"}
                     </div>
                 </div>
                 
-                <form onSubmit={handleEntry} style={{ display: 'grid', gap: '15px' }}>
+                <form onSubmit={handleEntry} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     
-                    <div>
+                    <div className="form-input-wrapper">
                         <label style={labelStyle}>Full Name</label>
                         <input placeholder="e.g. Rahul Sharma" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} style={cleanInputStyle} />
                     </div>
 
-                    <div>
+                    <div className="form-input-wrapper">
                         <label style={labelStyle}>Phone Number</label>
                         <input placeholder="9876543210" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} style={cleanInputStyle} />
                     </div>
 
                     <div className="form-split-row">
-                        <div>
+                        <div className="form-input-wrapper">
                             <label style={labelStyle}>Purpose</label>
                             <input placeholder="Visit" required value={formData.purpose} onChange={e => setFormData({...formData, purpose: e.target.value})} style={cleanInputStyle} />
                         </div>
-                        <div>
+                        <div className="form-input-wrapper">
                             <label style={labelStyle}>To Meet</label>
                             <input placeholder="Staff Name" required value={formData.person_to_meet} onChange={e => setFormData({...formData, person_to_meet: e.target.value})} style={cleanInputStyle} />
                         </div>
@@ -191,17 +203,7 @@ Status:        ${selectedPass.is_checked_out ? "Checked Out" : "Inside Campus"}
             </div>
 
             {/* 🎫 List Section */}
-            <div>
-                <div style={{ marginBottom: '20px', position: 'relative' }}>
-                    <Search size={18} style={{ position: 'absolute', left: '15px', top: '13px', color: '#94a3b8' }} />
-                    <input 
-                        placeholder="Search active visitors..." 
-                        value={searchTerm} 
-                        onChange={e => setSearchTerm(e.target.value)} 
-                        style={searchStyle}
-                    />
-                </div>
-
+            <div className="visitor-list-card" style={{ display: 'flex', flexDirection: 'column' }}>
                 <div className="visitor-card-grid">
                     <AnimatePresence>
                         {filteredVisitors.map((v) => (
@@ -223,6 +225,7 @@ Status:        ${selectedPass.is_checked_out ? "Checked Out" : "Inside Campus"}
                                     
                                     <div style={{display:'flex', alignItems:'center', gap:'5px'}}>
                                         <button 
+                                            type="button"
                                             onClick={() => setSelectedPass(v)} 
                                             style={{ background: '#f1f5f9', border: 'none', padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.75rem', fontWeight: '700', color: '#475569' }}
                                         >
@@ -239,8 +242,8 @@ Status:        ${selectedPass.is_checked_out ? "Checked Out" : "Inside Campus"}
 
                                 {!v.is_checked_out ? (
                                     <div style={{display:'flex', gap:'10px'}}>
-                                        <button onClick={() => setSelectedPass(v)} style={iconBtnStyle} title="View & Print"><Printer size={16}/></button>
-                                        <button onClick={() => handleCheckout(v.id)} style={checkoutBtnStyle}>Mark Exit <LogOut size={14}/></button>
+                                        <button type="button" onClick={() => setSelectedPass(v)} style={iconBtnStyle} title="View & Print"><Printer size={16}/></button>
+                                        <button type="button" onClick={() => handleCheckout(v.id)} style={checkoutBtnStyle}>Mark Exit <LogOut size={14}/></button>
                                     </div>
                                 ) : (
                                     <div style={{ textAlign: 'center', fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic', padding: '5px' }}>Checked Out</div>
@@ -291,10 +294,10 @@ Status:        ${selectedPass.is_checked_out ? "Checked Out" : "Inside Campus"}
 
                             {/* Buttons */}
                             <div style={{ display: 'flex', gap: '10px' }}>
-                                <button onClick={handlePrintPass} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', background: 'white', color: '#1e293b', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                <button type="button" onClick={handlePrintPass} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', background: 'white', color: '#1e293b', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                                     <Printer size={16}/> Print
                                 </button>
-                                <button onClick={handleDownloadPass} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: '#0f172a', color: 'white', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                <button type="button" onClick={handleDownloadPass} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: '#0f172a', color: 'white', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                                     <FileText size={16}/> Download
                                 </button>
                             </div>
@@ -306,41 +309,104 @@ Status:        ${selectedPass.is_checked_out ? "Checked Out" : "Inside Campus"}
 
       </div>
       
-      {/* 🚀 CSS FOR RESPONSIVENESS */}
+      {/* 🚀 CSS FOR 100% RESPONSIVENESS (Scroll Lock Removed) */}
       <style>{`
-            .visitor-main-content { flex: 1; margin-left: 280px; padding: 30px; box-sizing: border-box; transition: all 0.3s ease; min-height: 100vh;}
+            /* Base layout preventing overflow */
+            .visitor-page-wrapper { overflow-x: hidden; width: 100%; display: flex; flex-direction: column; min-height: 100vh; }
+
+            .visitor-main-content { 
+                flex: 1; 
+                margin-left: 280px; 
+                padding: 30px; 
+                box-sizing: border-box; 
+                transition: all 0.3s ease; 
+                min-height: 100vh;
+                max-width: 100%;
+                display: flex;
+                flex-direction: column;
+            }
             
-            .visitor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+            .visitor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px;}
             .visitor-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
-            .visitor-content-grid { display: grid; grid-template-columns: 360px 1fr; gap: 30px; align-items: start; }
+            .visitor-content-grid { display: grid; grid-template-columns: 360px 1fr; gap: 30px; align-items: start; flex: 1; }
             .visitor-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
             .form-split-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-            /* 📱 MOBILE SPECIFIC STYLES */
+            /* 📱 TABLET SPECIFIC STYLES */
+            @media (max-width: 1024px) {
+                .visitor-content-grid { grid-template-columns: 1fr; }
+                .visitor-main-content { max-width: 100vw; }
+            }
+
+            /* 📱 MOBILE SPECIFIC STYLES (Perfectly Resized for Full Scroll & Fit) */
             @media (max-width: 850px) {
+                /* ✅ UNLOCK SCROLL COMPLETELY */
+                html, body, #root { 
+                    height: auto !important; 
+                    min-height: 100vh !important; 
+                    overflow-y: visible !important; 
+                }
+                
+                .visitor-page-wrapper {
+                    display: block !important; 
+                    height: auto !important;
+                    min-height: 100vh !important;
+                }
+
                 .visitor-main-content {
                     margin-left: 0 !important;
                     padding: 15px !important;
-                    padding-top: 90px !important; /* Top bar space */
-                    width: 100% !important;
+                    padding-top: 85px !important; /* Top bar space for mobile */
+                    padding-bottom: 120px !important; /* ✅ Prevents Chatbot from overlapping the form/buttons */
+                    width: 100vw !important;
+                    max-width: 100vw !important;
+                    height: auto !important;
+                    min-height: 100vh !important;
+                    overflow: visible !important;
+                    display: block !important; /* Break Flex lock */
                 }
                 
-                .visitor-header { flex-direction: column; align-items: flex-start; gap: 15px; }
-                .visitor-stats-grid { grid-template-columns: 1fr; gap: 10px; }
-                .visitor-content-grid { grid-template-columns: 1fr; gap: 20px; }
+                .visitor-header { flex-direction: column; align-items: flex-start; gap: 15px; width: 100%; margin-bottom: 20px; }
                 
-                .form-split-row { grid-template-columns: 1fr; }
-                .visitor-card-grid { grid-template-columns: 1fr; }
+                /* Fixing Top Actions (Search & Calendar) to fill width on mobile */
+                .header-actions { width: 100%; flex-direction: column; align-items: stretch !important; gap: 10px !important; }
+                .top-search-bar { width: 100% !important; }
+                .date-picker-box { width: 100%; box-sizing: border-box; justify-content: space-between; }
+                .date-picker-box input { width: 100%; flex: 1; text-align: right; }
                 
-                .modal-responsive { max-width: 90% !important; }
+                .visitor-stats-grid { grid-template-columns: 1fr; gap: 12px; width: 100%; margin-bottom: 25px; }
+                
+                /* ✅ FIXING THE FORM CUT-OFF */
+                .visitor-content-grid { 
+                    display: flex !important; 
+                    flex-direction: column !important; 
+                    gap: 25px; 
+                    width: 100%; 
+                    height: auto !important; 
+                    overflow: visible !important;
+                }
+
+                /* Ensure Form Card and List Card shrink/grow naturally */
+                .new-entry-card, .visitor-list-card {
+                    height: auto !important;
+                    min-height: unset !important;
+                    overflow: visible !important;
+                }
+                
+                .form-split-row { grid-template-columns: 1fr; display: flex; flex-direction: column; gap: 15px; width: 100%; }
+                .form-input-wrapper { width: 100%; }
+                input { width: 100% !important; box-sizing: border-box !important; }
+                
+                .visitor-card-grid { grid-template-columns: 1fr; display: flex; flex-direction: column; width: 100%; }
+                
+                .modal-responsive { max-width: 90% !important; margin: 0 auto; }
             }
       `}</style>
     </div>
   );
 }
 
-// ✨ Styles
-
+// ✨ Styles (UNCHANGED)
 const statCardStyle = { background: 'white', padding: '15px 20px', borderRadius: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: '15px', border: '1px solid #f1f5f9' };
 const iconBox = (bg, color) => ({ background: bg, padding: '10px', borderRadius: '10px', color: color, display: 'flex' });
 const statLabel = { margin: 0, fontSize: '0.8rem', color: '#64748b', fontWeight: '600' };
@@ -358,7 +424,7 @@ const cleanInputStyle = {
 const primaryBtnStyle = {
     background: '#0f172a', color: 'white', padding: '14px', borderRadius: '10px',
     border: 'none', cursor: 'pointer', fontWeight: '700', fontSize: '0.95rem', width: '100%',
-    marginTop: '10px', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.2)'
+    marginTop: '10px', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.2)', boxSizing: 'border-box'
 };
 
 const searchStyle = {
@@ -370,12 +436,13 @@ const searchStyle = {
 const ticketStyle = (out) => ({
     background: 'white', padding: '15px', borderRadius: '16px',
     boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #f1f5f9',
-    opacity: out ? 0.7 : 1
+    opacity: out ? 0.7 : 1, width: '100%', boxSizing: 'border-box'
 });
 
 const avatarStyle = {
     width: '40px', height: '40px', borderRadius: '10px', background: '#0f172a', color: 'white',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '1rem'
+    display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '1rem',
+    flexShrink: 0
 };
 
 const activeDot = { width: '8px', height: '8px', background: '#22c55e', borderRadius: '50%', boxShadow: '0 0 0 3px #dcfce7' };
@@ -390,10 +457,10 @@ const checkoutBtnStyle = {
 
 const iconBtnStyle = {
     padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0',
-    background: 'white', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center'
+    background: 'white', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
 };
 
 // Modal Styles
 const passRow = { display: 'flex', justifyContent: 'space-between', marginBottom: '12px' };
 const passLabel = { color: '#64748b', fontSize: '0.9rem', fontWeight: '600' };
-const passValue = { color: '#1e293b', fontSize: '0.9rem', fontWeight: '700' };
+const passValue = { color: '#1e293b', fontSize: '0.9rem', fontWeight: '700', textAlign: 'right', flex: 1, paddingLeft: '10px' };
