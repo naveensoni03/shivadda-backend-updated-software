@@ -9,7 +9,6 @@ export default function AttendanceReport() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 🚀 FIX 1: URL exactly matched with your Django urls.py (eligibility/<batch_id>/)
     api.get("attendance/eligibility/1/")
       .then(res => {
         setReport(res.data);
@@ -18,7 +17,6 @@ export default function AttendanceReport() {
       .catch((err) => {
         console.error("Fetch Error:", err);
         toast.error("Database connection failed. Showing demo data.");
-        // Fallback mock data if backend fails, so UI doesn't break
         setReport([
           { student: "Amit Verma", percentage: 85, eligible: true },
           { student: "Sanjana Roy", percentage: 62, eligible: false },
@@ -30,20 +28,17 @@ export default function AttendanceReport() {
   }, []);
 
   return (
-    // 🚀 FIX 2: Added 'report-mobile-fix' class to handle scrolling
     <div className="dashboard-container report-mobile-fix">
       <SidebarModern />
       <Toaster position="top-right" />
       
       <div className="report-main-content">
-        <header style={{ marginBottom: '40px' }}>
-          <h1 className="main-title" style={{ fontSize: '2.5rem', fontWeight: '900', color: '#1e293b', margin: 0 }}>Attendance Analytics</h1>
-          <p className="sub-title" style={{ color: '#64748b', marginTop: '5px' }}>Lecture-wise monthly reports and eligibility tracking.</p>
+        <header className="mobile-header-spacing">
+          <h1 className="main-title">Attendance Analytics</h1>
+          <p className="sub-title">Lecture-wise monthly reports and eligibility tracking.</p>
         </header>
 
         <div className="pro-card">
-          
-          {/* 🚀 Mobile Scroll Wrapper for Table */}
           <div className="table-responsive-wrapper hide-scrollbar">
             <table className="modern-table">
               <thead>
@@ -95,14 +90,16 @@ export default function AttendanceReport() {
         </div>
       </div>
 
-      {/* ✨ CSS STYLES WITH 100% UNLOCKED MOBILE SCROLL */}
+      {/* ✨ 100% BULLETPROOF CSS */}
       <style>{`
         /* Desktop Base */
         .report-mobile-fix {
             display: flex;
             background: #f8fafc;
             min-height: 100vh;
-            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            overflow-x: hidden; /* X-axis scroll lock */
             font-family: 'Inter', sans-serif;
         }
 
@@ -110,8 +107,26 @@ export default function AttendanceReport() {
             flex: 1;
             padding: 40px;
             margin-left: 280px;
+            width: calc(100% - 280px); /* Strict width to prevent overflow */
             box-sizing: border-box;
             transition: all 0.3s ease;
+        }
+
+        .mobile-header-spacing {
+            margin-bottom: 40px;
+        }
+
+        .main-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .sub-title {
+            color: #64748b;
+            margin-top: 5px;
         }
 
         .pro-card {
@@ -120,19 +135,20 @@ export default function AttendanceReport() {
             padding: 25px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.05);
             border: 1px solid #f1f5f9;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .table-responsive-wrapper {
             width: 100%;
             overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
+            -webkit-overflow-scrolling: touch; /* Smooth mobile scroll */
         }
 
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Modern Table Styles (Keeping your UI intact) */
-        .modern-table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        .modern-table { width: 100%; border-collapse: collapse; min-width: 550px; }
         .modern-table th { padding: 15px; background: #f8fafc; text-align: left; color: #64748b; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0; }
         .modern-table td { padding: 18px 15px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
         .animated-row { transition: 0.3s; }
@@ -141,11 +157,11 @@ export default function AttendanceReport() {
         .student-name-cell { font-weight: 700; color: #1e293b; font-size: 0.95rem; }
         
         .progress-container { display: flex; align-items: center; gap: 15px; }
-        .progress-track { flex: 1; background: #e2e8f0; height: 10px; border-radius: 10px; overflow: hidden; }
+        .progress-track { flex: 1; background: #e2e8f0; height: 10px; border-radius: 10px; overflow: hidden; min-width: 100px; }
         .progress-fill { height: 100%; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 10px; }
         .progress-text { font-weight: 800; color: #334155; min-width: 45px; text-align: right; }
 
-        .eligibility-badge { padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; display: inline-flex; align-items: center; gap: 5px; }
+        .eligibility-badge { padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
         .eligibility-badge.safe { background: #dcfce7; color: #166534; }
         .eligibility-badge.danger { background: #fee2e2; color: #991b1b; }
 
@@ -153,42 +169,46 @@ export default function AttendanceReport() {
         .animate-spin { animation: spin 1s linear infinite; }
 
         /* =========================================================
-           📱 100% BULLETPROOF MOBILE SCROLL FIX
+           📱 MOBILE RESPONSIVE FIX (All Devices)
            ========================================================= */
         @media (max-width: 850px) {
-            
-            /* Break the layout flex behavior to force natural page scroll */
             .report-mobile-fix {
                 display: block !important;
-                height: auto !important;
-                min-height: 100vh !important;
-                overflow: visible !important;
+                width: 100vw !important;
             }
 
             .report-main-content {
                 margin-left: 0 !important;
-                padding: 15px !important;
-                padding-top: 90px !important; /* Spacing for mobile top header */
-                padding-bottom: 40px !important; /* Space at bottom so nothing touches edge */
                 width: 100% !important;
-                display: block !important;
-                height: auto !important; /* Unlock height completely */
-                overflow: visible !important; /* Allow page to scroll natively */
+                padding: 85px 15px 30px 15px !important; /* Top padding adjust for mobile navbar */
             }
 
-            .main-title { font-size: 1.8rem !important; margin-bottom: 8px !important; }
-            .sub-title { font-size: 0.9rem !important; margin-bottom: 20px !important; }
+            .mobile-header-spacing {
+                margin-bottom: 25px !important;
+            }
+
+            .main-title { 
+                font-size: 1.8rem !important; 
+            }
+            
+            .sub-title { 
+                font-size: 0.9rem !important; 
+            }
             
             .pro-card { 
                 padding: 15px !important; 
-                display: block !important;
-                height: auto !important;
-                overflow: visible !important;
+                border-radius: 15px !important;
             }
-            
-            .table-responsive-wrapper {
-                display: block !important;
+
+            .modern-table td, .modern-table th {
+                padding: 12px 10px !important; /* Tighter spacing for mobile */
             }
+        }
+
+        /* For very small screens (iPhone SE, Galaxy Fold) */
+        @media (max-width: 400px) {
+            .main-title { font-size: 1.5rem !important; }
+            .report-main-content { padding-left: 10px !important; padding-right: 10px !important; }
         }
       `}</style>
     </div>
