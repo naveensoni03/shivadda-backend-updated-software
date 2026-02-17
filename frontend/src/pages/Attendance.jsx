@@ -233,6 +233,7 @@ export default function Attendance() {
                         </table>
                     </div>
 
+                    {/* 🚀 ACTION BAR IS NOW NATURALLY SCROLLING BELOW THE TABLE */}
                     <div className="floating-action-bar slide-up-reveal">
                          <div className="summary-text">
                             <span>{present} Present</span> • <span>{absent} Absent</span>
@@ -241,6 +242,7 @@ export default function Attendance() {
                             <Save size={20} /> Save Record
                         </button>
                     </div>
+
                 </div>
             )}
 
@@ -335,9 +337,6 @@ export default function Attendance() {
             )}
         </>
         )}
-
-        {/* 🚀 100% GUARANTEED INLINE SCROLL SPACER (Invisible but forces page height) */}
-        <div style={{ height: "220px", width: "100%", clear: "both", display: "block" }}></div>
 
       </div>
 
@@ -456,10 +455,12 @@ export default function Attendance() {
         .remark-input.required { background: #FEF2F2; border-color: #FECACA; }
         .remark-input.required:focus { border-color: #EF4444; }
 
+        /* 🚀 FLOATING BAR NORMALIZED - SCROLLS WITH CONTENT NOW */
         .floating-action-bar {
-            position: fixed; bottom: 30px; right: 40px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px);
-            padding: 12px 15px 12px 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.8);
-            display: flex; align-items: center; gap: 20px; z-index: 1000;
+            margin-top: 30px;
+            background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px);
+            padding: 15px 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.8);
+            display: flex; align-items: center; justify-content: space-between; z-index: 100;
         }
         .summary-text { font-size: 0.9rem; font-weight: 600; color: #64748B; }
         .save-btn-glowing {
@@ -554,7 +555,7 @@ export default function Attendance() {
                 padding: 15px !important;
                 padding-top: 80px !important; 
                 width: 100% !important;
-                height: max-content !important; /* ALLOWS CONTENT TO GROW */
+                height: max-content !important; 
                 overflow: visible !important; 
             }
 
@@ -569,7 +570,7 @@ export default function Attendance() {
             .tab-btn { flex: 1; justify-content: center; }
             .profile-bubble { display: none; }
             
-            /* 🚀 FIX 1: CLASS AND DATE BUTTONS EXACTLY HALF-WIDTH */
+            /* 🚀 DATE & CLASS BUTTONS COMPACT SIZE (AS BEFORE) */
             .controls-bar { 
                 flex-direction: row !important; 
                 flex-wrap: wrap !important; 
@@ -577,7 +578,7 @@ export default function Attendance() {
                 gap: 10px !important; 
             }
             .control-group { 
-                width: 48% !important; /* Makes them sit side by side */
+                width: 48% !important; 
                 flex: 0 0 48% !important; 
                 justify-content: flex-start !important; 
                 padding: 10px 14px !important; 
@@ -600,16 +601,19 @@ export default function Attendance() {
             .lb-progress { padding: 10px 0; width: 100%; order: 3; }
             .lb-score { order: 2; margin-left: auto;}
             
-            /* 🚀 FIX 2: FLOATING BAR LIFTED ABOVE CHATBOT */
+            /* 🚀 FIX: SAVE BUTTON NOW SCROLLS WITH CONTENT (NOT FIXED) */
             .floating-action-bar {
-                width: calc(100% - 30px);
-                left: 15px;
-                right: 15px;
-                bottom: 95px !important; /* LIFTED UP TO AVOID CHATBOT */
-                justify-content: space-between;
+                width: 100%;
+                margin-top: 20px;
+                margin-bottom: 80px; /* Space so it doesn't hide behind Chatbot when at the very bottom */
                 padding: 15px;
                 box-sizing: border-box;
-                position: fixed; 
+                position: relative; /* Normal flow, scrolls with page */
+                left: auto;
+                right: auto;
+                bottom: auto;
+                justify-content: space-between;
+                display: flex;
             }
             .summary-text { font-size: 0.8rem; }
             .save-btn-glowing { padding: 10px 15px; font-size: 0.85rem; }
@@ -617,7 +621,7 @@ export default function Attendance() {
 
         @media (max-width: 400px) {
             .stats-grid { grid-template-columns: 1fr; }
-            .control-group { width: 100% !important; flex: 0 0 100% !important;} /* Stack on extremely tiny screens */
+            .control-group { width: 100% !important; flex: 0 0 100% !important;} 
         }
       `}</style>
     </div>
