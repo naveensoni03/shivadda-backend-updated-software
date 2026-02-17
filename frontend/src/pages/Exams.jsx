@@ -129,30 +129,47 @@ export default function Exams() {
       setShowEditModal(false);
   };
 
+  // ✅ SAFELY GENERATE PDF
   const generatePaper = () => {
       if(!examMeta.examName) return toast.error("Please enter Exam Name first!");
-      const doc = new jsPDF();
-      doc.setFontSize(18);
-      doc.text(examMeta.examName, 105, 15, null, null, "center");
-      doc.setFontSize(12);
-      doc.text(`Board: ${examMeta.examineeBody} | Time: ${examMeta.timeAllowed} | Max Marks: ${examMeta.maxMarks}`, 105, 25, null, null, "center");
+      
+      try {
+          const doc = new jsPDF();
+          doc.setFontSize(18);
+          doc.text(examMeta.examName, 105, 15, null, null, "center");
+          doc.setFontSize(12);
+          doc.text(`Board: ${examMeta.examineeBody} | Time: ${examMeta.timeAllowed} | Max Marks: ${examMeta.maxMarks}`, 105, 25, null, null, "center");
 
-      const tableRows = questions.map((q, i) => [
-          i + 1,
-          q.text,
-          q.q_type,
-          q.difficulty || "Medium",
-          q.marks
-      ]);
+          const tableRows = questions.map((q, i) => [
+              i + 1,
+              q.text,
+              q.q_type,
+              q.difficulty || "Medium",
+              q.marks
+          ]);
 
-      doc.autoTable({
-          head: [["Q.No", "Question", "Type", "Diff", "Marks"]],
-          body: tableRows,
-          startY: 35,
-      });
+          // Fallback in case autoTable fails
+          if (typeof doc.autoTable === 'function') {
+              doc.autoTable({
+                  head: [["Q.No", "Question", "Type", "Diff", "Marks"]],
+                  body: tableRows,
+                  startY: 35,
+              });
+          } else {
+               doc.text("Table generation failed. Raw data below:", 10, 40);
+               let yPos = 50;
+               questions.forEach((q, i) => {
+                   doc.text(`${i+1}. ${q.text} (${q.marks} Marks)`, 10, yPos);
+                   yPos += 10;
+               });
+          }
 
-      doc.save(`${examMeta.examName}_Paper.pdf`);
-      toast.success("Paper Set Generated! 💾");
+          doc.save(`${examMeta.examName}_Paper.pdf`);
+          toast.success("Paper Set Generated! 💾");
+      } catch (error) {
+          console.error("PDF Generation Error:", error);
+          toast.error("Failed to generate PDF. Check console.");
+      }
   };
 
   // --- PAGINATION LOGIC (UNTOUCHED) ---
@@ -232,9 +249,9 @@ export default function Exams() {
 
 
   return (
-    <div className="exams-container">
+    <div className="exams-page-wrapper">
         <SidebarModern />
-        <div className="main-content">
+        <div className="exams-main-content">
             <Toaster position="top-center" />
 
             <header className={`page-header ${loaded ? 'slide-in-top' : ''}`}>
@@ -263,7 +280,7 @@ export default function Exams() {
                         <div className="card-header">
                             <h3 style={{display:'flex', alignItems:'center', gap:'8px'}}><Layers size={18} color="#3b82f6"/> Exam Configuration</h3>
                         </div>
-                        <div className="card-body form-grid" style={{gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '15px'}}>
+                        <div className="card-body form-grid">
                             <div className="input-group full-width" style={{gridColumn: 'span 1'}}>
                                 <input type="text" placeholder="Name of Exam (e.g. Final)" className="input-field" value={examMeta.examName} onChange={e => setExamMeta({...examMeta, examName: e.target.value})} />
                             </div>
@@ -324,14 +341,16 @@ export default function Exams() {
 
                     {/* TABLE CARD */}
                     <div className="card shadow-md stagger-2" style={{marginTop: '20px'}}>
-                        <div className="card-header" style={{justifyContent: 'space-between'}}>
-                            <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-                                <h3>Database Records ({questions.length})</h3>
+                        {/* ✅ ALIGNED BUTTONS TO THE EXTREME RIGHT */}
+                        <div className="card-header table-card-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                            <h3>Database Records ({questions.length})</h3>
+                            <div style={{display:'flex', alignItems:'center', gap:'10px', marginLeft: 'auto'}}>
                                 <button onClick={fetchQuestions} className="icon-btn btn-view" title="Refresh Data"><RefreshCw size={16}/></button>
+                                <button onClick={generatePaper} className="btn-success ripple-effect"><FileOutput size={18}/> Generate Paper PDF</button>
                             </div>
-                            <button onClick={generatePaper} className="btn-success ripple-effect"><FileOutput size={18}/> Generate Paper PDF</button>
                         </div>
-                        <div className="card-body">
+
+                        <div className="card-body table-wrapper">
                             {loadingData ? (
                                 <div style={{textAlign: 'center', padding: '20px', color: '#64748b'}}>Loading Data from Server...</div>
                             ) : (
@@ -359,9 +378,7 @@ export default function Exams() {
                                                     <td>
                                                         <div className="action-buttons">
                                                             <button onClick={() => setViewQ(q)} className="icon-btn btn-view hover-3d" title="View"><Eye size={20}/></button>
-                                                            {/* ✅ Changed to open modal */}
                                                             <button onClick={() => handleEditClick(q)} className="icon-btn btn-edit hover-3d" title="Edit"><Edit2 size={20}/></button>
-                                                            {/* ✅ Changed to open custom modal instead of alert */}
                                                             <button onClick={() => initiateDelete(q)} className="icon-btn btn-delete hover-3d" title="Delete"><Trash size={20}/></button>
                                                         </div>
                                                     </td>
@@ -416,7 +433,7 @@ export default function Exams() {
                                     <span className="meta-tag">Time: {examMeta.timeAllowed || "3 Hrs"}</span>
                                 </div>
                             </div>
-                            <div style={{textAlign: "right"}}>
+                            <div className="meta-right">
                                 <div style={{fontWeight: "bold", color: "#64748b"}}>Examinee Body: {examMeta.examineeBody || "CBSE"}</div>
                                 <div style={{fontSize: "0.9rem", color: "#94a3b8"}}>Paper Set: A-102</div>
                             </div>
@@ -531,7 +548,7 @@ export default function Exams() {
                             <h3 style={{margin:0, color:'#1e293b', fontSize:'1.5rem'}}>Edit Question</h3>
                             <button onClick={handleCancelEdit} className="close-btn-premium" style={{width: '35px', height: '35px'}}><X size={18}/></button>
                         </div>
-                        <div className="card-body form-grid" style={{padding: 0}}>
+                        <div className="card-body form-grid-modal" style={{padding: 0}}>
                             <div className="input-group full-width" style={{gridColumn: 'span 2', marginBottom: '15px'}}>
                                 <input
                                     type="text"
@@ -539,10 +556,10 @@ export default function Exams() {
                                     className="input-field"
                                     value={newQ.text}
                                     onChange={(e) => setNewQ({...newQ, text: e.target.value})}
-                                    style={{width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '1rem'}}
+                                    style={{width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '1rem', boxSizing: 'border-box'}}
                                 />
                             </div>
-                            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', width: '100%', gridColumn: 'span 2', marginBottom: '25px'}}>
+                            <div className="grid-3-col" style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', width: '100%', gridColumn: 'span 2', marginBottom: '25px'}}>
                                 <select className="input-field hover-glow" value={newQ.q_type} onChange={(e) => setNewQ({...newQ, q_type: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px'}}>
                                     <option value="Descriptive">Descriptive</option>
                                     <option value="MCQ">MCQ</option>
@@ -558,11 +575,11 @@ export default function Exams() {
                                     className="input-field hover-glow"
                                     value={newQ.marks}
                                     onChange={(e) => setNewQ({...newQ, marks: parseInt(e.target.value) || 0})}
-                                    style={{width: '100%', padding: '12px', borderRadius: '10px'}}
+                                    style={{width: '100%', padding: '12px', borderRadius: '10px', boxSizing: 'border-box'}}
                                 />
                             </div>
                         </div>
-                        <div className="modal-footer-premium" style={{padding: '0', background: 'transparent', border: 'none', display: 'flex', gap: '10px'}}>
+                        <div className="modal-footer-premium footer-actions-modal" style={{padding: '0', background: 'transparent', border: 'none', display: 'flex', gap: '10px'}}>
                             <button onClick={handleCancelEdit} className="btn-secondary" style={{flex: 1, padding: '14px', borderRadius: '10px'}}>Cancel</button>
                             <button onClick={handleSaveQuestion} className="btn-primary ripple-effect" style={{flex: 1, padding: '14px', borderRadius: '10px'}}>Update Question</button>
                         </div>
@@ -573,7 +590,7 @@ export default function Exams() {
             {/* 3. DELETE CONFIRMATION MODAL */}
             {showDeleteModal && (
                 <div className="modal-overlay glass-overlay fade-in" onClick={() => setShowDeleteModal(false)}>
-                    <div className="modal-content premium-modal scale-up-bounce" onClick={e => e.stopPropagation()} style={{padding: '35px', width: '400px', textAlign: 'center'}}>
+                    <div className="modal-content premium-modal scale-up-bounce" onClick={e => e.stopPropagation()} style={{padding: '35px', width: '400px', maxWidth: '90vw', textAlign: 'center'}}>
                         <div style={{width: '70px', height: '70px', background: '#fee2e2', color: '#ef4444', borderRadius: '50%', display: 'flex', alignItems: 'center', justify: 'center', margin: '0 auto 20px', boxShadow: '0 5px 15px rgba(239, 68, 68, 0.2)'}}>
                             <Trash size={32} />
                         </div>
@@ -591,6 +608,7 @@ export default function Exams() {
 
         </div>
 
+        {/* 🚀 CSS FOR 100% RESPONSIVENESS AND TABLE HORIZONTAL SCROLL */}
         <style>{`
             :root {
                 --primary: #3b82f6;
@@ -598,8 +616,34 @@ export default function Exams() {
                 --bg-body: #f8fafc;
                 --text-main: #1e293b;
             }
-            .exams-container { display: flex; background: var(--bg-body); min-height: 100vh; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--text-main); }
-            .main-content { flex: 1; padding: 30px; marginLeft: 280px; }
+            
+            /* ✅ FULL SCROLL UNLOCK FOR DESKTOP & MOBILE */
+            html, body, #root {
+                margin: 0; padding: 0;
+                height: 100%;
+            }
+
+            .exams-page-wrapper {
+                display: flex;
+                width: 100%;
+                height: 100vh;
+                overflow: hidden; /* Prevents double scrollbars */
+                background: var(--bg-body);
+                font-family: 'Plus Jakarta Sans', sans-serif;
+                color: var(--text-main);
+            }
+
+            /* Desktop View Default */
+            .exams-main-content {
+                flex: 1;
+                margin-left: 280px; /* Sidebar space */
+                padding: 30px;
+                padding-bottom: 120px; /* ✅ Prevents Chatbot overlap on Desktop */
+                height: 100vh;
+                overflow-y: auto; /* ✅ ENABLES DESKTOP SCROLLING */
+                box-sizing: border-box;
+                max-width: calc(100% - 280px);
+            }
 
             /* --- PREMIUM WAOO MODAL STYLES --- */
             .glass-overlay {
@@ -617,6 +661,7 @@ export default function Exams() {
                 overflow: hidden;
                 position: relative;
                 border: 1px solid rgba(255, 255, 255, 0.5);
+                box-sizing: border-box;
             }
 
             .modal-decorative-bg {
@@ -640,7 +685,7 @@ export default function Exams() {
             .close-btn-premium {
                 background: #f1f5f9; border: none; width: 40px; height: 40px; border-radius: 50%;
                 display: flex; align-items: center; justify-content: center; color: #64748b;
-                cursor: pointer; transition: 0.3s;
+                cursor: pointer; transition: 0.3s; flex-shrink: 0;
             }
             .close-btn-premium:hover { background: #fee2e2; color: #ef4444; transform: rotate(90deg); }
 
@@ -710,10 +755,10 @@ export default function Exams() {
             .page-subtitle { color: #64748b; margin: 5px 0 0; }
 
             .tab-switch { background: white; padding: 5px; border-radius: 12px; display: flex; gap: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-            .tab-btn { border: none; background: transparent; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #64748b; transition: 0.2s; }
+            .tab-btn { border: none; background: transparent; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #64748b; transition: 0.2s; white-space: nowrap; }
             .tab-btn.active { background: #eff6ff; color: var(--primary); }
 
-            .card { background: white; border-radius: 16px; padding: 25px; border: 1px solid #e2e8f0; }
+            .card { background: white; border-radius: 16px; padding: 25px; border: 1px solid #e2e8f0; box-sizing: border-box; width: 100%; }
             .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
             .card-header { display: flex; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; }
             .card-header h3 { margin: 0; font-size: 1.1rem; color: var(--text-main); }
@@ -721,7 +766,7 @@ export default function Exams() {
             .form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 0.5fr auto; gap: 15px; align-items: center; }
             .full-width { grid-column: span 2; }
 
-            .input-field { padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; background: white; color: #1e293b; font-size: 0.9rem; transition: all 0.2s; width: 100%; font-weight: 600; }
+            .input-field { padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; background: white; color: #1e293b; font-size: 0.9rem; transition: all 0.2s; width: 100%; font-weight: 600; box-sizing: border-box; }
 
             .btn-group { display: flex; gap: 10px; }
             .btn-primary { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: 0.2s; }
@@ -730,12 +775,14 @@ export default function Exams() {
             .btn-warning:hover { background: #d97706; }
             .btn-secondary { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 12px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; }
             .btn-secondary:hover { background: #e2e8f0; }
-            .btn-success { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; gap: 8px; align-items: center; transition: 0.2s; }
+            .btn-success { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; gap: 8px; align-items: center; transition: 0.2s; white-space: nowrap; }
             .btn-success:hover { background: #059669; }
 
-            .modern-table { width: 100%; border-collapse: collapse; }
-            .modern-table th { text-align: left; padding: 12px; color: #64748b; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; background: #f8fafc; font-weight: 800; }
-            .modern-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+            /* ✅ FIXED: Table Wrapper for Horizontal Scroll */
+            .table-wrapper { overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; display: block; }
+            .modern-table { width: 100%; border-collapse: collapse; min-width: 700px; /* Forces scroll on small screens */ }
+            .modern-table th { text-align: left; padding: 12px; color: #64748b; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; background: #f8fafc; font-weight: 800; white-space: nowrap; }
+            .modern-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; white-space: nowrap; }
             .table-row { opacity: 0; animation: staggerUp 0.4s ease-out forwards; transition: 0.2s; }
             .table-row:hover { background: #f8fafc; }
 
@@ -762,7 +809,7 @@ export default function Exams() {
             .nav-btn { width: auto; padding: 0 10px; }
 
             .exam-meta-header { display: flex; justify-content: space-between; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0; }
-            .meta-tag { background: #f1f5f9; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; color: #475569; margin-right: 10px; }
+            .meta-tag { background: #f1f5f9; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; color: #475569; margin-right: 10px; display: inline-block; margin-bottom: 5px; }
             .answer-sheet-preview { background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #cbd5e1; }
             .handwriting-font { font-family: 'Courier New', Courier, monospace; font-size: 1.05rem; color: #334155; line-height: 1.6; font-style: italic; }
 
@@ -775,18 +822,72 @@ export default function Exams() {
             .eval-score { font-size: 2rem; font-weight: 800; color: #1e293b; margin-bottom: 5px; }
 
             .ai-check-box { display: flex; justify-content: space-between; align-items: center; background: #f0fdf4; padding: 20px; border-radius: 12px; border: 1px solid #bbf7d0; }
-            .btn-ai { background: #16a34a; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; gap: 8px; align-items: center; transition: 0.2s; }
+            .btn-ai { background: #16a34a; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; gap: 8px; align-items: center; transition: 0.2s; white-space: nowrap; }
             .btn-ai:hover { background: #15803d; }
-            .slide-in-top { animation: slideInTop 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
-            .pop-in-bounce { animation: popInBounce 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
-            .scale-up-bounce { animation: scaleUpBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-            @keyframes slideInTop { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
-            @keyframes popInBounce { 0% { transform: scale(0); } 60% { transform: scale(1.1); } 100% { transform: scale(1); } }
-            @keyframes scaleUpBounce { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
-            .stagger-1 { animation: staggerUp 0.6s ease-out 0.1s forwards; opacity: 0; }
-            .stagger-2 { animation: staggerUp 0.6s ease-out 0.2s forwards; opacity: 0; }
-            .stagger-3 { animation: staggerUp 0.6s ease-out 0.3s forwards; opacity: 0; }
-            @keyframes staggerUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+            /* 📱 MEDIA QUERIES FOR 100% RESPONSIVENESS & SCROLL UNLOCK */
+            @media (max-width: 1024px) {
+                .exams-main-content { margin-left: 0 !important; max-width: 100%; width: 100%; }
+            }
+
+            @media (max-width: 850px) {
+                /* ✅ UNLOCK SCROLL COMPLETELY ON MOBILE */
+                html, body, #root { 
+                    height: auto !important; 
+                    min-height: 100vh !important; 
+                    overflow-y: visible !important; 
+                }
+
+                .exams-page-wrapper {
+                    display: block !important; 
+                    height: auto !important;
+                    min-height: 100vh !important;
+                }
+
+                .exams-container { display: block !important; }
+
+                .exams-main-content {
+                    margin-left: 0 !important;
+                    padding: 15px !important;
+                    padding-top: 85px !important; 
+                    padding-bottom: 150px !important; /* ✅ Prevents Chatbot from overlapping the button */
+                    width: 100vw !important;
+                    max-width: 100vw !important;
+                    height: auto !important;
+                    min-height: 100vh !important;
+                    overflow: visible !important;
+                    display: block !important; /* Break Flex lock */
+                }
+
+                .page-header { flex-direction: column; align-items: flex-start !important; gap: 15px; }
+                .tab-switch { width: 100%; display: flex; justify-content: space-between; }
+                .tab-btn { flex: 1; justify-content: center; }
+
+                .form-grid { 
+                    display: flex !important; 
+                    flex-direction: column !important; 
+                    gap: 15px; 
+                    width: 100%; 
+                }
+
+                .table-card-header { flex-direction: column; align-items: flex-start !important; gap: 10px; }
+                .btn-success { width: 100%; justify-content: center; }
+
+                /* Evaluation Tab Mobile Fixes */
+                .exam-meta-header { flex-direction: column; gap: 10px; }
+                .meta-right { text-align: left !important; }
+                
+                .evaluation-grid { grid-template-columns: 1fr; gap: 15px; }
+                
+                .ai-check-box { flex-direction: column; align-items: flex-start; gap: 15px; }
+                .btn-ai { width: 100%; justify-content: center; }
+
+                /* Modal Fixes */
+                .modal-content { max-width: 90vw !important; }
+                .stats-grid { grid-template-columns: 1fr; }
+                .grid-3-col { display: flex !important; flex-direction: column !important; }
+                .footer-actions-modal { flex-direction: column; }
+            }
         `}</style>
     </div>
   );
