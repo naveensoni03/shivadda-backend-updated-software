@@ -200,18 +200,18 @@ export default function FeesLedger() {
   };
 
   const inputStyle = {
-    width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #cbd5e1', background: '#ffffff', color: '#0f172a', outline: 'none', fontSize: '0.9rem', transition: '0.3s'
+    width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #cbd5e1', background: '#ffffff', color: '#0f172a', outline: 'none', fontSize: '0.9rem', transition: '0.3s', boxSizing: 'border-box'
   };
 
   return (
-    <div className="dashboard-container" style={{background: '#f8fafc', height: '100vh', display: 'flex', overflow: 'hidden'}}>
+    <div className="dashboard-container fees-page-wrapper">
       <div className="ambient-bg"></div>
       <SidebarModern />
       <Toaster position="top-center"/>
 
-      <div className="main-content" style={{flex: 1, padding: '30px 40px', overflowY: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column', zIndex: 1}}>
+      <div className="main-content fees-main-content">
         
-        <header className="slide-in-down" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexShrink: 0 }}>
+        <header className="slide-in-down page-header">
           <div>
             <h1 className="gradient-text" style={{ fontSize: '2.2rem', fontWeight: '900', letterSpacing: '-1px', margin: 0 }}>Finance & Fees</h1>
             <p style={{ color: '#64748b', fontSize: '0.95rem', fontWeight: '500', margin: '5px 0 0' }}>Ledger, Invoices and Defaulter Management.</p>
@@ -223,7 +223,7 @@ export default function FeesLedger() {
         </header>
 
         {/* STATS ROW */}
-        <div className="stats-grid" style={{display: 'flex', gap: '25px', marginBottom: '30px', flexShrink: 0}}>
+        <div className="stats-grid" style={{display: 'flex', gap: '25px', marginBottom: '30px', flexShrink: 0, width: '100%'}}>
             <div className="stat-card-3d fade-in-up" style={{animationDelay: '0.1s', '--accent': '#10b981'}}>
                 <div style={{display:'flex', justifyContent:'space-between', alignItems: 'center', position: 'relative', zIndex: 2}}>
                     <div><span style={{color:'#64748b', fontWeight:'700', fontSize:'0.85rem', letterSpacing:'1px'}}>TOTAL REVENUE</span><h2 style={{color:'#10b981', fontSize:'2.5rem', margin: '5px 0', fontWeight: '900'}}>₹{totalCollected.toLocaleString()}</h2></div>
@@ -240,9 +240,9 @@ export default function FeesLedger() {
         </div>
 
         {/* MAIN LEDGER AREA - FIXED HEIGHT & NO SCROLL */}
-        <div className="glass-container fade-in-up" style={{ flex: 1, padding: '30px', animationDelay: '0.4s', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div className="glass-container fade-in-up table-card">
             
-            <div style={{display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid #f1f5f9', paddingBottom: '15px'}}>
+            <div className="filter-tabs">
                 {["All", "Paid", "Pending", "Overdue"].map(tab => (
                     <button key={tab} onClick={() => { setFilter(tab); setCurrentPage(1); }} className={`tab-btn-modern ${filter === tab ? 'active' : ''}`}>
                         {tab} {tab === 'Overdue' && <span style={{marginLeft:'5px', background:'#ef4444', color:'white', padding:'2px 6px', borderRadius:'10px', fontSize:'0.7rem'}}>!</span>}
@@ -251,7 +251,7 @@ export default function FeesLedger() {
             </div>
 
             {/* TABLE CONTENT */}
-            <div style={{flex: 1, overflow: 'hidden'}}>
+            <div className="table-wrapper">
                 <table className="modern-table luxe-table">
                     <thead>
                         <tr>
@@ -305,7 +305,7 @@ export default function FeesLedger() {
             </div>
 
             {/* PAGINATION CONTROLS */}
-            <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '20px', gap: '15px'}}>
+            <div className="pagination-container">
                 <button 
                     onClick={prevPage} 
                     disabled={currentPage === 1}
@@ -332,7 +332,7 @@ export default function FeesLedger() {
             <div className="overlay-blur" onClick={() => setActivePanel("none")}>
                 <div className={`luxe-panel slide-in-right ${activePanel === 'receipt' ? 'receipt-panel' : ''}`} onClick={(e) => e.stopPropagation()}>
                     
-                    <div className="panel-header-simple no-print" style={{borderBottom: '1px solid #f1f5f9', paddingBottom: '20px', marginBottom: '20px'}}>
+                    <div className="panel-header-simple no-print" style={{borderBottom: '1px solid #f1f5f9', paddingBottom: '20px', marginBottom: '20px', flexShrink: 0}}>
                         <div>
                             <h2 style={{margin: '0 0 5px', color: '#0f172a', fontWeight:'800'}}>
                                 {activePanel === 'collect' ? 'Collect Fee' : activePanel === 'pendingPayment' ? 'Pay Pending Fee' : 'Payment Receipt'}
@@ -533,8 +533,8 @@ export default function FeesLedger() {
             .overlay-blur { position: static; background: white; width: 100%; height: 100%; }
         }
 
-        .luxe-panel { width: 450px; height: 100%; background: white; padding: 35px; display: flex; flex-direction: column; box-shadow: -20px 0 60px rgba(0,0,0,0.15); overflow-y: auto; transition: 0.3s; }
-        .badge-gray { background: #f1f5f9; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; fontWeight: 600; color: #475569; }
+        .luxe-panel { width: 450px; height: 100%; background: white; padding: 35px; display: flex; flex-direction: column; box-shadow: -20px 0 60px rgba(0,0,0,0.15); box-sizing: border-box; transition: 0.3s; }
+        .badge-gray { background: #f1f5f9; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; color: #475569; white-space: nowrap; }
         
         @keyframes slideInDown { from { opacity: 0; transform: translateY(-40px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
@@ -548,7 +548,8 @@ export default function FeesLedger() {
         .slide-in-right { animation: slideRight 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .bounce-in-glass { animation: bounceInGlass 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
-        .stat-card-3d { flex: 1; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px); padding: 25px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1); transition: all 0.3s ease; position: relative; overflow: hidden; }
+        /* ✅ FIXED: Stat Cards to take full width and wrap properly */
+        .stat-card-3d { flex: 1; width: 100%; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px); padding: 25px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1); transition: all 0.3s ease; position: relative; overflow: hidden; box-sizing: border-box; }
         .stat-card-3d:hover { transform: translateY(-10px) perspective(1000px) rotateX(2deg) rotateY(2deg); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); }
         .icon-box-floating { width: 60px; height: 60px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; animation: floatIcon 4s ease-in-out infinite; }
         .card-glow { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, var(--accent) 0%, transparent 60%); opacity: 0; transition: opacity 0.3s; pointer-events: none; mix-blend-mode: soft-light; }
@@ -557,29 +558,132 @@ export default function FeesLedger() {
         .glass-container { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(30px); border-radius: 32px; border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 20px 60px -15px rgba(0,0,0,0.08); }
         .floating-row-glow { transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); border-radius: 18px; border: 1px solid transparent; }
         .floating-row-glow:hover { transform: translateY(-5px) scale(1.01); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.08); background: white; z-index: 10; position: relative; }
-        .floating-row-glow td { padding: 20px; border-bottom: 1px solid #f8fafc; }
+        .floating-row-glow td { padding: 20px; border-bottom: 1px solid #f8fafc; white-space: nowrap; }
 
-        .tab-btn-modern { position: relative; border: none; background: transparent; padding: 10px 24px; font-weight: 700; color: #64748b; cursor: pointer; transition: color 0.3s; z-index: 2; font-size: 0.9rem; border-radius: 30px; }
+        .filter-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; overflow-x: auto; white-space: nowrap; }
+        .tab-btn-modern { position: relative; border: none; background: transparent; padding: 10px 24px; font-weight: 700; color: #64748b; cursor: pointer; transition: color 0.3s; z-index: 2; font-size: 0.9rem; border-radius: 30px; white-space: nowrap; }
         .tab-btn-modern.active { color: #0f172a; background: white; box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
-        /* ✅ FIXED: Updated Status Badge to nowrap to fix layout breaking */
+        
         .status-badge-modern { padding: 8px 16px; border-radius: 30px; font-size: 0.75rem; font-weight: 900; letter-spacing: 0.8px; text-transform: uppercase; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; min-width: 80px; }
         
-        .btn-action-modern { border: none; padding: 10px 18px; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 0.85rem; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-action-modern { border: none; padding: 10px 18px; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 0.85rem; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
         .btn-action-modern.monitor { background: #fee2e2; color: #dc2626; border: 2px solid #fca5a5; }
         .btn-action-modern.results { background: #f0fdf4; color: #16a34a; border: 2px solid #bbf7d0; }
         .overlay-blur { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.3); backdrop-filter: blur(8px); z-index: 2000; display: flex; justify-content: flex-end; }
-        .close-circle-btn { width: 36px; height: 36px; border-radius: 50%; background: #f1f5f9; border: none; cursor: pointer; color: #64748b; font-size: 1rem; }
+        .close-circle-btn { width: 36px; height: 36px; border-radius: 50%; background: #f1f5f9; border: none; cursor: pointer; color: #64748b; font-size: 1rem; flex-shrink: 0; }
         .btn-confirm-gradient { background: linear-gradient(135deg, #0f172a 0%, #334155 100%); border: none; color: white; border-radius: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2); }
-        .btn-glow { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); border: none; color: white; padding: 10px 22px; border-radius: 50px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 15px rgba(99, 102, 241, 0.25); display: flex; align-items: center; font-size: 0.9rem; }
+        .btn-glow { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); border: none; color: white; padding: 10px 22px; border-radius: 50px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 15px rgba(99, 102, 241, 0.25); display: flex; align-items: center; font-size: 0.9rem; white-space: nowrap; }
 
         .success-card-luxe { background: white; padding: 40px; border-radius: 30px; text-align: center; width: 400px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
         .success-ring-luxe { width: 100px; height: 100px; background: linear-gradient(135deg, #ecfdf5, #d1fae5); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; animation: checkPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .checkmark-anim { font-size: 3.5rem; color: #10b981; transform: rotate(45deg) scaleX(-1); display: inline-block; }
-        .centered-flex { display: flex; alignItems: center; justifyContent: center; }
+        .centered-flex { display: flex; align-items: center; justify-content: center; }
         
-        /* ✅ Pagination Button Styles */
-        .btn-pagination { background: white; border: 1px solid #cbd5e1; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; color: #475569; }
+        .btn-pagination { background: white; border: 1px solid #cbd5e1; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; color: #475569; flex-shrink: 0; }
         .btn-pagination:hover:not(:disabled) { background: #f1f5f9; border-color: #94a3b8; color: #0f172a; transform: translateY(-2px); }
+
+        /* ✅ PANEL SCROLL FIX */
+        .panel-content-scroll {
+            overflow-y: auto;
+            flex: 1;
+            padding-bottom: 20px;
+        }
+
+        /* ✅ TABLE HORIZONTAL SCROLL FIX */
+        .table-wrapper {
+            overflow-x: auto;
+            width: 100%;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 10px;
+        }
+        .modern-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px; /* Forces scroll on smaller screens */
+        }
+        .modern-table th {
+            text-align: left;
+            padding: 15px 20px;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #f1f5f9;
+            white-space: nowrap;
+        }
+
+        /* 📱 RESPONSIVE MEDIA QUERIES */
+        
+        /* ✅ DESKTOP SPECIFIC FIX (SCROLL UNLOCK) */
+        @media (min-width: 1025px) {
+            html, body, #root { 
+                height: 100%; 
+                margin: 0; padding: 0; 
+                overflow: hidden; 
+            }
+            .fees-page-wrapper {
+                height: 100vh;
+                overflow: hidden;
+            }
+            .fees-main-content {
+                margin-left: 280px; 
+                height: 100vh;
+                overflow-y: auto !important; /* Forces scroll on desktop */
+                padding-bottom: 120px !important; /* Space for chatbot */
+                max-width: calc(100% - 280px);
+            }
+            .table-card {
+                height: auto; /* Allow natural height instead of flex: 1 */
+                overflow: visible;
+            }
+        }
+
+        /* 📱 TABLET & MOBILE */
+        @media (max-width: 1024px) {
+            .fees-main-content { margin-left: 0 !important; width: 100%; max-width: 100%; }
+        }
+
+        @media (max-width: 850px) {
+            /* Unlock Scroll on Mobile */
+            html, body, #root { height: auto !important; min-height: 100vh !important; overflow-y: visible !important; }
+            
+            .fees-page-wrapper {
+                display: block !important; 
+                height: auto !important;
+                min-height: 100vh !important;
+            }
+
+            .fees-main-content {
+                margin-left: 0 !important;
+                padding: 15px !important;
+                padding-top: 85px !important; 
+                padding-bottom: 150px !important; /* Space for chatbot */
+                width: 100vw !important;
+                max-width: 100vw !important;
+                height: auto !important;
+                min-height: 100vh !important;
+                overflow: visible !important;
+                display: block !important; /* Break Flex lock */
+            }
+
+            .page-header { flex-direction: column; align-items: flex-start !important; gap: 15px; }
+            .btn-glow { width: 100%; justify-content: center; }
+
+            /* ✅ FIXED: Mobile par cards equal width lenge aur aapas mein chipkenge nahi */
+            .stats-grid { flex-direction: column; gap: 15px !important; }
+            .stat-card-3d { width: 100% !important; box-sizing: border-box; }
+            
+            .table-card { padding: 15px !important; width: 100%; box-sizing: border-box; height: auto !important; overflow: visible !important; }
+            
+            /* Slide Panel mobile fix */
+            .luxe-panel { width: 100%; padding: 20px; }
+            .receipt-panel { width: 100%; padding: 20px; }
+            
+            .grid-2-col { grid-template-columns: 1fr !important; gap: 15px !important; }
+            
+            /* Modal Fix */
+            .success-card-luxe { max-width: 90vw !important; width: auto; padding: 30px; }
+        }
       `}</style>
     </div>
   );

@@ -344,7 +344,7 @@ export default function Exams() {
                         {/* ✅ ALIGNED BUTTONS TO THE EXTREME RIGHT */}
                         <div className="card-header table-card-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                             <h3>Database Records ({questions.length})</h3>
-                            <div style={{display:'flex', alignItems:'center', gap:'10px', marginLeft: 'auto'}}>
+                            <div style={{display:'flex', alignItems:'center', gap:'10px', marginLeft: 'auto'}} className="action-group">
                                 <button onClick={fetchQuestions} className="icon-btn btn-view" title="Refresh Data"><RefreshCw size={16}/></button>
                                 <button onClick={generatePaper} className="btn-success ripple-effect"><FileOutput size={18}/> Generate Paper PDF</button>
                             </div>
@@ -486,13 +486,13 @@ export default function Exams() {
 
             {/* --- MODALS SECTION --- */}
 
-            {/* 1. VIEW QUESTION MODAL */}
+            {/* 1. VIEW QUESTION MODAL (✅ FIXED SCROLL AND CUT-OFF) */}
             {viewQ && (
                 <div className="modal-overlay glass-overlay fade-in">
-                    <div className="modal-content premium-modal scale-up-bounce">
+                    <div className="modal-content premium-modal scale-up-bounce" style={{ display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
                         <div className="modal-decorative-bg"></div>
 
-                        <div className="modal-header-premium">
+                        <div className="modal-header-premium" style={{ flexShrink: 0 }}>
                             <div className="header-text">
                                 <span className="subtitle">Question Details</span>
                                 <h3>Overview</h3>
@@ -500,7 +500,7 @@ export default function Exams() {
                             <button onClick={() => setViewQ(null)} className="close-btn-premium"><X size={24}/></button>
                         </div>
 
-                        <div className="modal-body-premium">
+                        <div className="modal-body-premium" style={{ overflowY: 'auto', flex: 1 }}>
                             <div className="question-hero">
                                 <div className="q-icon"><FileText size={32}/></div>
                                 <p className="q-text">"{viewQ.text}"</p>
@@ -531,7 +531,7 @@ export default function Exams() {
                             </div>
                         </div>
 
-                        <div className="modal-footer-premium">
+                        <div className="modal-footer-premium" style={{ flexShrink: 0 }}>
                             <button onClick={() => { setViewQ(null); handleEditClick(viewQ); }} className="btn-edit-premium">
                                 <Edit2 size={16}/> Edit Question
                             </button>
@@ -540,15 +540,15 @@ export default function Exams() {
                 </div>
             )}
 
-            {/* 2. EDIT QUESTION MODAL */}
+            {/* 2. EDIT QUESTION MODAL (✅ FIXED SCROLL AND CUT-OFF) */}
             {showEditModal && (
                 <div className="modal-overlay glass-overlay fade-in" onClick={handleCancelEdit}>
-                    <div className="modal-content premium-modal scale-up-bounce" onClick={e => e.stopPropagation()} style={{padding: '30px', overflow: 'visible', width: '700px', maxWidth: '95vw'}}>
-                        <div className="modal-header-premium" style={{padding: '0 0 20px 0', borderBottom: '1px solid #e2e8f0', marginBottom: '20px'}}>
+                    <div className="modal-content premium-modal scale-up-bounce" onClick={e => e.stopPropagation()} style={{padding: '30px', overflowY: 'auto', maxHeight: '90vh', width: '700px', maxWidth: '95vw', display: 'flex', flexDirection: 'column'}}>
+                        <div className="modal-header-premium" style={{padding: '0 0 20px 0', borderBottom: '1px solid #e2e8f0', marginBottom: '20px', flexShrink: 0}}>
                             <h3 style={{margin:0, color:'#1e293b', fontSize:'1.5rem'}}>Edit Question</h3>
                             <button onClick={handleCancelEdit} className="close-btn-premium" style={{width: '35px', height: '35px'}}><X size={18}/></button>
                         </div>
-                        <div className="card-body form-grid-modal" style={{padding: 0}}>
+                        <div className="card-body form-grid-modal" style={{padding: 0, flex: 1}}>
                             <div className="input-group full-width" style={{gridColumn: 'span 2', marginBottom: '15px'}}>
                                 <input
                                     type="text"
@@ -579,7 +579,7 @@ export default function Exams() {
                                 />
                             </div>
                         </div>
-                        <div className="modal-footer-premium footer-actions-modal" style={{padding: '0', background: 'transparent', border: 'none', display: 'flex', gap: '10px'}}>
+                        <div className="modal-footer-premium footer-actions-modal" style={{padding: '0', background: 'transparent', border: 'none', display: 'flex', gap: '10px', flexShrink: 0}}>
                             <button onClick={handleCancelEdit} className="btn-secondary" style={{flex: 1, padding: '14px', borderRadius: '10px'}}>Cancel</button>
                             <button onClick={handleSaveQuestion} className="btn-primary ripple-effect" style={{flex: 1, padding: '14px', borderRadius: '10px'}}>Update Question</button>
                         </div>
@@ -658,7 +658,6 @@ export default function Exams() {
                 width: 600px;
                 border-radius: 24px;
                 box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-                overflow: hidden;
                 position: relative;
                 border: 1px solid rgba(255, 255, 255, 0.5);
                 box-sizing: border-box;
@@ -871,7 +870,8 @@ export default function Exams() {
                 }
 
                 .table-card-header { flex-direction: column; align-items: flex-start !important; gap: 10px; }
-                .btn-success { width: 100%; justify-content: center; }
+                .action-group { width: 100%; justify-content: space-between; margin-left: 0 !important; }
+                .btn-success { flex: 1; justify-content: center; }
 
                 /* Evaluation Tab Mobile Fixes */
                 .exam-meta-header { flex-direction: column; gap: 10px; }
