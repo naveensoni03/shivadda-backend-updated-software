@@ -34,7 +34,7 @@ export default function Inventory() {
   const inputStyle = { 
     width: '100%', padding: '12px', borderRadius: '12px', 
     border: '1px solid #334155', background: '#1e293b', 
-    color: '#ffffff', outline: 'none', fontSize: '0.9rem', transition: '0.3s' 
+    color: '#ffffff', outline: 'none', fontSize: '0.9rem', transition: '0.3s', boxSizing: 'border-box'
   };
 
   // ✅ 1. FETCH DATA (Strictly Real DB)
@@ -176,14 +176,6 @@ export default function Inventory() {
     setIsAddingCategory(false);
   };
 
-  const getStockStatus = (available, total) => {
-    if (!total) return { label: "No Data", color: "#64748b", bg: "#f1f5f9" };
-    const ratio = available / total;
-    if (ratio === 0) return { label: "Out of Stock", color: "#ef4444", bg: "#fef2f2" };
-    if (ratio < 0.2) return { label: "Low Stock", color: "#f59e0b", bg: "#fffbeb" };
-    return { label: "In Stock", color: "#10b981", bg: "#f0fdf4" };
-  };
-
   const openEditPanel = (item) => {
     setSelectedItem(item);
     setPanelMode("edit");
@@ -205,14 +197,14 @@ export default function Inventory() {
   };
 
   return (
-    <div className="dashboard-container" style={{background: '#f8fafc', height: '100vh', display: 'flex', overflow: 'hidden'}}>
+    <div className="inventory-page-wrapper">
       <div className="ambient-bg"></div>
       <SidebarModern />
       <Toaster position="top-center" reverseOrder={false} />
 
-      <div className="main-content" style={{flex: 1, padding: '30px 40px', overflowY: 'auto', position: 'relative', display: 'flex', flexDirection: 'column'}}>
+      <div className="inventory-main-content">
         
-        <header className="slide-in-down" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px', flexShrink: 0 }}>
+        <header className="slide-in-down page-header">
           <div>
             <h1 className="gradient-text" style={{ fontSize: '2.5rem', fontWeight: '900', letterSpacing: '-1px', margin: 0, color: '#0f172a' }}>Inventory Control</h1>
             <p style={{ color: '#64748b', fontSize: '0.95rem', fontWeight: '500', margin: '5px 0 0' }}>Real-time database connection.</p>
@@ -221,7 +213,7 @@ export default function Inventory() {
         </header>
 
         {/* ALERTS */}
-        <div className="stats-grid" style={{display: 'flex', gap: '20px', marginBottom: '30px'}}>
+        <div className="stats-grid">
             <div className="stat-card-3d fade-in-up" style={{animationDelay: '0.1s', '--accent': '#f59e0b'}}>
                 <div style={{display:'flex', justifyContent:'space-between', alignItems: 'center'}}>
                     <div><span style={{color:'#64748b', fontWeight:'700', fontSize:'0.85rem'}}>LOW STOCK ALERTS</span><h2 style={{color:'#f59e0b', fontSize:'2.5rem', margin: '5px 0', fontWeight: '900'}}>{items.filter(i => i.available_quantity < 5).length}</h2></div>
@@ -237,9 +229,9 @@ export default function Inventory() {
         </div>
 
         {/* TABLE */}
-        <div className="glass-card fade-in-up" style={{ flex: 1, background: 'white', padding: '25px', borderRadius: '24px', animationDelay: '0.3s', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <div className="glass-card fade-in-up table-card">
             
-            <div style={{overflowX: 'auto'}}>
+            <div className="table-wrapper">
                 <table className="modern-table luxe-table">
                     <thead>
                         <tr>
@@ -303,14 +295,14 @@ export default function Inventory() {
         {showActionPanel && (
             <div className="overlay-blur" onClick={() => setShowActionPanel(false)}>
                 <div className="luxe-panel slide-in-right" onClick={(e) => e.stopPropagation()}>
-                    <div className="panel-header-simple">
+                    <div className="panel-header-simple" style={{flexShrink: 0}}>
                         <h2 style={{margin: '0 0 5px', color: '#0f172a', fontWeight:'800'}}>
                             {panelMode === 'create' ? 'Add Asset' : panelMode === 'edit' ? 'Edit Asset' : `${actionType} Stock`}
                         </h2>
                         <button className="close-circle-btn hover-rotate" onClick={() => setShowActionPanel(false)}>✕</button>
                     </div>
                     
-                    <div className="panel-content-scroll" style={{marginTop: '20px'}}>
+                    <div className="panel-content-scroll" style={{marginTop: '20px', flex: 1, overflowY: 'auto'}}>
                         
                         {(panelMode === 'create' || panelMode === 'edit') && (
                             <>
@@ -372,7 +364,7 @@ export default function Inventory() {
                             </>
                         )}
 
-                        <button className="btn-confirm-gradient hover-lift" onClick={handleSubmit} style={{width: '100%', padding: '16px', fontSize: '1rem', marginTop:'30px', border: 'none', borderRadius: '12px', fontWeight: '700', cursor: 'pointer'}}>
+                        <button className="btn-confirm-gradient hover-lift" onClick={handleSubmit} style={{width: '100%', padding: '16px', fontSize: '1rem', marginTop:'30px', border: 'none', borderRadius: '12px', fontWeight: '700', cursor: 'pointer', flexShrink: 0}}>
                             {panelMode === 'create' ? 'Save Asset' : panelMode === 'edit' ? 'Update Details' : 'Confirm'}
                         </button>
                     </div>
@@ -383,8 +375,8 @@ export default function Inventory() {
         {/* --- HISTORY MODAL --- */}
         {showHistoryPanel && selectedItem && (
             <div className="overlay-blur centered-flex" onClick={() => setShowHistoryPanel(false)}>
-                <div className="glass-card" onClick={e => e.stopPropagation()} style={{width:'600px', height:'500px', background:'white', padding:'30px', borderRadius:'20px', overflow:'hidden', display:'flex', flexDirection:'column'}}>
-                    <div style={{display:'flex', justifyContent:'space-between', marginBottom:'20px'}}>
+                <div className="glass-card history-modal" onClick={e => e.stopPropagation()}>
+                    <div style={{display:'flex', justifyContent:'space-between', marginBottom:'20px', flexShrink: 0}}>
                         <div>
                             <h2 style={{margin:0, color:'#0f172a'}}>History Log</h2>
                             <p style={{margin:0, color:'#64748b', fontSize:'0.9rem'}}>Item: {selectedItem.name}</p>
@@ -406,7 +398,7 @@ export default function Inventory() {
                                 {historyLogs.length === 0 ? <tr><td colSpan="4" style={{textAlign:'center', padding:'20px', color:'#cbd5e1'}}>No history available in database.</td></tr> : 
                                 historyLogs.map(log => (
                                     <tr key={log.id} style={{borderBottom:'1px solid #f8fafc'}}>
-                                        <td style={{padding:'12px', fontSize:'0.85rem', color:'#64748b'}}>{log.formatted_date}</td>
+                                        <td style={{padding:'12px', fontSize:'0.85rem', color:'#64748b', whiteSpace: 'nowrap'}}>{log.formatted_date}</td>
                                         <td>
                                             <span style={{
                                                 padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700',
@@ -415,7 +407,7 @@ export default function Inventory() {
                                             }}>{log.type}</span>
                                         </td>
                                         <td style={{fontWeight:'bold', color:'#334155'}}>{log.quantity}</td>
-                                        <td style={{fontSize:'0.85rem', color:'#475569'}}>
+                                        <td style={{fontSize:'0.85rem', color:'#475569', whiteSpace: 'nowrap'}}>
                                             {log.issued_to ? `User: ${log.issued_to}` : '-'}
                                             {log.condition === 'Damaged' && <span style={{color:'#ef4444', marginLeft:'5px', fontWeight:'700'}}>(DAMAGED)</span>}
                                         </td>
@@ -429,7 +421,50 @@ export default function Inventory() {
         )}
 
       </div>
+      
+      {/* 🚀 CSS FOR 100% RESPONSIVENESS AND TABLE HORIZONTAL SCROLL */}
       <style>{`
+        /* Avoid Body scroll locking globally */
+        html, body, #root { margin: 0; padding: 0; height: 100%; }
+
+        .inventory-page-wrapper {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background: #f8fafc;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .inventory-main-content {
+            flex: 1;
+            margin-left: 280px; 
+            padding: 30px;
+            padding-bottom: 120px !important; /* Prevents Chatbot overlap on desktop */
+            height: 100vh;
+            overflow-y: auto !important; /* Desktop Scroll Guarantee */
+            box-sizing: border-box;
+            max-width: calc(100% - 280px);
+            position: relative;
+            z-index: 1;
+        }
+
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; flex-shrink: 0; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px; width: 100%; }
+        
+        .table-card { flex: 1; background: white; padding: 25px; border-radius: 24px; display: flex; flex-direction: column; justify-content: space-between; }
+
+        /* ✅ TABLE HORIZONTAL SCROLL FIX */
+        .table-wrapper {
+            overflow-x: auto;
+            width: 100%;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 10px;
+        }
+        
+        .modern-table { width: 100%; border-collapse: collapse; min-width: 800px; }
+
         /* Pagination Styles */
         .pagination-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #f1f5f9; }
         .page-info { color: #64748b; font-size: 0.9rem; }
@@ -455,24 +490,68 @@ export default function Inventory() {
         .bounce-in-glass { animation: bounceInGlass 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .pulse-animation { animation: pulseBlue 2s infinite; }
 
-        .stat-card-3d { flex: 1; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px); padding: 25px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1); transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .stat-card-3d { width: 100%; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px); padding: 25px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1); transition: all 0.3s ease; position: relative; overflow: hidden; box-sizing: border-box; }
         .stat-card-3d:hover { transform: translateY(-10px) perspective(1000px) rotateX(2deg) rotateY(2deg); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); }
         .icon-box-floating { width: 60px; height: 60px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; animation: floatIcon 4s ease-in-out infinite; }
         
         .glass-card { background: white; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .modern-table th { color: #94a3b8; font-size: 0.75rem; letter-spacing: 1px; text-align: left; padding: 20px; font-weight: 700; }
+        .modern-table th { color: #94a3b8; font-size: 0.75rem; letter-spacing: 1px; text-align: left; padding: 20px; font-weight: 700; white-space: nowrap; }
         .floating-row-glow { transition: all 0.2s ease; }
         .floating-row-glow:hover { transform: translateY(-3px); background: #f8fafc; }
-        .floating-row-glow td { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; }
+        .floating-row-glow td { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
         
         .overlay-blur { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.3); backdrop-filter: blur(8px); z-index: 2000; display: flex; justify-content: flex-end; }
-        .luxe-panel { width: 450px; height: 100%; background: white; padding: 35px; display: flex; flex-direction: column; box-shadow: -20px 0 60px rgba(0,0,0,0.15); overflow-y: auto; }
-        .close-circle-btn { width: 36px; height: 36px; border-radius: 50%; background: #f1f5f9; border: none; cursor: pointer; color: #64748b; font-size: 1rem; }
+        .luxe-panel { width: 450px; height: 100%; background: white; padding: 35px; display: flex; flex-direction: column; box-shadow: -20px 0 60px rgba(0,0,0,0.15); box-sizing: border-box; }
+        .close-circle-btn { width: 36px; height: 36px; border-radius: 50%; background: #f1f5f9; border: none; cursor: pointer; color: #64748b; font-size: 1rem; flex-shrink: 0; }
         
         .btn-confirm-gradient { background: linear-gradient(135deg, #0f172a 0%, #334155 100%); color: white; border-radius: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2); }
-        .btn-glow { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); border: none; color: white; padding: 10px 22px; border-radius: 50px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 15px rgba(99, 102, 241, 0.25); display: flex; align-items: center; font-size: 0.9rem; }
+        .btn-glow { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); border: none; color: white; padding: 10px 22px; border-radius: 50px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 15px rgba(99, 102, 241, 0.25); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; white-space: nowrap; }
         .input-group label { display: block; font-size: 0.85rem; color: #64748b; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.3px; }
-        .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; width: 100%; }
+
+        /* History Modal Fix */
+        .history-modal { width: 600px; height: 500px; max-width: 90vw; max-height: 90vh; background: white; padding: 30px; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
+
+        /* 📱 RESPONSIVE MEDIA QUERIES */
+        @media (max-width: 1024px) {
+            .inventory-main-content { margin-left: 0 !important; max-width: 100%; width: 100%; }
+        }
+
+        @media (max-width: 850px) {
+            /* Unlock Scroll on Mobile completely */
+            html, body, #root { height: auto !important; min-height: 100vh !important; overflow-y: visible !important; }
+            
+            .inventory-page-wrapper {
+                display: block !important; 
+                height: auto !important;
+                min-height: 100vh !important;
+            }
+
+            .inventory-main-content {
+                margin-left: 0 !important;
+                padding: 15px !important;
+                padding-top: 85px !important; 
+                padding-bottom: 160px !important; /* Space for chatbot */
+                width: 100vw !important;
+                max-width: 100vw !important;
+                height: auto !important;
+                min-height: 100vh !important;
+                overflow: visible !important;
+                display: block !important; /* Break Flex lock */
+            }
+
+            .page-header { flex-direction: column; align-items: flex-start !important; gap: 15px; }
+            .btn-glow { width: 100%; }
+
+            .stats-grid { grid-template-columns: 1fr !important; }
+            
+            .table-card { padding: 15px !important; }
+            
+            .grid-2-col { grid-template-columns: 1fr !important; gap: 15px !important; }
+
+            .luxe-panel { width: 100%; padding: 20px; }
+            .history-modal { padding: 20px; }
+        }
       `}</style>
     </div>
   );
