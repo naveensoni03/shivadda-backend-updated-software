@@ -196,7 +196,6 @@ export default function VirtualSpace() {
     <div className="virtual-space-container">
         <SidebarModern />
         
-        {/* 🚀 Main Content Wrapper */}
         <div className="vs-main-content">
             <Toaster position="top-center" />
             <input type="file" ref={fileInputRef} style={{display: 'none'}} onChange={handleFileChange} />
@@ -302,7 +301,7 @@ export default function VirtualSpace() {
                         </div>
                         <div className="card-footer">
                             <button onClick={handleUploadClick} className="btn-upload">
-                                <UploadCloud size={16}/> Upload
+                                <UploadCloud size={16}/> Upload Resource
                             </button>
                         </div>
                     </div>
@@ -310,20 +309,19 @@ export default function VirtualSpace() {
             </div>
         </div>
 
-        {/* 🚀 CSS WITH MOBILE RESPONSIVENESS (PERFECT VIDEO FIX) */}
+        {/* 🚀 CSS WITH 100% BULLETPROOF SCROLL FIX */}
         <style>{`
             :root { --bg-body: #f8fafc; --text-main: #1e293b; --text-muted: #64748b; --primary: #3b82f6; --danger: #ef4444; --border-light: #e2e8f0; }
+            
+            /* Desktop Layout */
             .virtual-space-container { display: flex; height: 100vh; background: var(--bg-body); font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }
-            
-            /* Main Content Desktop View */
-            .vs-main-content { flex: 1; padding: 20px; margin-left: 280px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box; transition: all 0.3s ease;}
-            
+            .vs-main-content { flex: 1; padding: 20px; margin-left: 280px; height: 100vh; display: flex; flex-direction: column; overflow-y: auto; box-sizing: border-box; transition: all 0.3s ease;}
             .vs-grid-layout { display: grid; grid-template-columns: 1fr 280px; gap: 20px; flex: 1; min-height: 0; }
-            .sidebar-panels { display: flex; flex-direction: column; gap: 15px; height: 100%; overflow: hidden; } 
             
+            .sidebar-panels { display: flex; flex-direction: column; gap: 15px; height: 100%; overflow: hidden; } 
             .info-card { background: white; border-radius: 14px; border: 1px solid var(--border-light); overflow: hidden; display: flex; flex-direction: column; }
             .broadcast-card { flex-shrink: 0; }
-            .resources-card { flex: 1; min-height: 0; display: flex; flex-direction: column; } 
+            .resources-card { flex: 1; min-height: 250px; display: flex; flex-direction: column; } 
             
             .scrollable-list { overflow-y: auto; flex: 1; padding: 10px; min-height: 0; }
             .scrollable-list::-webkit-scrollbar { width: 6px; }
@@ -368,8 +366,8 @@ export default function VirtualSpace() {
             .res-meta { font-size: 0.7rem; color: var(--text-muted); }
             .btn-download { background: white; border: 1px solid var(--border-light); width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); cursor: pointer; }
             
-            .card-footer { padding: 10px; border-top: 1px solid var(--border-light); text-align: center; background: #f8fafc; flex-shrink: 0; }
-            .btn-upload { width: 100%; padding: 10px; background: white; border: 1px dashed var(--primary); color: var(--primary); border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.85rem; transition: 0.2s; }
+            .card-footer { padding: 15px; border-top: 1px solid var(--border-light); text-align: center; background: #f8fafc; flex-shrink: 0; }
+            .btn-upload { width: 100%; padding: 12px; background: white; border: 1px dashed var(--primary); color: var(--primary); border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.9rem; transition: 0.2s; }
             .btn-upload:hover { background: #eff6ff; }
             
             .header-actions { display: flex; gap: 10px;}
@@ -379,32 +377,52 @@ export default function VirtualSpace() {
             .btn-secondary { background: white; border: 1px solid var(--border-light); color: var(--text-main); }
             .btn-danger-outline { background: white; border: 1px solid var(--danger); color: var(--danger); }
 
-            /* 📱 MOBILE RESPONSIVENESS */
+            /* ==============================================================
+               📱 THE ULTIMATE SCROLL FIX FOR ANY MOBILE IN THE WORLD
+               ============================================================== */
             @media (max-width: 850px) {
-                .virtual-space-container { overflow-y: auto; }
                 
+                /* KILL ALL HEIGHT RESTRICTIONS AND OVERFLOW LOCKS */
+                .virtual-space-container, 
+                .vs-main-content, 
+                .vs-grid-layout, 
+                .sidebar-panels, 
+                .info-card,
+                .resources-card,
+                .scrollable-list {
+                    height: auto !important;
+                    min-height: 0 !important;
+                    max-height: none !important;
+                    overflow: visible !important;
+                }
+
+                .virtual-space-container { 
+                    display: block !important; 
+                    padding-bottom: 50px !important; /* Safety padding for bottom nav bars */
+                }
+
                 .vs-main-content {
                     margin-left: 0 !important;
                     padding: 15px !important;
                     padding-top: 90px !important; /* Top space for Mobile Header */
                     width: 100% !important;
-                    height: auto !important; 
-                    overflow: visible !important;
+                    box-sizing: border-box !important;
+                    display: block !important;
                 }
                 
                 /* Stack header buttons */
-                .vs-header { flex-direction: column; align-items: flex-start; gap: 15px; }
-                .header-actions { width: 100%; flex-wrap: wrap; }
+                .vs-header { display: flex !important; flex-direction: column; align-items: flex-start; gap: 15px; margin-bottom: 20px; }
+                .header-actions { display: flex !important; width: 100%; flex-wrap: wrap; }
                 .header-actions button { flex: 1; justify-content: center; }
 
                 /* Stack Video and Sidebar */
-                .vs-grid-layout { grid-template-columns: 1fr; display: flex; flex-direction: column; }
+                .vs-grid-layout { display: flex !important; flex-direction: column !important; gap: 25px; }
                 
-                /* 🚀 PERFECT MOBILE VIDEO PLAYER FIX */
+                /* Video Player - Keep aspect ratio but allow it to sit in document flow */
                 .video-card { 
-                    height: auto !important; 
-                    aspect-ratio: 4/3; /* Ye camera/video ko pichakne nahi dega */
-                    min-height: auto; 
+                    display: block !important;
+                    width: 100%;
+                    aspect-ratio: 4/3; 
                 }
                 
                 /* Make controls smaller for mobile */
@@ -413,8 +431,25 @@ export default function VirtualSpace() {
                 .control-overlay { bottom: 10px; }
                 
                 /* Sidebar panels adjustments for mobile */
-                .sidebar-panels { height: auto; }
-                .resources-card { min-height: 350px; } 
+                .sidebar-panels { 
+                    display: flex !important; 
+                    flex-direction: column !important; 
+                    gap: 20px; 
+                }
+                
+                .info-card { 
+                    border: 1px solid var(--border-light) !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                }
+                
+                /* 🚀 UPLOAD BUTTON VISIBILITY FIX */
+                .card-footer {
+                    display: block !important;
+                    padding: 15px;
+                    background: #f8fafc;
+                    border-top: 1px solid var(--border-light);
+                }
             }
         `}</style>
     </div>
