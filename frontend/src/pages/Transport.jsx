@@ -138,17 +138,17 @@ export default function Transport() {
     window.location.href = `tel:${cleanNumber}`;
   };
 
-  const inputStyle = { width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #334155', background: '#1e293b', color: '#ffffff', outline: 'none', fontSize: '0.95rem', transition: '0.3s' };
+  const inputStyle = { width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid #334155', background: '#1e293b', color: '#ffffff', outline: 'none', fontSize: '0.95rem', transition: '0.3s', boxSizing: 'border-box' };
 
   return (
-    <div className="dashboard-container" style={{background: '#f8fafc', height: '100vh', display: 'flex', overflow: 'hidden', position: 'relative'}}>
+    <div className="transport-page-wrapper">
       <div className="ambient-bg"></div>
       <SidebarModern />
 
-      <div className="main-content" style={{flex: 1, padding: '30px 40px', overflowY: 'auto', position: 'relative', display: 'flex', flexDirection: 'column', zIndex: 1}}>
+      <div className="transport-main-content">
         
         {/* HEADER */}
-        <header className="slide-in-down" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px', flexShrink: 0 }}>
+        <header className="slide-in-down page-header">
           <div>
             <h1 className="gradient-text" style={{ fontSize: '2.5rem', fontWeight: '900', letterSpacing: '-1px', margin: 0, color: '#0f172a' }}>Transport Fleet</h1>
             <p style={{ color: '#64748b', fontSize: '0.95rem', fontWeight: '500', margin: '5px 0 0' }}>Live tracking, route management & driver details.</p>
@@ -159,7 +159,7 @@ export default function Transport() {
         </header>
 
         {/* ROUTES GRID */}
-        <div className="books-grid-modern" style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '25px', paddingBottom: '40px'}}>
+        <div className="books-grid-modern">
             {routes.map((route, idx) => (
                 <div key={route.id} className="book-card-premium fade-in-up" style={{animationDelay: `${idx * 0.1}s`, cursor:'default'}}>
                     <div style={{height: '140px', background: route.color, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', color: 'white', position: 'relative'}}>
@@ -169,7 +169,7 @@ export default function Transport() {
                         </div>
                         <div style={{fontSize: '2.5rem', opacity: 0.3}}>🚍</div>
                     </div>
-                    <div style={{padding: '20px', background: 'white', flex: 1}}>
+                    <div style={{padding: '20px', background: 'white', flex: 1, display: 'flex', flexDirection: 'column'}}>
                         <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px dashed #f1f5f9'}}>
                             <div>
                                 <small style={{color: '#94a3b8', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase'}}>Driver</small>
@@ -201,7 +201,7 @@ export default function Transport() {
                         <div style={{height: '8px', background: '#f1f5f9', borderRadius: '4px', overflow: 'hidden'}}>
                             <div style={{width: `${(route.filled/route.capacity)*100}%`, background: route.filled >= route.capacity ? '#ef4444' : '#3b82f6', height: '100%'}}></div>
                         </div>
-                        <div style={{display: 'flex', gap: '10px', marginTop: '20px'}}>
+                        <div style={{display: 'flex', gap: '10px', marginTop: 'auto', paddingTop: '20px'}}>
                             <button className="btn-edit hover-lift" onClick={() => handleEdit(route)} style={{flex: 1, justifyContent: 'center'}}>Edit ✏️</button>
                             <button className="btn-monitor hover-lift" onClick={() => handleTrack(route)} style={{flex: 1, justifyContent: 'center'}}>Track GPS 🛰️</button>
                         </div>
@@ -215,7 +215,7 @@ export default function Transport() {
             <div className="overlay-blur" onClick={() => setActivePanel("none")}>
                 <div className="luxe-panel slide-in-right" onClick={(e) => e.stopPropagation()}>
                     
-                    <div className="panel-header-simple" style={{borderBottom: '1px solid #f1f5f9', paddingBottom: '20px', marginBottom: '20px'}}>
+                    <div className="panel-header-simple" style={{borderBottom: '1px solid #f1f5f9', paddingBottom: '20px', marginBottom: '20px', flexShrink: 0}}>
                         <div>
                             <h2 style={{margin: '0 0 5px', color: '#0f172a', fontWeight:'800'}}>
                                 {activePanel === 'track' ? 'Live GPS Tracking' : (selectedRoute ? 'Update Route' : 'Add New Route')}
@@ -227,7 +227,7 @@ export default function Transport() {
                         <button className="close-circle-btn hover-rotate" onClick={() => setActivePanel("none")}>✕</button>
                     </div>
                     
-                    <div className="panel-content-scroll">
+                    <div className="panel-content-scroll" style={{overflowY: 'auto', flex: 1, paddingBottom: '20px'}}>
                         {/* 1. FORM VIEW */}
                         {activePanel === 'form' && (
                             <>
@@ -259,7 +259,7 @@ export default function Transport() {
                         {/* 2. REAL MAP VIEW (LEAFLET) */}
                         {activePanel === 'track' && selectedRoute && (
                             <div className="fade-in-up">
-                                <div style={{height: '350px', borderRadius: '16px', overflow: 'hidden', marginBottom: '20px', border: '2px solid white', boxShadow: '0 10px 30px rgba(0,0,0,0.1)'}}>
+                                <div className="map-container-style">
                                     <MapContainer center={[busLocation.lat, busLocation.lng]} zoom={14} style={{ height: "100%", width: "100%" }}>
                                         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                                         <Marker position={[busLocation.lat, busLocation.lng]}>
@@ -286,7 +286,7 @@ export default function Transport() {
 
                                 <div style={{background:'#fff', border:'1px solid #f1f5f9', padding:'20px', borderRadius:'16px', marginTop:'10px'}}>
                                     <div style={{display:'flex', gap:'15px', alignItems:'center'}}>
-                                        <div style={{width:'50px', height:'50px', background:'#e0e7ff', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.5rem'}}>👮‍♂️</div>
+                                        <div style={{width:'50px', height:'50px', background:'#e0e7ff', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.5rem', flexShrink: 0}}>👮‍♂️</div>
                                         <div>
                                             <h4 style={{margin:0, color:'#1e293b'}}>{selectedRoute.driver}</h4>
                                             <span style={{color:'#64748b', fontSize:'0.9rem'}}>Driver • ⭐ 4.8</span>
@@ -294,7 +294,7 @@ export default function Transport() {
                                         {/* ✅ CLICKABLE CALL BUTTON IN MAP */}
                                         <button 
                                             onClick={() => handleCallDriver(selectedRoute.phone)}
-                                            style={{marginLeft:'auto', background:'#22c55e', border:'none', width:'40px', height:'40px', borderRadius:'50%', color:'white', cursor:'pointer', fontSize:'1.2rem', display:'flex', alignItems:'center', justifyContent:'center', textDecoration:'none'}}
+                                            style={{marginLeft:'auto', background:'#22c55e', border:'none', width:'40px', height:'40px', borderRadius:'50%', color:'white', cursor:'pointer', fontSize:'1.2rem', display:'flex', alignItems:'center', justifyContent:'center', textDecoration:'none', flexShrink: 0}}
                                             className="hover-scale-press"
                                         >
                                             📞
@@ -322,9 +322,36 @@ export default function Transport() {
 
       </div>
 
-      {/* --- STYLES --- */}
+      {/* 🚀 RESPONSIVE STYLES */}
       <style>{`
-        /* Reuse Animations */
+        /* Core Reset */
+        html, body, #root { margin: 0; padding: 0; height: 100%; }
+        
+        .transport-page-wrapper {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background: #f8fafc;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .transport-main-content {
+            flex: 1;
+            margin-left: 280px; 
+            padding: 30px 40px;
+            padding-bottom: 120px !important; 
+            height: 100vh;
+            overflow-y: auto !important; 
+            box-sizing: border-box;
+            max-width: calc(100% - 280px);
+            position: relative;
+            z-index: 1;
+        }
+
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; flex-shrink: 0; }
+
+        /* Animations */
         @keyframes slideInDown { from { opacity: 0; transform: translateY(-40px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -338,29 +365,69 @@ export default function Transport() {
         .bounce-in-glass { animation: bounceInGlass 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .pulse-animation { animation: pulseBlue 2s infinite; }
 
-        .btn-edit { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 10px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 0.9rem; }
+        .btn-edit { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 10px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; }
         .btn-edit:hover { background: #0f172a; color: white; }
-        .btn-monitor { background: #ecfdf5; color: #10b981; border: 1px solid #bbf7d0; padding: 10px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 0.9rem; }
+        .btn-monitor { background: #ecfdf5; color: #10b981; border: 1px solid #bbf7d0; padding: 10px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 0.9rem; display: flex; align-items: center; gap: 5px;}
         .btn-monitor:hover { background: #10b981; color: white; }
 
         .hover-text-blue:hover { color: #3b82f6 !important; text-decoration: underline; }
         .hover-scale-press:hover { transform: scale(1.05); transition: 0.1s; }
 
         .overlay-blur { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.3); backdrop-filter: blur(8px); z-index: 2000; display: flex; justify-content: flex-end; }
-        .luxe-panel { width: 450px; height: 100%; background: white; padding: 35px; display: flex; flex-direction: column; box-shadow: -20px 0 60px rgba(0,0,0,0.15); overflow-y: auto; }
-        .close-circle-btn { width: 36px; height: 36px; border-radius: 50%; background: #f1f5f9; border: none; cursor: pointer; color: #64748b; font-size: 1rem; }
-        .btn-confirm-gradient { background: linear-gradient(135deg, #0f172a 0%, #334155 100%); border: none; color: white; border-radius: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2); }
-        .btn-glow { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); border: none; color: white; padding: 10px 22px; border-radius: 50px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 15px rgba(99, 102, 241, 0.25); display: flex; align-items: center; font-size: 0.9rem; }
+        .luxe-panel { width: 450px; height: 100%; background: white; padding: 35px; display: flex; flex-direction: column; box-shadow: -20px 0 60px rgba(0,0,0,0.15); box-sizing: border-box; }
+        .close-circle-btn { width: 36px; height: 36px; border-radius: 50%; background: #f1f5f9; border: none; cursor: pointer; color: #64748b; font-size: 1rem; flex-shrink: 0;}
+        .btn-confirm-gradient { background: linear-gradient(135deg, #0f172a 0%, #334155 100%); border: none; color: white; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center;}
+        .btn-glow { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); border: none; color: white; padding: 10px 22px; border-radius: 50px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 15px rgba(99, 102, 241, 0.25); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; white-space: nowrap;}
         
-        .success-card-luxe { background: white; padding: 40px; border-radius: 30px; text-align: center; width: 380px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+        .success-card-luxe { background: white; padding: 40px; border-radius: 30px; text-align: center; width: 380px; max-width: 90vw; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); box-sizing: border-box;}
         .success-ring-luxe { width: 100px; height: 100px; background: linear-gradient(135deg, #ecfdf5, #d1fae5); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; animation: checkPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .checkmark-anim { font-size: 3.5rem; color: #10b981; transform: rotate(45deg) scaleX(-1); display: inline-block; }
+        .centered-flex { display: flex; align-items: center; justify-content: center; padding: 20px;}
         
-        .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; width: 100%;}
         .input-group label { display: block; font-size: 0.85rem; color: #64748b; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.3px; }
         
-        .book-card-premium { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.06); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 1px solid #f1f5f9; display: flex; flex-direction: column; }
-        .book-card-premium:hover { transform: translateY(-10px); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); }
+        .books-grid-modern { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; width: 100%; padding-bottom: 40px;}
+        .book-card-premium { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.06); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; }
+        .book-card-premium:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+
+        .map-container-style { height: 350px; border-radius: 16px; overflow: hidden; margin-bottom: 20px; border: 2px solid white; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+
+        /* 📱 RESPONSIVE MEDIA QUERIES */
+        @media (max-width: 1024px) {
+            .transport-main-content { margin-left: 0 !important; max-width: 100%; width: 100%; }
+        }
+
+        @media (max-width: 850px) {
+            /* Unlock Scroll on Mobile completely */
+            html, body, #root { height: auto !important; min-height: 100vh !important; overflow-y: visible !important; }
+            
+            .transport-page-wrapper {
+                display: block !important; 
+                height: auto !important;
+                min-height: 100vh !important;
+            }
+
+            .transport-main-content {
+                margin-left: 0 !important;
+                padding: 15px !important;
+                padding-top: 85px !important; 
+                padding-bottom: 180px !important; /* Space for chatbot */
+                width: 100vw !important;
+                max-width: 100vw !important;
+                height: auto !important;
+                min-height: 100vh !important;
+                overflow: visible !important;
+                display: block !important; /* Break Flex lock */
+            }
+
+            .page-header { flex-direction: column; align-items: flex-start !important; gap: 15px; }
+            .page-header .btn-glow { width: 100%; justify-content: center; }
+
+            .luxe-panel { width: 100%; padding: 20px; }
+            .grid-2-col { grid-template-columns: 1fr !important; gap: 15px !important; }
+            .map-container-style { height: 250px; }
+        }
       `}</style>
     </div>
   );
