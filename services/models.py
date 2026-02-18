@@ -9,10 +9,10 @@ class EducationLevel(models.Model):
     def __str__(self):
         return self.name
 
-# 2. Service Type (e.g. Academic, Technical, Professional)
+# 2. Service Type (e.g. Academic, Unacademic, Both, Non)
 class ServiceType(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    code = models.CharField(max_length=20, unique=True) # e.g. ACD, TECH
+    code = models.CharField(max_length=20, unique=True) # e.g. ACD, UNACD
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -27,9 +27,7 @@ class ServiceMode(models.Model):
     def __str__(self):
         return self.name
     
-    
-    
-    # 4. Management Type (Management, Official, Unofficial, Both, None)
+# 4. Management Type (Management, Official, Unofficial, Both, None)
 class ManagementType(models.Model):
     name = models.CharField(max_length=50, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
