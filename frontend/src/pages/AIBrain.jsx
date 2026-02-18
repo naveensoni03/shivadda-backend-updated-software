@@ -73,7 +73,6 @@ export default function AIBrain() {
                 <h2>ESTABLISHING NEURAL LINK...</h2>
                 <div className="loading-bar"><div className="fill"></div></div>
                 <div className="terminal-text">
-                    {/* ✅ FIXED: Use &gt; instead of > */}
                     <p>&gt; Reading Database...</p>
                     <p>&gt; Analyzing Student Behavior...</p>
                     <p>&gt; Predicting Financial Trajectory...</p>
@@ -192,6 +191,7 @@ export default function AIBrain() {
         )}
       </div>
 
+      {/* 🚀 CSS FOR 100% RESPONSIVENESS AND PROPER SCROLLING */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap');
         
@@ -203,10 +203,13 @@ export default function AIBrain() {
             --glass-border: rgba(255, 255, 255, 0.08);
         }
 
+        /* ✅ SCROLL FIX: Strict Body Lock, App Container Lock */
+        html, body, #root { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #020617; }
+
         .neural-app {
-            display: flex; height: 100vh; background: #020617; 
+            display: flex; height: 100vh; width: 100%; background: #020617; 
             font-family: 'Rajdhani', sans-serif;
-            color: white; overflow: hidden;
+            color: white; overflow: hidden; position: relative;
         }
 
         .cyber-grid-bg {
@@ -219,13 +222,18 @@ export default function AIBrain() {
         }
 
         .orb {
-            position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.4; z-index: 0;
+            position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.4; z-index: 0; pointer-events: none;
         }
         .orb-1 { width: 300px; height: 300px; background: purple; top: -50px; left: 20%; animation: float 10s infinite; }
         .orb-2 { width: 400px; height: 400px; background: blue; bottom: -100px; right: 10%; animation: float 12s infinite reverse; }
 
+        /* ✅ SCROLL FIX: The ONLY element that scrolls vertically */
         .neural-container {
-            flex: 1; margin-left: 280px; padding: 30px; position: relative; z-index: 10; overflow-y: auto;
+            flex: 1; margin-left: 280px; padding: 30px; 
+            padding-bottom: 100px; /* Space at bottom for desktop */
+            position: relative; z-index: 10; 
+            height: 100vh; overflow-y: auto; overflow-x: hidden; 
+            box-sizing: border-box; scroll-behavior: smooth;
         }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
 
@@ -237,7 +245,7 @@ export default function AIBrain() {
         .nh-left { display: flex; gap: 20px; align-items: center; }
         .core-indicator {
             width: 50px; height: 50px; border: 1px solid var(--neon-purple); border-radius: 12px;
-            display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(168, 85, 247, 0.3);
+            display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(168, 85, 247, 0.3); flex-shrink: 0;
         }
         .core-indicator.pulse { background: var(--neon-purple); box-shadow: 0 0 30px var(--neon-purple); }
         
@@ -252,67 +260,72 @@ export default function AIBrain() {
         /* CARDS */
         .glass-card {
             background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border);
-            border-radius: 16px; padding: 20px; position: relative; transition: 0.3s;
+            border-radius: 16px; padding: 20px; position: relative; transition: 0.3s; box-sizing: border-box;
         }
         .glass-card:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-5px); box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5); }
         .card-label {
-            font-size: 0.7rem; color: #94a3b8; font-weight: 700; letter-spacing: 1.5px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;
+            font-size: 0.7rem; color: #94a3b8; font-weight: 700; letter-spacing: 1.5px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; text-transform: uppercase;
         }
 
         /* HUD GRID */
-        .hud-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
+        .hud-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; width: 100%; }
         .hud-card { display: flex; align-items: center; gap: 15px; }
-        .hc-icon { width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+        .hc-icon { width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;}
         .bg-purple { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; }
         .bg-blue { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
         .bg-cyan { background: rgba(34, 211, 238, 0.2); color: #67e8f9; }
         .bg-pink { background: rgba(244, 114, 182, 0.2); color: #f9a8d4; }
-        .hud-card h3 { margin: 0; font-size: 1.5rem; font-weight: 700; }
-        .hud-card span { font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px; }
+        .hud-card h3 { margin: 0; font-size: 1.5rem; font-weight: 700; white-space: nowrap;}
+        .hud-card span { font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px; white-space: nowrap;}
         .stat-up { color: #4ade80; font-size: 0.8rem; margin-left: 5px; }
         .stat-safe { color: #60a5fa; font-size: 0.8rem; margin-left: 5px; }
         .stat-neutral { color: #d1d5db; font-size: 0.8rem; margin-left: 5px; }
 
-        /* MAIN VIZ */
-        .main-viz-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 25px; margin-bottom: 25px; height: 350px; }
-        .brain-box { display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
-        .brain-visual { position: relative; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; }
+        /* ✅ MAIN VIZ GRID - Fixed width containment */
+        .main-viz-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 25px; margin-bottom: 25px; width: 100%; box-sizing: border-box; }
+        
+        .brain-box { display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 350px;}
+        .brain-visual { position: relative; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; margin: 20px 0;}
         .central-core { z-index: 2; animation: float 3s infinite ease-in-out; filter: drop-shadow(0 0 20px #a855f7); }
         .orbit { position: absolute; border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; }
         .orbit-1 { width: 100%; height: 100%; border-color: rgba(168, 85, 247, 0.3); animation: spin 10s linear infinite; }
         .orbit-2 { width: 70%; height: 70%; border-color: rgba(34, 211, 238, 0.3); animation: spin 7s linear infinite reverse; }
         .orbit-3 { width: 130%; height: 130%; border: 1px dashed rgba(255,255,255,0.05); animation: spin 20s linear infinite; }
         
-        .floating-stat { position: absolute; font-size: 0.7rem; background: rgba(0,0,0,0.5); padding: 4px 8px; border: 1px solid var(--glass-border); border-radius: 4px; }
-        .fs-1 { top: 10%; left: 0; }
+        .floating-stat { position: absolute; font-size: 0.7rem; background: rgba(0,0,0,0.5); padding: 4px 8px; border: 1px solid var(--glass-border); border-radius: 4px; white-space: nowrap;}
+        .fs-1 { top: 10%; left: -10px; }
         .fs-2 { bottom: 20%; right: -20px; }
         .fs-3 { bottom: -10%; left: 30%; }
         
-        .brain-footer { margin-top: 20px; font-size: 0.8rem; color: var(--neon-cyan); animation: blink 2s infinite; }
+        .brain-footer { margin-top: auto; font-size: 0.8rem; color: var(--neon-cyan); animation: blink 2s infinite; text-align: center;}
 
         /* INSIGHTS */
-        .insights-list { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; height: 100%; }
-        .insight-row { display: flex; align-items: center; gap: 15px; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.02); border-left: 3px solid transparent; transition: 0.2s; }
+        .insights-list { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; height: 100%; max-height: 300px; padding-right: 5px;}
+        .insight-row { display: flex; align-items: flex-start; gap: 15px; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.02); border-left: 3px solid transparent; transition: 0.2s; }
         .insight-row:hover { background: rgba(255,255,255,0.05); }
         .insight-row.opportunity { border-color: #4ade80; }
         .insight-row.alert { border-color: #f87171; }
         .insight-row.opt { border-color: #fbbf24; }
-        .ir-content { flex: 1; }
-        .ir-content h4 { margin: 0; font-size: 1rem; color: #f1f5f9; }
-        .ir-content p { margin: 2px 0 0; font-size: 0.8rem; color: #94a3b8; }
-        .ir-action { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+        .ir-left { margin-top: 2px; }
+        .ir-content { flex: 1; min-width: 0; } /* min-width:0 is crucial for flex child text wrapping */
+        
+        /* ✅ TEXT WRAPPING FIX */
+        .ir-content h4 { margin: 0; font-size: 1.05rem; color: #f1f5f9; white-space: normal; line-height: 1.3;}
+        .ir-content p { margin: 4px 0 0; font-size: 0.85rem; color: #94a3b8; white-space: normal; line-height: 1.4;}
+        
+        .ir-action { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; flex-shrink: 0; margin-top: 5px;}
         .ir-action:hover { background: white; color: black; }
 
-        /* BOTTOM GRID */
-        .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        /* ✅ BOTTOM GRID - Fixed width containment */
+        .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; width: 100%; margin-bottom: 40px; box-sizing: border-box; }
         .bm-row { display: flex; align-items: center; gap: 15px; margin-bottom: 12px; }
-        .bm-name { width: 120px; font-size: 0.9rem; color: #cbd5e1; }
-        .bm-bar-track { flex: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
+        .bm-name { width: 120px; font-size: 0.9rem; color: #cbd5e1; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .bm-bar-track { flex: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; min-width: 50px;}
         .bm-bar-fill { height: 100%; border-radius: 10px; transition: width 1s ease; }
-        .bm-score { font-weight: 700; width: 40px; text-align: right; }
+        .bm-score { font-weight: 700; width: 40px; text-align: right; flex-shrink: 0;}
 
         /* GRAPH */
-        .graph-bars { display: flex; align-items: flex-end; justify-content: space-between; height: 120px; padding: 0 10px; gap: 8px; }
+        .graph-bars { display: flex; align-items: flex-end; justify-content: space-between; height: 120px; padding: 0 10px; gap: 8px; margin-top: 20px;}
         .g-bar { flex: 1; background: rgba(255,255,255,0.1); border-radius: 4px 4px 0 0; position: relative; transition: 0.3s; cursor: pointer; }
         .g-bar:hover { background: var(--neon-purple); box-shadow: 0 0 15px var(--neon-purple); }
         .g-bar.predicted { background: transparent; border: 1px dashed var(--neon-cyan); }
@@ -324,12 +337,12 @@ export default function AIBrain() {
         .pred { color: var(--neon-cyan); }
 
         /* BOOT SEQUENCE */
-        .boot-sequence { height: 70vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .boot-sequence { height: 70vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;}
         .loading-brain { animation: pulse 1s infinite; filter: drop-shadow(0 0 20px #d8b4fe); margin-bottom: 20px; }
-        .loading-bar { width: 300px; height: 4px; background: rgba(255,255,255,0.1); margin: 20px 0; border-radius: 2px; overflow: hidden; }
+        .loading-bar { width: 100%; max-width: 300px; height: 4px; background: rgba(255,255,255,0.1); margin: 20px 0; border-radius: 2px; overflow: hidden;}
         .fill { width: 0%; height: 100%; background: var(--neon-purple); animation: load 3s forwards; }
-        .terminal-text { font-family: monospace; color: var(--neon-cyan); font-size: 0.9rem; text-align: left; }
-        .terminal-text p { overflow: hidden; white-space: nowrap; animation: typing 2s steps(40, end); }
+        .terminal-text { font-family: monospace; color: var(--neon-cyan); font-size: 0.9rem; text-align: left; max-width: 300px; margin: 0 auto;}
+        .terminal-text p { overflow: hidden; white-space: nowrap; animation: typing 2s steps(40, end); margin: 5px 0;}
 
         /* --- ANIMATIONS --- */
         .slide-up { animation: slideUp 0.6s ease-out forwards; opacity: 0; }
@@ -341,9 +354,7 @@ export default function AIBrain() {
         .slide-in-left { animation: slideInLeft 0.7s ease-out forwards; opacity: 0; }
         .slide-in-right { animation: slideInRight 0.7s ease-out forwards; opacity: 0; }
         .scale-in { animation: scaleIn 0.7s ease-out forwards; opacity: 0; }
-
         .stagger-item { animation: fadeInUp 0.6s ease-out forwards; opacity: 0; }
-
         .grow-bar { animation: growBar 0.8s ease-out forwards; transform-origin: bottom; }
 
         .float-slow { animation: floatSlow 6s ease-in-out infinite; }
@@ -367,6 +378,61 @@ export default function AIBrain() {
         @keyframes floatSlow { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
         @keyframes floatMedium { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
         @keyframes floatFast { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-16px); } }
+
+        /* 📱 RESPONSIVE MEDIA QUERIES */
+        @media (max-width: 1024px) {
+            .neural-container { margin-left: 0 !important; max-width: 100%; width: 100%; }
+            .hud-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+
+        @media (max-width: 850px) {
+            /* On mobile, ONLY the container scrolls vertically. Body remains locked. */
+            .neural-container {
+                margin-left: 0 !important;
+                padding: 15px !important;
+                padding-top: 85px !important; /* Sidebar header clearance */
+                padding-bottom: 150px !important; /* Chatbot & bottom nav clearance */
+                width: 100% !important; 
+                max-width: 100% !important;
+                height: 100vh !important; /* Keeps scroll active */
+            }
+
+            /* Responsive Header */
+            .neural-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .nh-right { text-align: left; }
+            .sys-status { justify-content: flex-start; }
+
+            /* ✅ FIXED: Grid Layouts to Stack for Mobile */
+            .hud-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 15px; }
+            
+            .main-viz-grid { 
+                grid-template-columns: 1fr !important; /* Forces vertical stack */
+                height: auto !important; 
+                gap: 20px !important;
+            }
+            
+            .insights-list {
+                height: auto !important;
+                max-height: none !important;
+                overflow: visible !important;
+            }
+
+            .bottom-grid { 
+                grid-template-columns: 1fr !important; /* Forces vertical stack */
+                gap: 20px !important;
+            }
+
+            /* Brain Scaling for Mobile */
+            .brain-visual { transform: scale(0.85); margin: 0 auto; }
+            
+            /* Typography Tweaks */
+            .glitch-text { font-size: 1.5rem; }
+            .hud-card h3 { font-size: 1.2rem; }
+        }
+
+        @media (max-width: 400px) {
+            .hud-grid { grid-template-columns: 1fr !important; }
+        }
       `}</style>
     </div>
   );
