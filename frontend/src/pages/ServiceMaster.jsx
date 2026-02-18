@@ -59,7 +59,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, isDeleting }) => (
                 style={{
                     position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', 
                     backdropFilter: 'blur(5px)', zIndex: 9999,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
                 }}
             >
                 <motion.div 
@@ -67,7 +67,8 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, isDeleting }) => (
                     className="responsive-modal"
                     style={{
                         background: 'white', padding: '30px', borderRadius: '24px',
-                        boxShadow: '0 20px 40px -10px rgba(0,0,0,0.2)', textAlign:'center', position:'relative'
+                        boxShadow: '0 20px 40px -10px rgba(0,0,0,0.2)', textAlign:'center', position:'relative',
+                        width: '100%', maxWidth: '400px'
                     }}
                 >
                     <button onClick={onClose} style={{position:'absolute', right:'20px', top:'20px', border:'none', background:'transparent', cursor:'pointer', color:'#94a3b8'}}><X size={20}/></button>
@@ -75,82 +76,11 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, isDeleting }) => (
                         <AlertTriangle size={32} strokeWidth={1.5}/>
                     </div>
                     <h3 style={{fontSize:'1.5rem', fontWeight:'800', color:'#1e293b', marginBottom:'10px'}}>Are you sure?</h3>
-                    <p style={{color:'#64748b', marginBottom:'25px'}}>Do you really want to delete this service record? This action cannot be undone.</p>
+                    <p style={{color:'#64748b', marginBottom:'25px'}}>Do you really want to delete this record? This action cannot be undone.</p>
                     <div style={{display:'flex', gap:'15px'}}>
                         <button onClick={onClose} style={{flex:1, padding:'12px', borderRadius:'12px', border:'2px solid #e2e8f0', background:'white', fontWeight:'700', color:'#64748b', cursor:'pointer'}}>Cancel</button>
                         <button onClick={onConfirm} style={{flex:1, padding:'12px', borderRadius:'12px', border:'none', background:'#ef4444', fontWeight:'700', color:'white', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'8px'}}>
                             {isDeleting ? <Sparkles size={18} className="spin"/> : <>Yes, Delete <Trash2 size={18}/></>}
-                        </button>
-                    </div>
-                </motion.div>
-            </motion.div>
-        )}
-    </AnimatePresence>
-);
-
-const ViewModal = ({ data, onClose, config }) => (
-    <AnimatePresence>
-        {data && (
-            <motion.div 
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                style={{
-                    position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', 
-                    backdropFilter: 'blur(5px)', zIndex: 9999,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '15px'
-                }}
-                onClick={onClose}
-            >
-                <motion.div 
-                    initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="responsive-modal"
-                    style={{
-                        background: 'white', padding: '0', borderRadius: '24px', 
-                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow:'hidden'
-                    }}
-                >
-                    <div style={{background: config.color, padding:'30px', position:'relative'}}>
-                        <button onClick={onClose} style={{position:'absolute', right:'20px', top:'20px', border:'none', background:'rgba(255,255,255,0.2)', width:'32px', height:'32px', borderRadius:'50%', cursor:'pointer', color:'white', display:'flex', alignItems:'center', justifyContent:'center'}}><X size={18}/></button>
-                        <div style={{width:'60px', height:'60px', borderRadius:'16px', background:'rgba(255,255,255,0.2)', color:'white', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:'15px', backdropFilter:'blur(5px)'}}>
-                            {config.icon}
-                        </div>
-                        <h2 style={{margin:0, color:'white', fontSize:'1.6rem', fontWeight:'800'}}>{data.name}</h2>
-                        <p style={{margin:'5px 0 0', color:'rgba(255,255,255,0.8)', fontSize:'0.9rem'}}>{config.title} Details</p>
-                    </div>
-
-                    <div style={{padding:'30px', maxHeight: '60vh', overflowY: 'auto'}}>
-                        <div style={{display:'grid', gap:'15px'}}>
-                            <div style={{padding:'15px', background:'#f8fafc', borderRadius:'14px', border:'1px solid #f1f5f9'}}>
-                                <div style={{fontSize:'0.7rem', fontWeight:'800', color:'#94a3b8', textTransform:'uppercase', letterSpacing:'0.5px'}}>Record ID</div>
-                                <div style={{fontSize:'1rem', fontWeight:'700', color:'#334155'}}>#{data.id}</div>
-                            </div>
-                            
-                            {data.description && (
-                                <div style={{padding:'15px', background:'#f8fafc', borderRadius:'14px', border:'1px solid #f1f5f9'}}>
-                                    <div style={{fontSize:'0.7rem', fontWeight:'800', color:'#94a3b8', textTransform:'uppercase', letterSpacing:'0.5px'}}>Description</div>
-                                    <div style={{fontSize:'1rem', fontWeight:'600', color:'#334155'}}>{data.description}</div>
-                                </div>
-                            )}
-                            
-                            {data.code && (
-                                <div style={{padding:'15px', background:'#f8fafc', borderRadius:'14px', border:'1px solid #f1f5f9'}}>
-                                    <div style={{fontSize:'0.7rem', fontWeight:'800', color:'#94a3b8', textTransform:'uppercase', letterSpacing:'0.5px'}}>Short Code</div>
-                                    <div style={{fontSize:'1rem', fontWeight:'700', color:'#334155', display:'flex', alignItems:'center', gap:'8px'}}>
-                                        <span style={{background:'#e0e7ff', color:'#4f46e5', padding:'4px 10px', borderRadius:'8px', fontSize:'0.85rem'}}>{data.code}</span>
-                                    </div>
-                                </div>
-                            )}
-
-                            {data.icon_name && (
-                                <div style={{padding:'15px', background:'#f8fafc', borderRadius:'14px', border:'1px solid #f1f5f9'}}>
-                                    <div style={{fontSize:'0.7rem', fontWeight:'800', color:'#94a3b8', textTransform:'uppercase', letterSpacing:'0.5px'}}>Icon Identifier</div>
-                                    <div style={{fontSize:'1rem', fontWeight:'600', color:'#334155'}}>{data.icon_name}</div>
-                                </div>
-                            )}
-                        </div>
-
-                        <button onClick={onClose} style={{marginTop:'25px', width:'100%', padding:'16px', borderRadius:'14px', border:'none', background:'#f1f5f9', color:'#64748b', fontWeight:'700', cursor:'pointer', fontSize:'1rem', transition:'all 0.2s'}}>
-                            Close Panel
                         </button>
                     </div>
                 </motion.div>
@@ -170,7 +100,6 @@ export default function ServiceMaster() {
   // State for Modals
   const [deleteModal, setDeleteModal] = useState({ show: false, id: null });
   const [isDeletingButton, setIsDeletingButton] = useState(false);
-  const [viewData, setViewData] = useState(null); 
 
   useEffect(() => { fetchAllServices(); }, []);
 
@@ -225,9 +154,9 @@ export default function ServiceMaster() {
   };
 
   const contentConfig = {
-      levels: { title: "Education Levels", subtitle: "Define hierarchy (e.g. Primary, Secondary)", icon: <Layers size={24}/>, color: '#6366f1' },
-      types: { title: "Service Types", subtitle: "Nature of institution (e.g. Academic, Technical)", icon: <Briefcase size={24}/>, color: '#ec4899' },
-      modes: { title: "Delivery Modes", subtitle: "How is it taught? (e.g. Online, Hybrid)", icon: <Radio size={24}/>, color: '#f59e0b' }
+      levels: { title: "Education Levels", subtitle: "(Foundation, Middle, Secondary...)", icon: <Layers size={24}/>, color: '#6366f1' },
+      types: { title: "Service Types", subtitle: "(Academic, Unacademic, Both...)", icon: <Briefcase size={24}/>, color: '#ec4899' },
+      modes: { title: "Service Modes", subtitle: "(Online, Offline, Hybrid...)", icon: <Radio size={24}/>, color: '#f59e0b' }
   };
 
   const currentConfig = contentConfig[activeTab];
@@ -245,36 +174,29 @@ export default function ServiceMaster() {
         isDeleting={isDeletingButton}
       />
 
-      {/* View Modal */}
-      <ViewModal 
-        data={viewData} 
-        onClose={() => setViewData(null)} 
-        config={currentConfig} 
-      />
-
       <div className="service-main-content">
         
         {/* Animated Background Blobs */}
-        <div style={{position: 'fixed', top: '-20%', left: '20%', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(99,102,241,0.08) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none'}} />
-        <div style={{position: 'fixed', bottom: '-10%', right: '-10%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(236,72,153,0.08) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none'}} />
+        <div className="bg-blob blob-1" />
+        <div className="bg-blob blob-2" />
 
         {/* --- HEADER --- */}
-        <div style={{marginBottom:'35px'}}>
+        <div style={{marginBottom:'35px', position: 'relative', zIndex: 2}}>
             <h1 style={{fontSize: '2.5rem', fontWeight: '900', color: '#0f172a', letterSpacing: '-1px', margin: '0 0 5px 0'}}>
                 Service Master <span style={{fontSize:'2rem', verticalAlign:'middle'}}>🛠️</span>
             </h1>
-            <p style={{color: '#64748b', fontSize: '1.05rem', fontWeight:'500', margin: 0}}>Configure global education parameters.</p>
+            <p style={{color: '#64748b', fontSize: '1.05rem', fontWeight:'500', margin: 0}}>Manage Tabular Records for Services, Management, and Place Codes.</p>
         </div>
 
         {/* --- TABS --- */}
-        <div className="tabs-container">
-            <TabButton active={activeTab === 'levels'} onClick={() => setActiveTab('levels')} label="Education Levels" icon={<Layers size={18}/>} />
+        <div className="tabs-container" style={{position: 'relative', zIndex: 2}}>
+            <TabButton active={activeTab === 'levels'} onClick={() => setActiveTab('levels')} label="Educational Levels" icon={<Layers size={18}/>} />
             <TabButton active={activeTab === 'types'} onClick={() => setActiveTab('types')} label="Service Types" icon={<Briefcase size={18}/>} />
             <TabButton active={activeTab === 'modes'} onClick={() => setActiveTab('modes')} label="Service Modes" icon={<Radio size={18}/>} />
         </div>
 
         {/* --- MAIN CONTENT (Split View) --- */}
-        <div className="service-content-grid">
+        <div className="service-content-grid" style={{position: 'relative', zIndex: 2}}>
             
             {/* LEFT: FORM */}
             <AnimatePresence mode="wait">
@@ -284,6 +206,7 @@ export default function ServiceMaster() {
                     animate={{ opacity: 1, x: 0 }} 
                     exit={{ opacity: 0, x: 20 }}
                     transition={{ duration: 0.3 }}
+                    className="form-wrapper-box"
                 >
                     <GlassCard style={{padding:'30px', borderTop: `5px solid ${currentConfig.color}`}}>
                         <div style={{display:'flex', alignItems:'center', gap:'15px', marginBottom:'25px'}}>
@@ -298,7 +221,7 @@ export default function ServiceMaster() {
 
                         <form onSubmit={handleAdd} style={{display:'flex', flexDirection:'column', gap:'15px'}}>
                             <input 
-                                placeholder="Name (e.g. Senior Secondary)" 
+                                placeholder="Name (e.g. Academic, Foundation...)" 
                                 value={newItem.name} 
                                 onChange={e=>setNewItem({...newItem, name:e.target.value})} 
                                 style={inputStyle} 
@@ -316,7 +239,7 @@ export default function ServiceMaster() {
                             )}
                             {activeTab === 'types' && (
                                 <input 
-                                    placeholder="Short Code (e.g. K12)" 
+                                    placeholder="Short Code (e.g. ACD)" 
                                     value={newItem.code} 
                                     onChange={e=>setNewItem({...newItem, code:e.target.value})} 
                                     style={{...inputStyle, textTransform:'uppercase', fontWeight:'700'}} 
@@ -343,80 +266,79 @@ export default function ServiceMaster() {
                 </motion.div>
             </AnimatePresence>
 
-            {/* RIGHT: LIST */}
-            <div>
+            {/* RIGHT: TABULAR LIST */}
+            <div className="table-wrapper-box">
                 <div style={{display:'flex', alignItems:'center', gap:'10px', marginBottom:'20px'}}>
                     <LayoutGrid size={20} color="#64748b"/>
-                    <h3 style={{fontSize:'1.2rem', fontWeight:'800', color:'#334155', margin:0}}>Active Records</h3>
+                    <h3 style={{fontSize:'1.2rem', fontWeight:'800', color:'#334155', margin:0}}>Tabular Records</h3>
                 </div>
 
-                <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:'20px'}}>
-                    <AnimatePresence mode="popLayout">
-                        {data[activeTab].length === 0 ? (
-                            <motion.div initial={{opacity:0}} animate={{opacity:1}} style={{gridColumn:'1/-1', textAlign:'center', padding:'50px', background:'white', borderRadius:'20px', border:'2px dashed #cbd5e1', color:'#94a3b8'}}>
-                                <Cpu size={40} style={{marginBottom:'10px', opacity:0.5}}/>
-                                <p>No records found. Add one to begin.</p>
-                            </motion.div>
-                        ) : data[activeTab].map((item, idx) => (
-                            <motion.div 
-                                key={item.id}
-                                layout
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.9 }}
-                                transition={{ delay: idx * 0.05 }}
-                                whileHover={{ y: -5 }}
-                                style={listCardStyle}
-                            >
-                                <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
-                                    <div>
-                                        <div style={{fontSize:'1rem', fontWeight:'800', color:'#1e293b'}}>{item.name}</div>
-                                        {activeTab === 'levels' && <div style={{fontSize:'0.8rem', color:'#64748b', marginTop:'4px'}}>{item.description || 'No description'}</div>}
-                                        {activeTab === 'types' && <div style={{fontSize:'0.75rem', fontWeight:'700', background:'#f1f5f9', padding:'2px 8px', borderRadius:'6px', display:'inline-block', marginTop:'5px', color:'#475569'}}>{item.code}</div>}
-                                        {activeTab === 'modes' && item.icon_name && <div style={{fontSize:'0.8rem', color:'#64748b', marginTop:'4px'}}>Icon: {item.icon_name}</div>}
-                                    </div>
-                                    
-                                    {/* ACTIONS BUTTONS (High Visibility) */}
-                                    <div style={{display:'flex', gap:'10px'}}>
-                                        <motion.button 
-                                            whileHover={{ scale: 1.1 }}
-                                            onClick={() => setViewData(item)} 
-                                            style={viewIconStyle} title="View Details"
-                                        >
-                                            <Eye size={20}/>
-                                        </motion.button>
-                                        <motion.button 
-                                            whileHover={{ scale: 1.1 }}
-                                            onClick={() => openDeleteModal(item.id)} 
-                                            style={deleteIconStyle} title="Delete Item"
-                                        >
-                                            <Trash2 size={20}/>
-                                        </motion.button>
-                                    </div>
-
-                                </div>
-                                <div style={{marginTop:'15px', height:'4px', width:'40px', borderRadius:'2px', background: currentConfig.color}}></div>
-                            </motion.div>
-                        ))}
-                    </AnimatePresence>
+                <div className="table-card glass-card">
+                    {data[activeTab].length === 0 ? (
+                        <div style={{textAlign:'center', padding:'50px', color:'#94a3b8'}}>
+                            <Cpu size={40} style={{marginBottom:'10px', opacity:0.5, margin:'0 auto'}}/>
+                            <p>No records found in database.</p>
+                        </div>
+                    ) : (
+                        <div className="table-responsive-wrapper hide-scrollbar">
+                            <table className="modern-table">
+                                <thead>
+                                    <tr>
+                                        <th style={{width: '10%'}}>ID</th>
+                                        <th style={{width: '35%'}}>Name</th>
+                                        {activeTab === 'levels' && <th style={{width: '40%'}}>Description</th>}
+                                        {activeTab === 'types' && <th style={{width: '40%'}}>Code</th>}
+                                        {activeTab === 'modes' && <th style={{width: '40%'}}>Icon</th>}
+                                        <th style={{width: '15%', textAlign: 'right'}}>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <AnimatePresence>
+                                        {data[activeTab].map((item, idx) => (
+                                            <motion.tr 
+                                                key={item.id}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, x: -20 }}
+                                                transition={{ delay: idx * 0.05 }}
+                                                className="table-row-hover"
+                                            >
+                                                <td style={{fontWeight: '700', color: '#64748b'}}>#{item.id}</td>
+                                                <td style={{fontWeight: '800', color: '#1e293b'}}>{item.name}</td>
+                                                
+                                                {activeTab === 'levels' && <td style={{color: '#64748b', fontSize: '0.85rem'}}>{item.description || '-'}</td>}
+                                                {activeTab === 'types' && <td><span className="badge-code">{item.code || '-'}</span></td>}
+                                                {activeTab === 'modes' && <td style={{color: '#64748b'}}>{item.icon_name || '-'}</td>}
+                                                
+                                                <td style={{textAlign: 'right'}}>
+                                                    <button onClick={() => openDeleteModal(item.id)} className="action-btn-del" title="Delete">
+                                                        <Trash2 size={16}/>
+                                                    </button>
+                                                </td>
+                                            </motion.tr>
+                                        ))}
+                                    </AnimatePresence>
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
             </div>
 
         </div>
       </div>
       
-      {/* 🚀 CSS FOR 100% RESPONSIVENESS */}
+      {/* 🚀 CSS FOR 100% RESPONSIVENESS AND TABLE VIEW */}
       <style>{`
-        /* Reset & Core Setup */
-        html, body, #root { margin: 0; padding: 0; height: 100%; }
+        /* ✅ SCROLL FIX: Strict body lock, scrolling only in main container */
+        html, body, #root { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #f8fafc; }
         
         .service-master-wrapper {
             display: flex;
             width: 100%;
             height: 100vh;
-            overflow: hidden;
-            background: #f8fafc;
             font-family: 'Inter', sans-serif;
+            position: relative;
         }
 
         .service-main-content {
@@ -425,38 +347,53 @@ export default function ServiceMaster() {
             padding: 35px;
             padding-bottom: 120px !important; 
             height: 100vh;
-            overflow-y: auto !important; 
+            overflow-y: auto; 
+            overflow-x: hidden;
             box-sizing: border-box;
-            max-width: calc(100% - 280px);
+            max-width: calc(100% - 280px); /* Only for Desktop */
             position: relative;
             z-index: 1;
+            scroll-behavior: smooth;
         }
 
-        /* ✅ FIXED: Desktop Split View and Mobile Stack View */
+        .bg-blob { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; }
+        .blob-1 { top: -20%; left: 20%; width: 600px; height: 600px; background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, rgba(0,0,0,0) 70%); }
+        .blob-2 { bottom: -10%; right: -10%; width: 500px; height: 500px; background: radial-gradient(circle, rgba(236,72,153,0.08) 0%, rgba(0,0,0,0) 70%); }
+
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
         .service-content-grid {
             display: grid;
             grid-template-columns: 380px 1fr;
             gap: 35px;
-            padding-bottom: 50px;
             align-items: start;
         }
 
-        /* ✅ FIXED: Horizontal Scroll for Tabs on Mobile */
+        /* Essential for child elements not breaking the grid */
+        .form-wrapper-box { min-width: 0; }
+        .table-wrapper-box { min-width: 0; }
+
         .tabs-container {
             display: flex; gap: 15px; margin-bottom: 35px;
             overflow-x: auto; padding-bottom: 5px;
             -webkit-overflow-scrolling: touch;
         }
-        .tabs-container::-webkit-scrollbar { display: none; } /* Hides scrollbar for cleaner look */
 
-        /* Modal Responsive Classes */
-        .responsive-modal {
-            width: 420px;
-            max-width: 90vw !important;
-            box-sizing: border-box;
-        }
+        /* ✅ TABLE STYLES (TABULAR VIEW) */
+        .table-card { background: white; padding: 0; border-radius: 20px; overflow: hidden; width: 100%;}
+        .table-responsive-wrapper { overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; }
+        
+        .modern-table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        .modern-table th { background: #f8fafc; padding: 18px 20px; text-align: left; color: #64748b; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0; white-space: nowrap;}
+        .modern-table td { padding: 18px 20px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        .table-row-hover { transition: 0.2s; }
+        .table-row-hover:hover { background: #f8fafc; }
 
-        /* Animations */
+        .badge-code { background: #e0e7ff; color: #4f46e5; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; }
+        .action-btn-del { background: #fee2e2; color: #ef4444; border: none; width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; flex-shrink: 0;}
+        .action-btn-del:hover { background: #ef4444; color: white; transform: scale(1.1); }
+
         .spin { animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
@@ -466,32 +403,19 @@ export default function ServiceMaster() {
         }
 
         @media (max-width: 850px) {
-            /* Unlock Scroll on Mobile completely */
-            html, body, #root { height: auto !important; min-height: 100vh !important; overflow-y: visible !important; }
-            
-            .service-master-wrapper {
-                display: block !important; 
-                height: auto !important;
-                min-height: 100vh !important;
-            }
-
             .service-main-content {
                 margin-left: 0 !important;
                 padding: 15px !important;
                 padding-top: 85px !important; 
                 padding-bottom: 180px !important; /* Space for chatbot */
-                width: 100vw !important;
-                max-width: 100vw !important;
-                height: auto !important;
-                min-height: 100vh !important;
-                overflow: visible !important;
-                display: block !important; /* Break Flex lock */
+                width: 100% !important; /* Changed from 100vw to 100% */
+                max-width: 100% !important;
             }
 
-            /* ✅ FIXED: Break the grid into a single column for mobile */
-            .service-content-grid {
-                grid-template-columns: 1fr !important;
-                gap: 25px;
+            /* ✅ FIXED: Prevent grid blowout on mobile */
+            .service-content-grid { 
+                grid-template-columns: minmax(0, 1fr) !important; 
+                gap: 25px; 
             }
         }
       `}</style>
@@ -504,8 +428,7 @@ const inputStyle = {
     width:'100%', padding:'16px 20px', borderRadius:'14px', 
     border:'2px solid #f1f5f9', outline:'none', background:'#f8fafc', 
     fontSize:'0.95rem', color:'#1e293b', fontWeight:'600', transition:'all 0.2s',
-    boxShadow:'inset 0 2px 4px rgba(0,0,0,0.01)',
-    boxSizing: 'border-box' // Essential for full width inputs
+    boxShadow:'inset 0 2px 4px rgba(0,0,0,0.01)', boxSizing: 'border-box' 
 };
 
 const btnPrimary = { 
@@ -513,24 +436,4 @@ const btnPrimary = {
     color:'white', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', 
     boxShadow:'0 8px 20px -5px rgba(0,0,0,0.2)', fontSize:'1rem', fontWeight:'700',
     marginTop:'10px', boxSizing: 'border-box'
-};
-
-const listCardStyle = { 
-    background:'white', borderRadius:'20px', padding:'20px',
-    border:'1px solid #f1f5f9', boxShadow:'0 4px 10px -2px rgba(0,0,0,0.03)',
-    cursor:'default'
-};
-
-const deleteIconStyle = { 
-    width:'42px', height:'42px', borderRadius:'12px', border:'none', 
-    background:'#ef4444', color:'white', cursor:'pointer', 
-    display:'flex', alignItems:'center', justifyContent:'center', 
-    boxShadow:'0 4px 10px rgba(239, 68, 68, 0.4)', transition:'all 0.2s', flexShrink: 0
-};
-
-const viewIconStyle = { 
-    width:'42px', height:'42px', borderRadius:'12px', border:'none', 
-    background:'#3b82f6', color:'white', cursor:'pointer', 
-    display:'flex', alignItems:'center', justifyContent:'center', 
-    boxShadow:'0 4px 10px rgba(59, 130, 246, 0.4)', transition:'all 0.2s', flexShrink: 0
 };

@@ -26,3 +26,25 @@ class ServiceMode(models.Model):
 
     def __str__(self):
         return self.name
+    
+    
+    
+    # 4. Management Type (Management, Official, Unofficial, Both, None)
+class ManagementType(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+# 5. Place & Service Code Mapping
+class PlaceCodeMapping(models.Model):
+    place_code = models.CharField(max_length=50, unique=True)
+    longitude = models.DecimalField(max_digits=12, decimal_places=8, null=True, blank=True)
+    latitude = models.DecimalField(max_digits=12, decimal_places=8, null=True, blank=True)
+    services_code = models.CharField(max_length=50)
+    users_code = models.CharField(max_length=50)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.place_code
