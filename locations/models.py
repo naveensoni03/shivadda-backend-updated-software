@@ -10,6 +10,7 @@ class Place(models.Model):
         ('District', 'District'),
         ('Tehsil', 'Tehsil'),
         ('Block', 'Block'),
+        ('Colony', 'Colony'),   # ✅ FIXED: Colony add kiya gaya
         ('Village', 'Village'),
         ('School', 'School/Center'),
     )
@@ -22,14 +23,32 @@ class Place(models.Model):
     
     # ✅ Auto-Generated Codes
     hierarchy_code = models.CharField(max_length=100, blank=True, help_text="Auto: 0.1.1.1")
-    virtual_id = models.CharField(max_length=50, unique=True, blank=True, editable=False)
+    
+    # ✅ FIXED: editable=False hataya taaki Frontend se Manual ID bhi save ho sake
+    virtual_id = models.CharField(max_length=100, unique=True, blank=True, null=True) 
     
     place_type = models.CharField(max_length=50, choices=PLACE_TYPES, default='Global')
     
-    # Extra Data
-    latitude = models.CharField(max_length=50, blank=True, null=True)
-    longitude = models.CharField(max_length=50, blank=True, null=True)
-    status = models.CharField(max_length=20, default='Active', choices=[('Active', 'Active'), ('Inactive', 'Inactive')])
+    # 🚀 --- NEW SUPER ADMIN FIELDS --- 🚀
+    space_type = models.CharField(max_length=50, null=True, blank=True)
+    place_uses_for = models.CharField(max_length=100, null=True, blank=True)
+    pin_code = models.CharField(max_length=20, null=True, blank=True)
+    zip_code = models.CharField(max_length=20, null=True, blank=True)
+    beat_no = models.CharField(max_length=50, null=True, blank=True)
+    village_code = models.CharField(max_length=50, null=True, blank=True)
+    google_map_id = models.CharField(max_length=255, null=True, blank=True)
+    latitude = models.CharField(max_length=100, null=True, blank=True)
+    longitude = models.CharField(max_length=100, null=True, blank=True)
+    work_status = models.CharField(max_length=50, null=True, blank=True)
+    
+    # ✅ FIXED: Status choices ko Frontend se match kiya gaya taaki 400 error na aaye
+    STATUS_CHOICES = (
+        ('ACTIVE', 'Activate'),
+        ('DEACTIVATED', 'Deactivate'),
+        ('HIDDEN', 'Hibernate/Hide')
+    )
+    status = models.CharField(max_length=20, default='ACTIVE', choices=STATUS_CHOICES)
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -46,9 +65,9 @@ class Place(models.Model):
                 count = Place.objects.filter(parent__isnull=True).count()
                 self.hierarchy_code = f"0.{count}" if count > 0 else "0"
 
-        # 2. Virtual ID Logic (SHIV-IND-DL-001)
+        # 2. Virtual ID Logic - Agar frontend ne Virtual ID nahi bheji, tabhi auto-generate kare
         if not self.virtual_id:
-            prefix = self.name[:3].upper()
+            prefix = self.name[:3].upper() if self.name else "PLC"
             unique_seq = str(uuid.uuid4().int)[:6]
             self.virtual_id = f"SHIV-{prefix}-{unique_seq}"
 

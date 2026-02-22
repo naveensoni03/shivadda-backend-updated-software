@@ -4,14 +4,22 @@ from .models import (
     ServiceType, 
     ServiceMode, 
     ManagementType, 
-    PlaceCodeMapping
+    PlaceCodeMapping,
+    NatureOfService,        # ✅ NEW
+    ServiceSeekerGroup,     # ✅ NEW
+    ServiceProviderGroup,   # ✅ NEW
+    ServiceCharge           # ✅ NEW
 )
 from .serializers import (
     EducationLevelSerializer, 
     ServiceTypeSerializer, 
     ServiceModeSerializer,
     ManagementTypeSerializer,
-    PlaceCodeMappingSerializer
+    PlaceCodeMappingSerializer,
+    NatureOfServiceSerializer,        # ✅ NEW
+    ServiceSeekerGroupSerializer,     # ✅ NEW
+    ServiceProviderGroupSerializer,   # ✅ NEW
+    ServiceChargeSerializer           # ✅ NEW
 )
 
 class EducationLevelViewSet(viewsets.ModelViewSet):
@@ -26,8 +34,6 @@ class ServiceModeViewSet(viewsets.ModelViewSet):
     queryset = ServiceMode.objects.all()
     serializer_class = ServiceModeSerializer
 
-# --- NEWLY ADDED VIEWSETS ---
-
 class ManagementTypeViewSet(viewsets.ModelViewSet):
     queryset = ManagementType.objects.all()
     serializer_class = ManagementTypeSerializer
@@ -35,3 +41,21 @@ class ManagementTypeViewSet(viewsets.ModelViewSet):
 class PlaceCodeMappingViewSet(viewsets.ModelViewSet):
     queryset = PlaceCodeMapping.objects.all()
     serializer_class = PlaceCodeMappingSerializer
+
+# --- 🚀 NEW SUPER ADMIN VIEWSETS ---
+
+class NatureOfServiceViewSet(viewsets.ModelViewSet):
+    queryset = NatureOfService.objects.all()
+    serializer_class = NatureOfServiceSerializer
+
+class ServiceSeekerGroupViewSet(viewsets.ModelViewSet):
+    queryset = ServiceSeekerGroup.objects.all()
+    serializer_class = ServiceSeekerGroupSerializer
+
+class ServiceProviderGroupViewSet(viewsets.ModelViewSet):
+    queryset = ServiceProviderGroup.objects.all()
+    serializer_class = ServiceProviderGroupSerializer
+
+class ServiceChargeViewSet(viewsets.ModelViewSet):
+    queryset = ServiceCharge.objects.all()
+    serializer_class = ServiceChargeSerializer
