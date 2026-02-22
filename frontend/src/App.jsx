@@ -31,6 +31,7 @@ import Timetable from "./pages/Timetable";
 import Communication from "./pages/Communication";
 import AIBrain from "./pages/AIBrain"; // ✅ 1. IMPORT ADDED
 
+
 // Components
 import ChatWidget from './components/ChatWidget';
 
@@ -102,8 +103,10 @@ export default function App() {
           {/* ✅ 2. ROUTE ADDED HERE */}
           <Route path="/ai-brain" element={<ProtectedRoute><AIBrain /></ProtectedRoute>} />
 
-          {/* 404 Fallback */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+         
+          
+
+          
         </Routes>
 
         <ChatWidget />

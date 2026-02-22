@@ -5,10 +5,13 @@ from .models import (
     ServiceMode, 
     ManagementType, 
     PlaceCodeMapping,
-    NatureOfService,        # ✅ NEW
-    ServiceSeekerGroup,     # ✅ NEW
-    ServiceProviderGroup,   # ✅ NEW
-    ServiceCharge           # ✅ NEW
+    NatureOfService,        
+    ServiceSeekerGroup,     
+    ServiceProviderGroup,   
+    ServiceCharge,
+    Notice,                 # ✅ NEW
+    SupportTicket,          # ✅ NEW
+    MailboxStat             # ✅ NEW
 )
 from .serializers import (
     EducationLevelSerializer, 
@@ -16,10 +19,13 @@ from .serializers import (
     ServiceModeSerializer,
     ManagementTypeSerializer,
     PlaceCodeMappingSerializer,
-    NatureOfServiceSerializer,        # ✅ NEW
-    ServiceSeekerGroupSerializer,     # ✅ NEW
-    ServiceProviderGroupSerializer,   # ✅ NEW
-    ServiceChargeSerializer           # ✅ NEW
+    NatureOfServiceSerializer,        
+    ServiceSeekerGroupSerializer,     
+    ServiceProviderGroupSerializer,   
+    ServiceChargeSerializer,
+    NoticeSerializer,               # ✅ NEW
+    SupportTicketSerializer,        # ✅ NEW
+    MailboxStatSerializer           # ✅ NEW
 )
 
 class EducationLevelViewSet(viewsets.ModelViewSet):
@@ -42,8 +48,6 @@ class PlaceCodeMappingViewSet(viewsets.ModelViewSet):
     queryset = PlaceCodeMapping.objects.all()
     serializer_class = PlaceCodeMappingSerializer
 
-# --- 🚀 NEW SUPER ADMIN VIEWSETS ---
-
 class NatureOfServiceViewSet(viewsets.ModelViewSet):
     queryset = NatureOfService.objects.all()
     serializer_class = NatureOfServiceSerializer
@@ -59,3 +63,16 @@ class ServiceProviderGroupViewSet(viewsets.ModelViewSet):
 class ServiceChargeViewSet(viewsets.ModelViewSet):
     queryset = ServiceCharge.objects.all()
     serializer_class = ServiceChargeSerializer
+
+# --- 🚀 NEW COMMUNICATION VIEWSETS ---
+class NoticeViewSet(viewsets.ModelViewSet):
+    queryset = Notice.objects.all().order_by('-id')
+    serializer_class = NoticeSerializer
+
+class SupportTicketViewSet(viewsets.ModelViewSet):
+    queryset = SupportTicket.objects.all().order_by('-id')
+    serializer_class = SupportTicketSerializer
+
+class MailboxStatViewSet(viewsets.ModelViewSet):
+    queryset = MailboxStat.objects.all()
+    serializer_class = MailboxStatSerializer

@@ -5,10 +5,13 @@ from .models import (
     ServiceMode,
     ManagementType,      
     PlaceCodeMapping,
-    NatureOfService,        # ✅ NEW
-    ServiceSeekerGroup,     # ✅ NEW
-    ServiceProviderGroup,   # ✅ NEW
-    ServiceCharge           # ✅ NEW
+    NatureOfService,        
+    ServiceSeekerGroup,     
+    ServiceProviderGroup,   
+    ServiceCharge,
+    Notice,                 # ✅ NEW
+    SupportTicket,          # ✅ NEW
+    MailboxStat             # ✅ NEW
 )
 
 class EducationLevelSerializer(serializers.ModelSerializer):
@@ -36,8 +39,6 @@ class PlaceCodeMappingSerializer(serializers.ModelSerializer):
         model = PlaceCodeMapping
         fields = '__all__'
 
-# --- 🚀 NEW SUPER ADMIN SERIALIZERS ---
-
 class NatureOfServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = NatureOfService
@@ -56,4 +57,20 @@ class ServiceProviderGroupSerializer(serializers.ModelSerializer):
 class ServiceChargeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServiceCharge
+        fields = '__all__'
+
+# --- 🚀 NEW COMMUNICATION SERIALIZERS ---
+class NoticeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notice
+        fields = '__all__'
+
+class SupportTicketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SupportTicket
+        fields = '__all__'
+
+class MailboxStatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MailboxStat
         fields = '__all__'

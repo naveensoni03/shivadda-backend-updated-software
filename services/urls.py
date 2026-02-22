@@ -6,10 +6,13 @@ from .views import (
     ServiceModeViewSet,
     ManagementTypeViewSet,        
     PlaceCodeMappingViewSet,
-    NatureOfServiceViewSet,         # ✅ NEW
-    ServiceSeekerGroupViewSet,      # ✅ NEW
-    ServiceProviderGroupViewSet,    # ✅ NEW
-    ServiceChargeViewSet            # ✅ NEW
+    NatureOfServiceViewSet,         
+    ServiceSeekerGroupViewSet,      
+    ServiceProviderGroupViewSet,    
+    ServiceChargeViewSet,
+    NoticeViewSet,                  # ✅ NEW
+    SupportTicketViewSet,           # ✅ NEW
+    MailboxStatViewSet              # ✅ NEW
 )
 
 router = DefaultRouter()
@@ -24,6 +27,11 @@ router.register(r'nature', NatureOfServiceViewSet)
 router.register(r'seekers', ServiceSeekerGroupViewSet)
 router.register(r'providers', ServiceProviderGroupViewSet)
 router.register(r'charges', ServiceChargeViewSet)
+
+# --- 🚀 NEW COMMUNICATION ROUTES ---
+router.register(r'notices', NoticeViewSet)
+router.register(r'tickets', SupportTicketViewSet)
+router.register(r'mailbox-stats', MailboxStatViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

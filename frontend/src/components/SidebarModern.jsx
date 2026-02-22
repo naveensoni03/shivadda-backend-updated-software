@@ -1,7 +1,7 @@
 ﻿import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-// Lucide icons add kiye hain Mobile button ke liye
-import { Menu, X } from "lucide-react"; 
+// ✅ IMPORT ADDED FOR ACTIVITY ICON
+import { Menu, X, Activity } from "lucide-react"; 
 
 const SidebarModern = () => {
   const navigate = useNavigate();
@@ -50,7 +50,7 @@ const SidebarModern = () => {
         </button>
       </div>
 
-      {/* 📱 MOBILE BLACK OVERLAY (Jab menu open ho tab piche ka hissa dark karne ke liye) */}
+      {/* 📱 MOBILE BLACK OVERLAY */}
       {isMobileOpen && (
         <div className="mobile-overlay" onClick={() => setIsMobileOpen(false)}></div>
       )}
@@ -81,6 +81,12 @@ const SidebarModern = () => {
         <nav style={{ flex: 1 }}>
           <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', letterSpacing: '1.5px', paddingLeft: '8px' }}>Super Controls</p>
           <NavLink to="/dashboard" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📊 Dashboard</NavLink>
+          
+          {/* ✅ ANALYTICS & LOGS MOVED TO SUPER CONTROLS */}
+          <NavLink to="/analytics" style={linkStyle} onClick={() => setIsMobileOpen(false)}>
+            <Activity size={18} /> Analytics & Logs
+          </NavLink>
+          
           <NavLink to="/ai-brain" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🧠 AI Brain</NavLink>
           <NavLink to="/institutions" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🏢 Institutions</NavLink>
           <NavLink to="/locations" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🌍 Global Locations</NavLink>
@@ -114,6 +120,7 @@ const SidebarModern = () => {
           <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', marginTop: '30px', letterSpacing: '1.5px', paddingLeft: '8px' }}>System</p>
           <NavLink to="/services" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🛠️ Service Master</NavLink>
           <NavLink to="/system" style={linkStyle} onClick={() => setIsMobileOpen(false)}>⚙️ Config</NavLink>
+
         </nav>
 
         <div 
