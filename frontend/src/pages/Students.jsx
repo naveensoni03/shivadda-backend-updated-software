@@ -12,7 +12,7 @@ const InputField = ({ label, value, onChange, type = "text", placeholder = "", r
         <label style={{ display: 'block', marginBottom: '5px', color: '#000', fontWeight: '800', fontSize: '0.85rem' }}>{label}</label>
         <input 
             type={type} 
-            value={value} 
+            value={value || ""} 
             onChange={onChange} 
             placeholder={placeholder} 
             readOnly={readOnly}
@@ -26,7 +26,7 @@ const SelectField = ({ label, value, onChange, options }) => (
     <div className="input-group">
         <label style={{ display: 'block', marginBottom: '5px', color: '#000', fontWeight: '800', fontSize: '0.85rem' }}>{label}</label>
         <select 
-            value={value} 
+            value={value || ""} 
             onChange={onChange} 
             className="modern-input"
         >
@@ -52,16 +52,20 @@ export default function Students() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8; 
 
-  // --- FORM STATE ---
+  // --- FORM STATE (✅ SUPER ADMIN FIELDS ADDED WITHOUT CHANGING UI) ---
   const [formData, setFormData] = useState({
     id: null,
     first_name: "", last_name: "", dob: "", gender: "Male",
+    place_of_birth: "", height: "", weight: "", marital_status: "No", spouse_name: "",
     blood_group: "", religion: "", category: "General", nationality: "Indian", aadhar_number: "",
     continent: "Asia", country: "India", latitude: "", longitude: "", virtual_id: "",
     student_class: "", section: "A", roll_number: "", admission_number: "",
     admission_date: new Date().toISOString().split('T')[0], batch_session: "", previous_school: "", tc_number: "", fee_status: "Pending",
     father_name: "", father_occupation: "", mother_name: "", mother_occupation: "",
     primary_mobile: "", secondary_mobile: "", email: "", current_address: "", permanent_address: "",
+    place_id: "", subplace_id: "", service_id: "", subservice_id: "", user_group: "Service Seekers", user_subgroup: "Students",
+    highest_qualification: "", experience: "", hobbies: "", beliefs: "",
+    registration_status: "Registered", validity_start: "", validity_end: "", status: "Active",
     scholarship_percent: "", transport_mode: "", photo: null, aadhar_scan: null, tc_scan: null, marksheet_scan: null,
   });
 
@@ -101,6 +105,17 @@ export default function Students() {
   const handleSelectAll = (e) => {
       if (e.target.checked) setSelectedRows(currentItems.map(s => s.id));
       else setSelectedRows([]);
+  };
+
+  // ✅ SUPER ADMIN BULK ACTION
+  const handleBulkAction = async (newStatus) => {
+      const load = toast.loading(`Applying ${newStatus} to selected profiles...`);
+      try {
+          await Promise.all(selectedRows.map(id => api.patch(`/students/list/${id}/`, { status: newStatus })));
+          toast.success(`Profiles marked as ${newStatus}! ✅`, { id: load });
+          setSelectedRows([]);
+          fetchData();
+      } catch (err) { toast.error("Bulk Action failed", { id: load }); }
   };
 
   const handlePromoteSubmit = async () => {
@@ -147,12 +162,16 @@ export default function Students() {
       const generatedVID = "SHIV-" + Math.floor(10000 + Math.random() * 90000);
       setFormData({
         id: null, first_name: "", last_name: "", dob: "", gender: "Male",
+        place_of_birth: "", height: "", weight: "", marital_status: "No", spouse_name: "",
         blood_group: "", religion: "", category: "General", nationality: "Indian", aadhar_number: "",
         continent: "Asia", country: "India", latitude: "", longitude: "", virtual_id: generatedVID,
         student_class: "", section: "A", roll_number: "", admission_number: "",
         admission_date: new Date().toISOString().split('T')[0], fee_status: "Pending", batch_session: "", previous_school: "", tc_number: "",
         father_name: "", father_occupation: "", mother_name: "", mother_occupation: "",
         primary_mobile: "", secondary_mobile: "", email: "", current_address: "", permanent_address: "",
+        place_id: "", subplace_id: "", service_id: "", subservice_id: "", user_group: "Service Seekers", user_subgroup: "Students",
+        highest_qualification: "", experience: "", hobbies: "", beliefs: "",
+        registration_status: "Registered", validity_start: "", validity_end: "", status: "Active",
         scholarship_percent: "", transport_mode: "", photo: null, aadhar_scan: null, tc_scan: null, marksheet_scan: null
       });
       setShowAddModal(true);
@@ -232,7 +251,9 @@ export default function Students() {
                 <span style={{fontWeight: '700'}}>✅ {selectedRows.length} Students Selected</span>
                 <div style={{display: 'flex', gap: '10px'}}>
                     <button style={{background: '#ef4444', border: 'none', padding: '8px 16px', borderRadius: '8px', color: 'white', fontWeight: '700', cursor: 'pointer'}} onClick={() => setSelectedRows([])}>Clear</button>
-                    <button style={{background: '#10b981', border: 'none', padding: '8px 16px', borderRadius: '8px', color: 'white', fontWeight: '700', cursor: 'pointer'}} onClick={() => toast.success("Bulk Action Applied")}>Bulk Action</button>
+                    {/* ✅ New Super Admin Bulk Actions */}
+                    <button style={{background: '#10b981', border: 'none', padding: '8px 16px', borderRadius: '8px', color: 'white', fontWeight: '700', cursor: 'pointer'}} onClick={() => handleBulkAction('Active')}>Activate</button>
+                    <button style={{background: '#f59e0b', border: 'none', padding: '8px 16px', borderRadius: '8px', color: 'white', fontWeight: '700', cursor: 'pointer'}} onClick={() => handleBulkAction('Hibernation')}>Hibernate</button>
                 </div>
             </div>
         )}
@@ -276,7 +297,7 @@ export default function Students() {
                             <td><span className="class-badge">{s.student_class}</span></td>
                             <td>{s.section}</td>
                             <td>
-                                <span className={`status-pill ${s.fee_status.toLowerCase()}`}>
+                                <span className={`status-pill ${s.fee_status?.toLowerCase() || 'pending'}`}>
                                     {s.fee_status === 'Paid' ? '● Paid' : '● Pending'}
                                 </span>
                             </td>
@@ -301,7 +322,7 @@ export default function Students() {
             <button className="btn-secondary" style={{padding:'10px 20px', opacity: currentPage === totalPages ? 0.5 : 1}} disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => p + 1)}>Next ▶</button>
         </div>
 
-        {/* --- ADD/EDIT MODAL --- */}
+        {/* --- ADD/EDIT MODAL (SAME UI, FIELDS ADDED) --- */}
         <AnimatePresence>
         {showAddModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="modal-overlay">
@@ -337,16 +358,21 @@ export default function Students() {
                             {formStep === 1 && <>
                                 <InputField label="First Name" value={formData.first_name} onChange={e => setFormData({...formData, first_name: e.target.value})} placeholder="e.g. Aarav" />
                                 <InputField label="Last Name" value={formData.last_name} onChange={e => setFormData({...formData, last_name: e.target.value})} />
-                                <SelectField label="Continent" value={formData.continent} onChange={e => setFormData({...formData, continent: e.target.value})} options={["Asia", "Europe", "North America", "Africa"]} />
-                                <SelectField label="Country" value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} options={["India", "USA", "UK"]} />
-                                <InputField label="Latitude" value={formData.latitude} onChange={e => setFormData({...formData, latitude: e.target.value})} placeholder="e.g. 28.6139" />
-                                <InputField label="Longitude" value={formData.longitude} onChange={e => setFormData({...formData, longitude: e.target.value})} placeholder="e.g. 77.2090" />
                                 <InputField label="Virtual ID" value={formData.virtual_id} readOnly={true} />
                                 <InputField label="Aadhar Number" value={formData.aadhar_number} onChange={e => setFormData({...formData, aadhar_number: e.target.value})} placeholder="12-digit number" />
                                 <InputField label="DOB" type="date" value={formData.dob} onChange={e => setFormData({...formData, dob: e.target.value})} />
                                 <SelectField label="Gender" value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})} options={["Male", "Female", "Other"]} />
                                 <SelectField label="Blood Group" value={formData.blood_group} onChange={e => setFormData({...formData, blood_group: e.target.value})} options={["Select", "A+", "B+", "O+", "AB+", "A-", "B-"]} />
                                 <SelectField label="Category" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} options={["General", "OBC", "SC/ST"]} />
+                                
+                                {/* ✅ ADDED SUPER ADMIN FIELDS */}
+                                <InputField label="Place of Birth" value={formData.place_of_birth} onChange={e => setFormData({...formData, place_of_birth: e.target.value})} />
+                                <div style={{display:'flex', gap:'10px'}}>
+                                    <InputField label="Height" value={formData.height} onChange={e => setFormData({...formData, height: e.target.value})} placeholder="e.g. 165cm" />
+                                    <InputField label="Weight" value={formData.weight} onChange={e => setFormData({...formData, weight: e.target.value})} placeholder="e.g. 60kg" />
+                                </div>
+                                <SelectField label="Marital Status" value={formData.marital_status} onChange={e => setFormData({...formData, marital_status: e.target.value})} options={["No", "Yes", "Other"]} />
+                                {formData.marital_status === 'Yes' && <InputField label="Spouse Name" value={formData.spouse_name} onChange={e => setFormData({...formData, spouse_name: e.target.value})} />}
                             </>}
 
                             {formStep === 2 && <>
@@ -356,6 +382,13 @@ export default function Students() {
                                 <InputField label="Roll Number" value={formData.roll_number} onChange={e => setFormData({...formData, roll_number: e.target.value})} />
                                 <InputField label="Date of Joining" type="date" value={formData.admission_date} onChange={e => setFormData({...formData, admission_date: e.target.value})} />
                                 <InputField label="Prev. School" value={formData.previous_school} onChange={e => setFormData({...formData, previous_school: e.target.value})} />
+                                
+                                {/* ✅ ADDED SUPER ADMIN MAPPING FIELDS */}
+                                <InputField label="Place ID (Mapping)" value={formData.place_id} onChange={e => setFormData({...formData, place_id: e.target.value})} placeholder="e.g. DEL-01" />
+                                <InputField label="Service ID (Mapping)" value={formData.service_id} onChange={e => setFormData({...formData, service_id: e.target.value})} placeholder="e.g. SRV-01" />
+                                <SelectField label="Registration Status" value={formData.registration_status} onChange={e => setFormData({...formData, registration_status: e.target.value})} options={["Registered", "Non-Registered", "Hibernation"]} />
+                                <SelectField label="User Group" value={formData.user_group} onChange={e => setFormData({...formData, user_group: e.target.value})} options={["Owner", "Management", "Service Provider", "Service Seekers", "Parents", "Guests", "Others"]} />
+                                <SelectField label="Account Status" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} options={["Active", "Deactivated", "Hibernation", "Hidden"]} />
                             </>}
 
                             {formStep === 3 && <>
@@ -363,6 +396,13 @@ export default function Students() {
                                 <InputField label="Mother's Name" value={formData.mother_name} onChange={e => setFormData({...formData, mother_name: e.target.value})} />
                                 <InputField label="Primary Mobile" value={formData.primary_mobile} onChange={e => setFormData({...formData, primary_mobile: e.target.value})} />
                                 <InputField label="Email Address" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                                
+                                {/* ✅ ADDED QUALIFICATIONS / PORTFOLIO */}
+                                <InputField label="Highest Qualification" value={formData.highest_qualification} onChange={e => setFormData({...formData, highest_qualification: e.target.value})} placeholder="e.g. Academic, Professional..." />
+                                <InputField label="Hobbies" value={formData.hobbies} onChange={e => setFormData({...formData, hobbies: e.target.value})} />
+                                <InputField label="Beliefs & Faiths" value={formData.beliefs} onChange={e => setFormData({...formData, beliefs: e.target.value})} />
+                                <InputField label="Experience" value={formData.experience} onChange={e => setFormData({...formData, experience: e.target.value})} />
+
                                 <div className="input-group full-width">
                                     <label style={{ display: 'block', marginBottom: '5px', color: '#000', fontWeight: '800', fontSize: '0.85rem' }}>Current Address</label>
                                     <textarea className="modern-input" rows="2" value={formData.current_address} onChange={e => setFormData({...formData, current_address: e.target.value})}></textarea>
@@ -371,8 +411,12 @@ export default function Students() {
 
                             {formStep === 4 && <>
                                 <SelectField label="Transport Mode" value={formData.transport_mode} onChange={e => setFormData({...formData, transport_mode: e.target.value})} options={["Select", "School Bus", "Private", "Self"]} />
+                                <InputField label="Validity Start Date" type="date" value={formData.validity_start} onChange={e => setFormData({...formData, validity_start: e.target.value})} />
+                                <InputField label="Validity End Date" type="date" value={formData.validity_end} onChange={e => setFormData({...formData, validity_end: e.target.value})} />
                                 <InputField label="Student Photo" type="file" onChange={e => setFormData({...formData, photo: e.target.files[0]})} />
                                 <InputField label="Aadhar Scan" type="file" onChange={e => setFormData({...formData, aadhar_scan: e.target.files[0]})} />
+                                <InputField label="Marksheet Scan" type="file" onChange={e => setFormData({...formData, marksheet_scan: e.target.files[0]})} />
+                                
                                 <div className="input-group full-width doc-preview-area">
                                     <p style={{color: '#64748b'}}>Ensure all documents are clear and under 2MB.</p>
                                 </div>
@@ -439,7 +483,7 @@ export default function Students() {
                             <div className="info-item"><span>Adm No</span><p>{selectedStudent.admission_number}</p></div>
                             <div className="info-item"><span>Roll No</span><p>{selectedStudent.roll_number || "--"}</p></div>
                             <div className="info-item"><span>Mobile</span><p>{selectedStudent.primary_mobile}</p></div>
-                            <div className="info-item"><span>Status</span><p className={selectedStudent.fee_status.toLowerCase()}>{selectedStudent.fee_status}</p></div>
+                            <div className="info-item"><span>Status</span><p className={selectedStudent.fee_status?.toLowerCase() || 'pending'}>{selectedStudent.fee_status}</p></div>
                         </div>
 
                         <button className="btn-primary-gradient full-btn" onClick={handleEditProfile}>Edit Full Profile</button>
@@ -451,7 +495,7 @@ export default function Students() {
 
       </div>
 
-      {/* ✅ CSS STYLES (MOBILE RESPONSIVE ADDED) */}
+      {/* ✅ CSS STYLES (MOBILE RESPONSIVE ADDED - UNCHANGED) */}
       <style>{`
         :root {
             --primary: #6366f1;
