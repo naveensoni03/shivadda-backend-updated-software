@@ -5,7 +5,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import {
     Users, UserPlus, Search, Edit3, Trash2, Eye,
     CheckCircle, XCircle, Mail, Shield, Lock, X, ChevronLeft, ChevronRight, 
-    Calendar, User, Phone, Sparkles, AlertTriangle, Power, Smartphone, HardDrive, Moon
+    Calendar, User, Phone, Sparkles, AlertTriangle, Power, Smartphone, HardDrive, Moon, Filter, MapPin, CalendarClock
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -60,12 +60,18 @@ export default function UserManager() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+    const [filterRole, setFilterRole] = useState("ALL");
+    const [filterLocation, setFilterLocation] = useState("ALL");
     
+    // Checkbox State (Bulk Actions)
+    const [selectedUserIds, setSelectedUserIds] = useState([]);
+
     // Modals
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isViewOpen, setIsViewOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [userToDelete, setUserToDelete] = useState(null);
+    const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
 
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
     const [userToToggle, setUserToToggle] = useState(null);
@@ -79,7 +85,7 @@ export default function UserManager() {
     const [itemsPerPage] = useState(6);
 
     const [formData, setFormData] = useState({
-        id: null, full_name: "", email: "", phone: "", role: "STAFF", password: "", account_status: "ACTIVE"
+        id: null, full_name: "", email: "", phone: "", role: "STAFF", password: "", account_status: "ACTIVE", location: "Global", validity_days: 365, is_disguised: false
     });
 
     useEffect(() => { fetchUsers(); }, []);
@@ -90,6 +96,33 @@ export default function UserManager() {
             const res = await api.get("users/");
             setUsers(res.data.results || res.data);
         } catch (err) { toast.error("Failed to sync users."); } finally { setLoading(false); }
+    };
+
+    // --- Bulk Action Handlers ---
+    const handleSelectAll = (e) => {
+        if (e.target.checked) {
+            setSelectedUserIds(currentUsers.map(u => u.id));
+        } else {
+            setSelectedUserIds([]);
+        }
+    };
+
+    const handleSelectUser = (id) => {
+        setSelectedUserIds(prev => prev.includes(id) ? prev.filter(uId => uId !== id) : [...prev, id]);
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedUserIds.length === 0) return;
+        const loadToast = toast.loading("Processing Bulk Deletion...");
+        try {
+            await Promise.all(selectedUserIds.map(id => api.delete(`users/${id}/`)));
+            setUsers(users.filter(u => !selectedUserIds.includes(u.id)));
+            setSelectedUserIds([]);
+            toast.success(`${selectedUserIds.length} users deleted.`, { id: loadToast });
+            setIsBulkDeleteOpen(false);
+        } catch (err) {
+            toast.error("Bulk deletion failed. Some users might remain.", { id: loadToast });
+        }
     };
 
     const initiateDelete = (id) => {
@@ -149,7 +182,10 @@ export default function UserManager() {
             email: formData.email,
             phone: formData.phone,
             role: formData.role,
-            account_status: formData.account_status
+            account_status: formData.account_status,
+            location: formData.location, 
+            validity_days: formData.validity_days, 
+            is_disguised: formData.is_disguised 
         };
         if (formData.password && formData.password.trim() !== "") {
             payload.password = formData.password;
@@ -178,7 +214,7 @@ export default function UserManager() {
 
     const openForm = (user = null) => {
         setEditMode(!!user);
-        setFormData(user ? { ...user, password: "" } : { id: null, full_name: "", email: "", phone: "", role: "STAFF", password: "", account_status: "ACTIVE" });
+        setFormData(user ? { ...user, password: "", location: user.location || "Global", validity_days: user.validity_days || 365, is_disguised: user.is_disguised || false } : { id: null, full_name: "", email: "", phone: "", role: "STAFF", password: "", account_status: "ACTIVE", location: "Global", validity_days: 365, is_disguised: false });
         setIsFormOpen(true);
     };
     
@@ -190,10 +226,14 @@ export default function UserManager() {
     const closeForm = () => setIsFormOpen(false);
     const closeView = () => setIsViewOpen(false);
 
-    const filteredUsers = users.filter(u =>
-        u.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        u.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Dynamic Filtering logic
+    const filteredUsers = users.filter(u => {
+        const matchesSearch = u.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || u.email?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesRole = filterRole === "ALL" || u.role === filterRole;
+        const matchesLocation = filterLocation === "ALL" || (u.location && u.location === filterLocation);
+        return matchesSearch && matchesRole && matchesLocation;
+    });
+
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
@@ -208,7 +248,6 @@ export default function UserManager() {
             <SidebarModern />
             <Toaster position="top-center" toastOptions={{ style: { background: '#0f172a', color: 'white', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' } }} />
 
-            {/* 🚀 FIXED: Replaced inline styles with 'user-main-view' class */}
             <div className="user-main-view hide-scrollbar">
 
                 {/* 🔥 HERO HEADER */}
@@ -219,145 +258,198 @@ export default function UserManager() {
                         </h1>
                         <p style={{ color: '#64748b', fontSize: '1.1rem', marginTop: '8px', fontWeight: '500' }}>Orchestrate your team's access and permissions.</p>
                     </div>
-                    <motion.button 
-                        whileHover={{ scale: 1.05, boxShadow: '0 20px 40px -10px rgba(79, 70, 229, 0.5)' }} 
-                        whileTap={{ scale: 0.95 }} 
-                        onClick={() => openForm()} 
-                        style={primaryBtn}
-                    >
-                        <div style={{background:'rgba(255,255,255,0.2)', padding:'8px', borderRadius:'10px'}}><UserPlus size={22}/></div>
-                        <span>Add New User</span>
-                    </motion.button>
-                </motion.div>
-
-                {/* 🔍 FLOATING SEARCH */}
-                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }} style={{ marginBottom: '35px', position: 'relative' }}>
-                    <div style={{position:'absolute', left:'25px', top:'50%', transform:'translateY(-50%)', color:'#6366f1', filter:'drop-shadow(0 0 8px rgba(99,102,241,0.3))'}}>
-                        <Search size={22} strokeWidth={2.5} />
+                    <div style={{display:'flex', gap:'15px', flexWrap:'wrap', justifyContent:'flex-start'}}>
+                         <motion.button 
+                            whileHover={{ scale: 1.05 }} 
+                            whileTap={{ scale: 0.95 }} 
+                            onClick={() => selectedUserIds.length > 0 ? setIsBulkDeleteOpen(true) : toast("Select users first", {icon: '⚠️'})} 
+                            style={{...secondaryBtn, opacity: selectedUserIds.length > 0 ? 1 : 0.5, border: selectedUserIds.length > 0 ? '1px solid #ef4444' : 'none', color: selectedUserIds.length > 0 ? '#ef4444' : '#94a3b8'}}
+                        >
+                            <Trash2 size={18}/> Bulk Actions
+                        </motion.button>
+                        <motion.button 
+                            whileHover={{ scale: 1.05, boxShadow: '0 20px 40px -10px rgba(79, 70, 229, 0.5)' }} 
+                            whileTap={{ scale: 0.95 }} 
+                            onClick={() => openForm()} 
+                            style={primaryBtn}
+                        >
+                            <div style={{background:'rgba(255,255,255,0.2)', padding:'8px', borderRadius:'10px'}}><UserPlus size={22}/></div>
+                            <span>Add New User</span>
+                        </motion.button>
                     </div>
-                    <input 
-                        placeholder="Search by name, email or role..." 
-                        style={searchBar} 
-                        value={searchTerm} 
-                        onChange={(e) => setSearchTerm(e.target.value)} 
-                    />
                 </motion.div>
 
-                {/* 📋 TABLE HEADER */}
-                <div className="user-grid-header">
-                    <div>User Profile</div>
-                    <div>Role</div>
-                    <div>Contact Info</div>
-                    <div>Status</div>
-                    <div style={{ textAlign: 'right', paddingRight: '10px' }}>Actions</div>
+                {/* 🔍 FLOATING SEARCH & FILTERS */}
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }} style={{ marginBottom: '35px', display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                    <div style={{ position: 'relative', flex: 2, minWidth: '250px' }}>
+                        <div style={{position:'absolute', left:'25px', top:'50%', transform:'translateY(-50%)', color:'#6366f1', filter:'drop-shadow(0 0 8px rgba(99,102,241,0.3))'}}>
+                            <Search size={22} strokeWidth={2.5} />
+                        </div>
+                        <input 
+                            placeholder="Search by name or email..." 
+                            style={searchBar} 
+                            value={searchTerm} 
+                            onChange={(e) => setSearchTerm(e.target.value)} 
+                        />
+                    </div>
+                    
+                    <div className="filter-group">
+                        <div className="select-wrapper">
+                             <Filter size={16} className="select-icon" />
+                             <select style={filterSelect} value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
+                                 <option value="ALL">All Roles</option>
+                                 <option value="SUPER_ADMIN">Super Admin</option>
+                                 <option value="SCHOOL_ADMIN">School Admin</option>
+                                 <option value="STAFF">Staff</option>
+                                 <option value="TEACHER">Teacher</option>
+                             </select>
+                        </div>
+                        <div className="select-wrapper">
+                             <MapPin size={16} className="select-icon" />
+                             <select style={filterSelect} value={filterLocation} onChange={(e) => setFilterLocation(e.target.value)}>
+                                 <option value="ALL">All Locations</option>
+                                 <option value="Global">Global HQ</option>
+                                 <option value="Delhi Branch">Delhi Branch</option>
+                                 <option value="Mumbai Branch">Mumbai Branch</option>
+                             </select>
+                        </div>
+                    </div>
+                </motion.div>
+
+                {/* 📋 TABULAR DATA AREA */}
+                <div className="table-responsive-wrapper hide-scrollbar" style={{ flex: 1 }}>
+                    <table className="modern-table">
+                        <thead>
+                            <tr>
+                                <th style={{width: '30%'}}>
+                                    <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
+                                        <input type="checkbox" onChange={handleSelectAll} checked={currentUsers.length > 0 && selectedUserIds.length === currentUsers.length} style={checkboxStyle}/> 
+                                        User Profile
+                                    </div>
+                                </th>
+                                <th style={{width: '15%'}}>Role</th>
+                                <th style={{width: '25%'}}>Contact Info</th>
+                                <th style={{width: '15%'}}>Status</th>
+                                <th style={{width: '15%', textAlign: 'right', paddingRight: '30px'}}>Actions</th>
+                            </tr>
+                        </thead>
+                        <AnimatePresence>
+                            <motion.tbody variants={containerVariants} initial="hidden" animate="show">
+                                {loading ? <tr><td colSpan="5"><div style={emptyState}>Loading Data...</div></td></tr> : 
+                                 currentUsers.length === 0 ? <tr><td colSpan="5"><div style={emptyState}>No users found matching filters.</div></td></tr> :
+                                 currentUsers.map((user, i) => {
+                                    const theme = ROLE_THEMES[user.role] || ROLE_THEMES.STAFF;
+                                    const avatarBg = AVATAR_GRADIENTS[i % AVATAR_GRADIENTS.length];
+                                    
+                                    // Status Logic
+                                    let statusColor = '#10b981'; 
+                                    let statusBg = '#dcfce7';
+                                    let StatusIcon = CheckCircle;
+                                    let statusText = "Active";
+
+                                    if(user.account_status === 'HIBERNATE') {
+                                        statusColor = '#8b5cf6'; 
+                                        statusBg = '#f3e8ff';
+                                        StatusIcon = Moon;
+                                        statusText = "Hibernated";
+                                    } else if (!user.is_active || user.account_status === 'INACTIVE') {
+                                        statusColor = '#ef4444'; 
+                                        statusBg = '#fee2e2';
+                                        StatusIcon = XCircle;
+                                        statusText = "Inactive";
+                                    }
+
+                                    const isSelected = selectedUserIds.includes(user.id);
+
+                                    return (
+                                        <motion.tr 
+                                            key={user.id} 
+                                            variants={cardVariants}
+                                            whileHover={{ y: -4, scale: 1.005, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.1)' }}
+                                            className="table-row"
+                                        >
+                                            {/* Profile Cell */}
+                                            <td style={{ borderLeft: theme.border, background: isSelected ? '#f8fafc' : 'white' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                    <input type="checkbox" checked={isSelected} onChange={() => handleSelectUser(user.id)} style={checkboxStyle}/>
+                                                    <div style={{ ...avatar, background: avatarBg, position:'relative' }}>
+                                                        {user.full_name?.charAt(0).toUpperCase()}
+                                                        {user.is_disguised && <div style={{position:'absolute', bottom:'-5px', right:'-5px', background:'#f59e0b', color:'white', borderRadius:'50%', padding:'2px'}} title="Disguised Account"><Sparkles size={12}/></div>}
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ fontWeight: '800', color: '#1e293b', fontSize: '1.05rem', display:'flex', alignItems:'center', gap:'8px' }}>
+                                                            {user.full_name} 
+                                                        </div>
+                                                        <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600', marginTop:'2px', display:'flex', alignItems:'center', gap:'8px' }}>
+                                                            <Shield size={10} color={theme.color}/> ID: #{user.id.toString().padStart(4, '0')}
+                                                            <span style={{color:'#cbd5e1'}}>|</span>
+                                                            <MapPin size={10}/> {user.location || "Global"}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            {/* Role Badge Cell */}
+                                            <td style={{ background: isSelected ? '#f8fafc' : 'white' }}>
+                                                <span style={{ 
+                                                    ...badge, 
+                                                    background: theme.badgeBg, 
+                                                    color: theme.badgeText, 
+                                                    border: `1px solid ${theme.color}30` 
+                                                }}>
+                                                    {user.role ? user.role.replace('_', ' ') : 'STAFF'}
+                                                </span>
+                                            </td>
+
+                                            {/* Contact Info Cell */}
+                                            <td style={{ background: isSelected ? '#f8fafc' : 'white' }}>
+                                                <div style={{display:'flex', flexDirection:'column', gap:'4px'}}>
+                                                    <div style={{ color: '#475569', fontWeight: '600', fontSize: '0.9rem', display:'flex', alignItems:'center', gap:'10px' }}>
+                                                        <Mail size={14} color="#64748b"/> {user.email}
+                                                    </div>
+                                                    {user.phone && (
+                                                        <div style={{ color: '#64748b', fontSize: '0.85rem', display:'flex', alignItems:'center', gap:'10px' }}>
+                                                            <Smartphone size={14} color="#94a3b8"/> {user.phone}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+
+                                            {/* Status Badge Cell */}
+                                            <td style={{ background: isSelected ? '#f8fafc' : 'white' }}>
+                                                <span style={{...statusBadge, color: statusColor, background: statusBg}}>
+                                                    <StatusIcon size={14}/> {statusText}
+                                                </span>
+                                            </td>
+
+                                            {/* Actions Cell */}
+                                            <td style={{ background: isSelected ? '#f8fafc' : 'white', textAlign: 'right', paddingRight: '30px' }}>
+                                                <div className="user-actions-wrap" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                                                    <motion.button whileHover={{ scale: 1.15 }} onClick={() => handleStatusToggleClick(user)} style={{...actionBtn, color: user.account_status === 'HIBERNATE' ? '#10b981' : '#8b5cf6', background:'#f3f4f6'}} title={user.account_status === 'HIBERNATE' ? "Activate" : "Hibernate"}>
+                                                        <Power size={18} />
+                                                    </motion.button>
+                                                    <motion.button whileHover={{ scale: 1.15 }} onClick={() => openView(user)} style={{...actionBtn, color: '#3b82f6', background:'#eff6ff'}} title="View">
+                                                        <Eye size={18} />
+                                                    </motion.button>
+                                                    <motion.button whileHover={{ scale: 1.15 }} onClick={() => openForm(user)} style={{...actionBtn, color: '#f59e0b', background:'#fffbeb'}} title="Edit">
+                                                        <Edit3 size={18} />
+                                                    </motion.button>
+                                                    <motion.button whileHover={{ scale: 1.15 }} onClick={() => initiateDelete(user.id)} style={{...actionBtn, color: '#ef4444', background:'#fef2f2'}} title="Delete">
+                                                        <Trash2 size={18} />
+                                                    </motion.button>
+                                                </div>
+                                            </td>
+                                        </motion.tr>
+                                    );
+                                })}
+                            </motion.tbody>
+                        </AnimatePresence>
+                    </table>
                 </div>
-
-                {/* 🚀 USERS LIST (CARDS) */}
-                <motion.div 
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="show"
-                    style={{ display: 'flex', flexDirection: 'column', gap: '18px', paddingBottom:'20px', flex:1 }}
-                >
-                    {loading ? <div style={emptyState}>Loading Data...</div> : 
-                     currentUsers.length === 0 ? <div style={emptyState}>No users found.</div> :
-                     currentUsers.map((user, i) => {
-                        const theme = ROLE_THEMES[user.role] || ROLE_THEMES.STAFF;
-                        const avatarBg = AVATAR_GRADIENTS[i % AVATAR_GRADIENTS.length];
-                        
-                        // Status Logic
-                        let statusColor = '#10b981'; 
-                        let statusBg = '#dcfce7';
-                        let StatusIcon = CheckCircle;
-                        let statusText = "Active";
-
-                        if(user.account_status === 'HIBERNATE') {
-                            statusColor = '#8b5cf6'; 
-                            statusBg = '#f3e8ff';
-                            StatusIcon = Moon;
-                            statusText = "Hibernated";
-                        } else if (!user.is_active || user.account_status === 'INACTIVE') {
-                            statusColor = '#ef4444'; 
-                            statusBg = '#fee2e2';
-                            StatusIcon = XCircle;
-                            statusText = "Inactive";
-                        }
-
-                        return (
-                            <motion.div 
-                                key={user.id} 
-                                variants={cardVariants}
-                                whileHover={{ y: -6, scale: 1.005, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.1)' }}
-                                style={{...rowCard, borderLeft: theme.border}}
-                                className="user-card-row"
-                            >
-                                {/* Profile */}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
-                                    <div style={{ ...avatar, background: avatarBg }}>
-                                        {user.full_name?.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div>
-                                        <div style={{ fontWeight: '800', color: '#1e293b', fontSize: '1.05rem' }}>{user.full_name}</div>
-                                        <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600', marginTop:'2px', display:'flex', alignItems:'center', gap:'4px' }}>
-                                            <Shield size={10} color={theme.color}/> ID: #{user.id.toString().padStart(4, '0')}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Role Badge */}
-                                <div>
-                                    <span style={{ 
-                                        ...badge, 
-                                        background: theme.badgeBg, 
-                                        color: theme.badgeText, 
-                                        border: `1px solid ${theme.color}30` 
-                                    }}>
-                                        {user.role ? user.role.replace('_', ' ') : 'STAFF'}
-                                    </span>
-                                </div>
-
-                                {/* Contact Info */}
-                                <div style={{display:'flex', flexDirection:'column', gap:'4px'}}>
-                                    <div style={{ color: '#475569', fontWeight: '600', fontSize: '0.9rem', display:'flex', alignItems:'center', gap:'10px' }}>
-                                        <Mail size={14} color="#64748b"/> {user.email}
-                                    </div>
-                                    {user.phone && (
-                                        <div style={{ color: '#64748b', fontSize: '0.85rem', display:'flex', alignItems:'center', gap:'10px' }}>
-                                            <Smartphone size={14} color="#94a3b8"/> {user.phone}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Status Badge */}
-                                <div>
-                                    <span style={{...statusBadge, color: statusColor, background: statusBg}}>
-                                        <StatusIcon size={14}/> {statusText}
-                                    </span>
-                                </div>
-
-                                {/* ✨ ACTIONS */}
-                                <div className="user-actions-wrap" style={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                                    <motion.button whileHover={{ scale: 1.15 }} onClick={() => handleStatusToggleClick(user)} style={{...actionBtn, color: user.account_status === 'HIBERNATE' ? '#10b981' : '#8b5cf6', background:'#f3f4f6'}} title={user.account_status === 'HIBERNATE' ? "Activate" : "Hibernate"}>
-                                        <Power size={18} />
-                                    </motion.button>
-                                    <motion.button whileHover={{ scale: 1.15 }} onClick={() => openView(user)} style={{...actionBtn, color: '#3b82f6', background:'#eff6ff'}} title="View">
-                                        <Eye size={18} />
-                                    </motion.button>
-                                    <motion.button whileHover={{ scale: 1.15 }} onClick={() => openForm(user)} style={{...actionBtn, color: '#f59e0b', background:'#fffbeb'}} title="Edit">
-                                        <Edit3 size={18} />
-                                    </motion.button>
-                                    <motion.button whileHover={{ scale: 1.15 }} onClick={() => initiateDelete(user.id)} style={{...actionBtn, color: '#ef4444', background:'#fef2f2'}} title="Delete">
-                                        <Trash2 size={18} />
-                                    </motion.button>
-                                </div>
-                            </motion.div>
-                        );
-                    })}
-                </motion.div>
 
                 {/* PAGINATION */}
                 {filteredUsers.length > itemsPerPage && (
-                    <div style={{ marginTop: 'auto', paddingTop: '20px', display: 'flex', justifyContent: 'center', gap: '15px' }}>
+                    <div style={{ paddingTop: '20px', display: 'flex', justifyContent: 'center', gap: '15px' }}>
                         <motion.button whileHover={{scale:1.1}} disabled={currentPage===1} onClick={()=>paginate(currentPage-1)} style={pageBtn}><ChevronLeft size={20}/></motion.button>
                         <span style={{padding:'10px 24px', background:'white', borderRadius:'14px', fontWeight:'800', color:'#0f172a', boxShadow:'0 4px 10px rgba(0,0,0,0.05)', display:'flex', alignItems:'center'}}>{currentPage} <span style={{color:'#cbd5e1', margin:'0 8px'}}>/</span> {totalPages}</span>
                         <motion.button whileHover={{scale:1.1}} disabled={currentPage===totalPages} onClick={()=>paginate(currentPage+1)} style={pageBtn}><ChevronRight size={20}/></motion.button>
@@ -384,7 +476,7 @@ export default function UserManager() {
                                 </div>
                                 <motion.button whileHover={{ rotate: 90, background:'#e2e8f0' }} onClick={closeForm} style={closeBtn}><X size={22} /></motion.button>
                             </div>
-                            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxHeight:'65vh', overflowY:'auto', paddingRight:'5px' }} className="hide-scrollbar">
                                 <div style={inputGroup}>
                                     <label style={labelStyle}>Full Name</label>
                                     <input required placeholder="e.g. John Doe" value={formData.full_name} onChange={e => setFormData({ ...formData, full_name: e.target.value })} style={input} />
@@ -425,6 +517,30 @@ export default function UserManager() {
                                             <ChevronLeft size={16} style={{position:'absolute', right:'15px', top:'50%', transform:'translateY(-50%) rotate(-90deg)', pointerEvents:'none', color:'#64748b'}}/>
                                         </div>
                                     </div>
+                                </div>
+
+                                <div className="user-form-split-flex">
+                                     <div style={{flex:1}}>
+                                        <label style={labelStyle}>Location/Branch</label>
+                                        <div style={{position:'relative'}}>
+                                            <select value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} style={{...input, appearance:'none'}}>
+                                                <option value="Global">Global HQ</option>
+                                                <option value="Delhi Branch">Delhi Branch</option>
+                                                <option value="Mumbai Branch">Mumbai Branch</option>
+                                            </select>
+                                            <ChevronLeft size={16} style={{position:'absolute', right:'15px', top:'50%', transform:'translateY(-50%) rotate(-90deg)', pointerEvents:'none', color:'#64748b'}}/>
+                                        </div>
+                                    </div>
+                                    <div style={{flex:1}}>
+                                        <label style={labelStyle}>Validity (Days)</label>
+                                        <input type="number" min="1" value={formData.validity_days} onChange={e => setFormData({ ...formData, validity_days: parseInt(e.target.value) })} style={input} />
+                                    </div>
+                                </div>
+
+                                <div style={{display:'flex', alignItems:'center', gap:'10px', background:'#f8fafc', padding:'15px', borderRadius:'16px', border:'1px solid #e2e8f0'}}>
+                                    <input type="checkbox" id="disguised" checked={formData.is_disguised} onChange={e => setFormData({...formData, is_disguised: e.target.checked})} style={{width:'18px', height:'18px', cursor:'pointer'}}/>
+                                    <label htmlFor="disguised" style={{fontSize:'0.95rem', color:'#334155', fontWeight:'600', cursor:'pointer', flex:1}}>Make this a Disguised ID / Sub-ID</label>
+                                    <Sparkles size={18} color="#f59e0b"/>
                                 </div>
 
                                 {!editMode && (
@@ -468,18 +584,20 @@ export default function UserManager() {
                                     <X size={20} strokeWidth={2.5}/>
                                 </motion.button>
 
-                                <div style={{ width: '90px', height: '90px', borderRadius: '24px', background: 'rgba(255,255,255,0.25)', margin: '0 auto 15px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: '800', backdropFilter:'blur(10px)', border:'1px solid rgba(255,255,255,0.4)', boxShadow:'0 15px 30px rgba(0,0,0,0.2)' }}>
+                                <div style={{ width: '90px', height: '90px', borderRadius: '24px', background: 'rgba(255,255,255,0.25)', margin: '0 auto 15px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: '800', backdropFilter:'blur(10px)', border:'1px solid rgba(255,255,255,0.4)', boxShadow:'0 15px 30px rgba(0,0,0,0.2)', position:'relative' }}>
                                     {selectedUser.full_name?.charAt(0).toUpperCase()}
+                                    {selectedUser.is_disguised && <div style={{position:'absolute', bottom:'-5px', right:'-5px', background:'#f59e0b', borderRadius:'50%', padding:'5px', boxShadow:'0 4px 10px rgba(0,0,0,0.2)'}}><Sparkles size={16}/></div>}
                                 </div>
                                 <h2 style={{fontSize:'1.8rem', margin:0, fontWeight:'800'}}>{selectedUser.full_name}</h2>
                                 <p style={{fontSize:'1rem', opacity:0.9, marginTop:'5px', fontWeight:'500'}}>{selectedUser.email}</p>
                             </div>
 
-                            <div style={{padding:'35px'}}>
+                            <div style={{padding:'35px', maxHeight:'50vh', overflowY:'auto'}} className="hide-scrollbar">
                                 <DetailRow icon={<Shield size={20}/>} label="Assigned Role" value={selectedUser.role.replace('_', ' ')} />
                                 <DetailRow icon={<User size={20}/>} label="System ID" value={`#${selectedUser.id}`} />
+                                <DetailRow icon={<MapPin size={20}/>} label="Location" value={selectedUser.location || "Global"} />
                                 <DetailRow icon={<Smartphone size={20}/>} label="Phone" value={selectedUser.phone || "N/A"} />
-                                <DetailRow icon={<HardDrive size={20}/>} label="Storage Used" value={`${selectedUser.storage_used_mb || 0} MB / ${selectedUser.storage_limit_mb || 500} MB`} />
+                                <DetailRow icon={<CalendarClock size={20}/>} label="Validity" value={`${selectedUser.validity_days || 365} Days`} />
                                 <DetailRow icon={<Calendar size={20}/>} label="Date Joined" value={new Date(selectedUser.date_joined).toLocaleDateString()} />
                                 <DetailRow 
                                     icon={selectedUser.account_status === 'ACTIVE' ? <CheckCircle size={20} color="#10b981"/> : <Moon size={20} color="#8b5cf6"/>} 
@@ -493,7 +611,7 @@ export default function UserManager() {
                 )}
             </AnimatePresence>
 
-            {/* 🚀 NEW: CUSTOM STATUS TOGGLE CONFIRMATION MODAL */}
+            {/* 🚀 CUSTOM STATUS TOGGLE CONFIRMATION MODAL */}
             <AnimatePresence>
                 {isStatusModalOpen && userToToggle && (
                     <div style={overlay}>
@@ -544,7 +662,7 @@ export default function UserManager() {
                 )}
             </AnimatePresence>
 
-            {/* 🗑️ DELETE CONFIRMATION MODAL */}
+            {/* 🗑️ SINGLE DELETE CONFIRMATION MODAL */}
             <AnimatePresence>
                 {isDeleteModalOpen && (
                     <div style={overlay}>
@@ -575,6 +693,37 @@ export default function UserManager() {
                 )}
             </AnimatePresence>
 
+            {/* 🗑️ BULK DELETE CONFIRMATION MODAL */}
+            <AnimatePresence>
+                {isBulkDeleteOpen && (
+                    <div style={overlay}>
+                        <motion.div 
+                            initial={{ scale: 0.9, opacity: 0 }} 
+                            animate={{ scale: 1, opacity: 1 }} 
+                            exit={{ scale: 0.9, opacity: 0 }} 
+                            style={{...modal, width:'450px', textAlign:'center', borderTop:'6px solid #ef4444', borderRadius:'24px'}}
+                            className="responsive-modal"
+                        >
+                            <div style={{width:'70px', height:'70px', background:'#fee2e2', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', color:'#ef4444'}}>
+                                <Users size={32} />
+                            </div>
+                            <h2 style={{fontSize:'1.6rem', fontWeight:'800', color:'#1e293b', marginBottom:'10px'}}>Bulk Delete Users?</h2>
+                            <p style={{color:'#64748b', fontSize:'0.95rem', marginBottom:'30px', lineHeight:'1.5'}}>
+                                You are about to permanently delete <strong>{selectedUserIds.length}</strong> users. This action cannot be undone.
+                            </p>
+                            <div style={{display:'flex', gap:'15px', justifyContent:'center'}}>
+                                <motion.button whileHover={{scale:1.05}} onClick={() => setIsBulkDeleteOpen(false)} style={{...secondaryBtn, flex:1}}>
+                                    Cancel
+                                </motion.button>
+                                <motion.button whileHover={{scale:1.05}} onClick={handleBulkDelete} style={{...deleteBtnStyle, flex:1}}>
+                                    Delete {selectedUserIds.length} Users
+                                </motion.button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
             {/* 🔥 CSS FOR RESPONSIVENESS AND ANIMATIONS */}
             <style>{`
                 .hide-scrollbar::-webkit-scrollbar { display: none; }
@@ -584,12 +733,26 @@ export default function UserManager() {
 
                 /* 💻 DESKTOP CLASSES */
                 .user-main-view { flex: 1; margin-left: 280px; padding: 40px; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; box-sizing: border-box; transition: all 0.3s ease; }
-                .user-header-wrap { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+                .user-header-wrap { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 20px;}
                 .responsive-title { font-size: 3rem; }
-                .user-grid-header { display: grid; grid-template-columns: 1.5fr 1fr 1.2fr 0.8fr 1.2fr; padding: 0 30px 15px 30px; color: #94a3b8; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.2px; }
-                .user-card-row { display: grid; grid-template-columns: 1.5fr 1fr 1.2fr 0.8fr 1.2fr; align-items: center; gap: 15px; }
+                
                 .user-form-split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
                 .user-form-split-flex { display: flex; gap: 20px; }
+                .filter-group { display: flex; gap: 10px; flex-wrap: wrap; flex: 1;}
+                .select-wrapper { position: relative; flex: 1; min-width: 150px; }
+                .select-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none;}
+
+                /* ✅ TRUE TABULAR TABLE STYLES (NO UI CHANGE) */
+                .table-responsive-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+                .modern-table { width: 100%; border-collapse: separate; border-spacing: 0 15px; min-width: 1000px; margin-top: -15px; }
+                .modern-table th { padding: 0 30px; text-align: left; color: #94a3b8; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; border: none; white-space: nowrap; }
+                .modern-table td { padding: 22px 30px; vertical-align: middle; background: inherit; border-top: 1px solid transparent; border-bottom: 1px solid transparent; }
+                
+                /* Fake Border Radius for Table Rows to match exact card UI */
+                .table-row { transition: all 0.3s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); background: white; cursor: default; }
+                .table-row td:first-child { border-top-left-radius: 24px; border-bottom-left-radius: 24px; }
+                .table-row td:last-child { border-top-right-radius: 24px; border-bottom-right-radius: 24px; }
+                
 
                 /* 📱 MOBILE RESPONSIVE STYLES */
                 @media (max-width: 850px) {
@@ -600,15 +763,9 @@ export default function UserManager() {
                         width: 100% !important;
                     }
                     .user-header-wrap { flex-direction: column; align-items: flex-start; gap: 15px; }
+                    .user-header-wrap > div:last-child { width: 100%; display: grid; grid-template-columns: 1fr; gap:10px; }
                     .user-header-wrap button { width: 100%; justify-content: center; }
                     .responsive-title { font-size: 2.2rem !important; }
-                    
-                    /* Hide Table Header on Mobile */
-                    .user-grid-header { display: none !important; }
-                    
-                    /* Stack Row Cards */
-                    .user-card-row { grid-template-columns: 1fr !important; padding: 20px !important; gap: 15px; }
-                    .user-actions-wrap { justify-content: flex-start !important; margin-top: 10px; }
                     
                     /* Form stacking */
                     .user-form-split { grid-template-columns: 1fr !important; }
@@ -616,13 +773,15 @@ export default function UserManager() {
                     
                     /* Modals fitting screen */
                     .responsive-modal { width: 95% !important; padding: 25px !important; }
+                    
+                    .filter-group { flex-direction: column; width: 100%; }
                 }
             `}</style>
         </div>
     );
 }
 
-// ✨ ULTRA PREMIUM STYLES (Cleaned for Responsive Setup)
+// ✨ ULTRA PREMIUM STYLES
 const DetailRow = ({ icon, label, value, color }) => (
     <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'16px 0', borderBottom:'1px dashed #e2e8f0'}}>
         <div style={{display:'flex', alignItems:'center', gap:'14px', color:'#64748b', fontSize:'1rem', fontWeight:'600'}}>
@@ -637,18 +796,19 @@ const overlay = { position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4
 const modal = { background: 'white', padding: '40px', borderRadius: '32px', width: '550px', maxWidth: '90%', boxShadow: '0 40px 80px -20px rgba(0,0,0,0.3)', position:'relative', border:'1px solid white' };
 const modalHeader = { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '30px' };
 const primaryBtn = { background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', color: 'white', border: 'none', padding: '12px 28px', borderRadius: '18px', cursor: 'pointer', fontWeight: '700', fontSize: '1rem', display:'flex', gap:'12px', alignItems:'center', boxShadow:'0 10px 25px -10px rgba(79, 70, 229, 0.5)', transition: 'all 0.3s' };
-const secondaryBtn = { background: '#f1f5f9', color: '#475569', border: 'none', padding: '14px 20px', borderRadius: '14px', cursor: 'pointer', fontWeight: '700', fontSize: '1rem' };
+const secondaryBtn = { background: '#f1f5f9', color: '#475569', border: 'none', padding: '12px 20px', borderRadius: '14px', cursor: 'pointer', fontWeight: '700', fontSize: '1rem', display:'flex', alignItems:'center', gap:'8px', transition:'all 0.3s' };
 const deleteBtnStyle = { background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: 'white', border: 'none', padding: '14px 20px', borderRadius: '14px', cursor: 'pointer', fontWeight: '700', fontSize: '1rem', boxShadow: '0 10px 20px -5px rgba(239, 68, 68, 0.4)' };
-const searchBar = { width: '100%', padding: '18px 25px 18px 65px', borderRadius: '20px', border: 'none', background: 'white', fontSize: '1rem', outline: 'none', boxSizing:'border-box', boxShadow: '0 10px 40px -10px rgba(0,0,0,0.05)', color: '#1e293b', fontWeight:'600', transition:'all 0.3s' };
-const rowCard = { background: 'white', padding: '22px 30px', borderRadius: '24px', border: '1px solid white', transition: 'all 0.3s', boxShadow:'0 4px 6px -1px rgba(0, 0, 0, 0.02)' };
+const searchBar = { width: '100%', padding: '16px 25px 16px 55px', borderRadius: '16px', border: '2px solid transparent', background: 'white', fontSize: '0.95rem', outline: 'none', boxSizing:'border-box', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.05)', color: '#1e293b', fontWeight:'600', transition:'all 0.3s' };
+const filterSelect = { width: '100%', padding: '16px 25px 16px 45px', borderRadius: '16px', border: '2px solid transparent', background: 'white', fontSize: '0.95rem', outline: 'none', boxSizing:'border-box', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.05)', color: '#1e293b', fontWeight:'600', transition:'all 0.3s', appearance:'none', cursor:'pointer' };
 const avatar = { minWidth: '50px', height: '50px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '900', fontSize: '1.3rem', boxShadow:'0 8px 15px rgba(0,0,0,0.1)' };
 const badge = { padding: '8px 16px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.8px', textTransform:'uppercase' };
 const statusBadge = { padding: '6px 14px', borderRadius: '10px', fontSize: '0.8rem', fontWeight: '700', display:'flex', alignItems:'center', gap:'6px', width:'fit-content' };
-const actionBtn = { border: 'none', width: '42px', height: '42px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition:'all 0.2s' };
+const actionBtn = { border: 'none', width: '42px', height: '42px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition:'all 0.2s', flexShrink:0 };
 const inputGroup = {display:'flex', flexDirection:'column', gap:'8px'};
-const input = { width: '100%', padding: '16px', borderRadius: '16px', border: '2px solid #f1f5f9', background: '#f8fafc', fontSize: '1rem', outline: 'none', color: '#1e293b', fontWeight:'600', transition:'all 0.3s', boxSizing:'border-box' };
+const input = { width: '100%', padding: '14px 20px', borderRadius: '14px', border: '2px solid #f1f5f9', background: '#f8fafc', fontSize: '1rem', outline: 'none', color: '#1e293b', fontWeight:'600', transition:'all 0.3s', boxSizing:'border-box' };
 const labelStyle = { fontSize:'0.9rem', color:'#64748b', fontWeight:'700', marginLeft:'5px' };
 const submitBtn = { width: '100%', padding: '18px', borderRadius: '18px', border: 'none', background: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)', color: 'white', fontWeight: '800', fontSize: '1.1rem', cursor: 'pointer', marginTop: '15px', boxShadow:'0 20px 40px -10px rgba(15, 23, 42, 0.4)' };
 const closeBtn = { background: '#f1f5f9', border: 'none', width: '40px', height: '40px', borderRadius: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color:'#64748b' };
 const emptyState = { textAlign: 'center', padding: '80px', color: '#94a3b8', background: 'white', borderRadius: '30px', fontWeight: '600', border:'2px dashed #e2e8f0', fontSize:'1.1rem' };
 const pageBtn = { background: 'white', border: 'none', width: '45px', height: '45px', borderRadius: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', boxShadow:'0 4px 10px rgba(0,0,0,0.05)' };
+const checkboxStyle = { width: '20px', height: '20px', borderRadius: '6px', cursor: 'pointer', accentColor: '#4f46e5' };

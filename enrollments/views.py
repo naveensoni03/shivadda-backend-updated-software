@@ -35,6 +35,7 @@ class EnrollmentListCreate(APIView):
                 "student_name": display_name, 
                 "course": e.course.id,
                 "course_name": e.course.name, 
+                "class_name": getattr(e, 'class_name', None), # ✅ NEW: Table me class dikhane ke liye
                 "enrolled_at": e.enrolled_at,
             })
             
@@ -59,9 +60,31 @@ class EnrollmentListCreate(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# 🚀 NEW CLASS: DELETE REQUEST KO HANDLE KARNE KE LIYE
 class EnrollmentDetail(APIView):
     permission_classes = [AllowAny]
+
+    # ✅ NEW: PUT method (Edit button ke liye 405 Method Not Allowed error fix karega)
+    def put(self, request, pk):
+        enrollment = get_object_or_404(Enrollment, pk=pk)
+        data = request.data.copy()
+        try:
+            if 'student' in data: data['student'] = int(data['student'])
+            if 'course' in data: data['course'] = int(data['course'])
+        except Exception:
+            pass
+            
+        # partial=True ka matlab hai ki agar koi field na bheje toh error mat dena
+        serializer = EnrollmentSerializer(enrollment, data=data, partial=True) 
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+            
+        print("❌ PUT ERROR:", serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+    # ✅ NEW: PATCH method (Kuch browsers/frontends PATCH bhejte hain edit ke liye)
+    def patch(self, request, pk):
+        return self.put(request, pk)
 
     def delete(self, request, pk):
         try:

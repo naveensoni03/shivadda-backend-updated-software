@@ -9,6 +9,10 @@ from datetime import date, timedelta
 class Enrollment(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    
+    # ✅ NEW: Class Name field added here (Form se class yahan save hogi)
+    class_name = models.CharField(max_length=100, null=True, blank=True)
+    
     enrolled_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 
@@ -18,7 +22,8 @@ class Enrollment(models.Model):
     def __str__(self):
         # Fallback if student name attribute varies
         student_name = getattr(self.student, 'first_name', getattr(self.student, 'name', f"Student {self.student.id}"))
-        return f"{student_name} -> {self.course.name}"
+        class_str = f" ({self.class_name})" if self.class_name else ""
+        return f"{student_name}{class_str} -> {self.course.name}"
 
 # Signal 1: FeePlan ke through installment banana
 @receiver(post_save, sender=Enrollment)
