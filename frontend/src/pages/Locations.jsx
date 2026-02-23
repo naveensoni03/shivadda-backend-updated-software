@@ -53,7 +53,7 @@ export default function Locations() {
   const [places, setPlaces] = useState([]);
   const [breadcrumbs, setBreadcrumbs] = useState([]); 
   
-  // ✅ FIXED: Changed default status to 'Active' to match backend
+  // ✅ FIXED ERROR: State status to UPPERCASE "ACTIVE" to match Backend validation
   const [newPlace, setNewPlace] = useState({ 
       name: "", 
       place_type: "Country",
@@ -68,8 +68,10 @@ export default function Locations() {
       latitude: "",
       longitude: "",
       work_status: "Ministerial Office",
-      status: "Active" 
+      status: "ACTIVE" // 🔥 Changed to Uppercase
   });
+
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   
   const [loadingId, setLoadingId] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
@@ -107,11 +109,12 @@ export default function Locations() {
     e.preventDefault();
     if(!newPlace.name) return toast.error("Please enter a location name");
     
+    if(!agreedToTerms) return toast.error("You must agree to the Terms and Conditions!");
+    
     setLoadingId('addPlace');
     try {
         const parentId = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].id : null;
         
-        // 🔥 SMART PAYLOAD CLEANER: Jo box khali hain, unhe backend ko mat bhejo (Prevents 400 Error)
         const payload = { ...newPlace, parent: parentId };
         Object.keys(payload).forEach(key => {
             if (payload[key] === "" || payload[key] === "None") {
@@ -122,12 +125,13 @@ export default function Locations() {
         await api.post("locations/places/", payload);
         toast.success(`${newPlace.place_type} Added Successfully!`);
         
-        // Reset form
         setNewPlace({ 
             name: "", place_type: "Country", space_type: "Physical", place_uses_for: "None", 
             pin_code: "", zip_code: "", beat_no: "", village_code: "", virtual_id: "", 
-            google_map_id: "", latitude: "", longitude: "", work_status: "Ministerial Office", status: "Active" 
+            google_map_id: "", latitude: "", longitude: "", work_status: "Ministerial Office", 
+            status: "ACTIVE" // 🔥 Reset also to UPPERCASE
         });
+        setAgreedToTerms(false); 
         fetchPlaces(parentId);
     } catch(err) { 
         let errorMsg = "Error adding location.";
@@ -137,7 +141,6 @@ export default function Locations() {
             errorMsg = Array.isArray(data[firstKey]) ? `${firstKey}: ${data[firstKey][0]}` : `${firstKey}: ${data[firstKey]}`;
         }
         toast.error(`Error: ${errorMsg}`); 
-        console.error("EXACT 400 ERROR:", err.response?.data);
     }
     setLoadingId(null);
   };
@@ -175,7 +178,7 @@ export default function Locations() {
       }
   };
 
-  // ✅ FIXED: Bulk Status ab backend format me bhejega ('Active' / 'Inactive')
+  // Bulk Status Update API call
   const handleBulkStatus = async (newStatus) => {
       const loadToast = toast.loading(`Updating status...`);
       try {
@@ -317,16 +320,29 @@ export default function Locations() {
                                 <ChevronDown size={18} className="select-icon"/>
                             </div>
                             <div style={{position:'relative', flex: 1}}>
-                                {/* ✅ FIXED: Matches Backend Choices Exactly */}
+                                {/* 🔥 FIXED: Options matching backend string requirement precisely */}
                                 <select value={newPlace.status} onChange={e=>setNewPlace({...newPlace, status:e.target.value})} style={{...inputStyle, appearance:'none'}}>
-                                    <option value="Active">Active / Show</option>
-                                    <option value="Inactive">Inactive / Hide</option>
+                                    <option value="ACTIVE">Active / Show</option>
+                                    <option value="INACTIVE">Inactive / Hide</option>
                                 </select>
                                 <ChevronDown size={18} className="select-icon"/>
                             </div>
                         </div>
 
-                        <motion.button whileTap={{scale:0.98}} type="submit" style={{...btnPrimary, width: '100%', marginTop:'10px'}}>
+                        <div style={{display:'flex', alignItems:'flex-start', gap:'10px', marginTop:'10px', padding:'10px', background:'#f8fafc', borderRadius:'10px', border:'1px solid #e2e8f0'}}>
+                            <input 
+                                type="checkbox" 
+                                id="termsCheck"
+                                checked={agreedToTerms}
+                                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                                style={{marginTop:'3px', width:'16px', height:'16px', accentColor:'#6366f1', cursor:'pointer'}}
+                            />
+                            <label htmlFor="termsCheck" style={{fontSize:'0.75rem', color:'#64748b', lineHeight:'1.4', cursor:'pointer'}}>
+                                I AM AGREE WITH ALL TERMS AND CONDITIONS OF THIS WEBSITE 1 PLACE 2 SERVICES. 3 USERS. I AM AGREED WITH ALL OF THEM.
+                            </label>
+                        </div>
+
+                        <motion.button whileTap={{scale:0.98}} type="submit" style={{...btnPrimary, width: '100%', marginTop:'5px'}}>
                             {loadingId === 'addPlace' ? <Sparkles size={20} className="spin"/> : <span style={{display:'flex', alignItems:'center', gap:'8px'}}><Save size={18}/> Save Master Place</span>}
                         </motion.button>
                     </form>
@@ -362,9 +378,9 @@ export default function Locations() {
                         >
                             <span style={{fontWeight:'700', fontSize:'0.9rem'}}>{selectedIds.length} Selected</span>
                             <div style={{display:'flex', gap:'10px'}}>
-                                {/* ✅ FIXED: Sending 'Active' and 'Inactive' to Backend */}
-                                <button onClick={() => handleBulkStatus('Active')} style={bulkBtnStyle} title="Activate"><Check size={16}/> Activate</button>
-                                <button onClick={() => handleBulkStatus('Inactive')} style={bulkBtnStyle} title="Hide / Deactivate"><EyeOff size={16}/> Hide</button>
+                                {/* 🔥 FIXED: Sending exact UPPERCASE string to the API */}
+                                <button onClick={() => handleBulkStatus('ACTIVE')} style={bulkBtnStyle} title="Activate"><Check size={16}/> Activate</button>
+                                <button onClick={() => handleBulkStatus('INACTIVE')} style={bulkBtnStyle} title="Hide / Deactivate"><EyeOff size={16}/> Hide</button>
                                 <button onClick={handleBulkDelete} style={{...bulkBtnStyle, background:'#ef4444', border:'none'}} title="Delete Selected"><Trash2 size={16} color="white"/> Delete</button>
                             </div>
                         </motion.div>
@@ -413,8 +429,17 @@ export default function Locations() {
                                             {place.space_type && <span style={{background:'#eef2ff', color:'#4f46e5', padding:'2px 6px', borderRadius:'4px'}}>{place.space_type}</span>}
                                             {place.place_uses_for && place.place_uses_for !== "None" && <span>• {place.place_uses_for}</span>}
                                             {place.status && (
-                                                <span style={{color: place.status === 'Active' ? '#10b981' : '#ef4444'}}>
+                                                <span style={{color: place.status?.toUpperCase() === 'ACTIVE' ? '#10b981' : '#ef4444'}}>
                                                     • {place.status}
+                                                </span>
+                                            )}
+                                            
+                                            {place.virtual_id && (
+                                                <span style={{color:'#f59e0b', background:'#fef3c7', padding:'2px 6px', borderRadius:'4px'}}>VID: {place.virtual_id}</span>
+                                            )}
+                                            {(place.latitude || place.longitude) && (
+                                                <span style={{color:'#0ea5e9', display:'flex', alignItems:'center', gap:'3px'}}>
+                                                    <Globe size={10}/> {place.latitude}, {place.longitude}
                                                 </span>
                                             )}
                                         </div>

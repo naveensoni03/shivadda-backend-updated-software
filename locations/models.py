@@ -10,26 +10,32 @@ class Place(models.Model):
         ('District', 'District'),
         ('Tehsil', 'Tehsil'),
         ('Block', 'Block'),
-        ('Colony', 'Colony'),   # ✅ FIXED: Colony add kiya gaya
+        ('Colony', 'Colony'),
         ('Village', 'Village'),
         ('School', 'School/Center'),
+    )
+
+    # ✅ FIXED: Status choices ko React Frontend ke payload ('ACTIVE', 'INACTIVE') se match kiya gaya
+    STATUS_CHOICES = (
+        ('ACTIVE', 'Active / Show'),
+        ('INACTIVE', 'Inactive / Hide'),
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     
-    # ✅ Parent Link (Recursive Relationship)
+    # Parent Link (Recursive Relationship for Hierarchy)
     parent = models.ForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
     
-    # ✅ Auto-Generated Codes
+    # Auto-Generated Codes
     hierarchy_code = models.CharField(max_length=100, blank=True, help_text="Auto: 0.1.1.1")
     
-    # ✅ FIXED: editable=False hataya taaki Frontend se Manual ID bhi save ho sake
+    # Virtual ID Frontend se bhi aa sakti hai ya Auto-generate hogi
     virtual_id = models.CharField(max_length=100, unique=True, blank=True, null=True) 
     
     place_type = models.CharField(max_length=50, choices=PLACE_TYPES, default='Global')
     
-    # 🚀 --- NEW SUPER ADMIN FIELDS --- 🚀
+    # --- SUPER ADMIN FIELDS (Geographical & Deep Config) ---
     space_type = models.CharField(max_length=50, null=True, blank=True)
     place_uses_for = models.CharField(max_length=100, null=True, blank=True)
     pin_code = models.CharField(max_length=20, null=True, blank=True)
@@ -41,12 +47,6 @@ class Place(models.Model):
     longitude = models.CharField(max_length=100, null=True, blank=True)
     work_status = models.CharField(max_length=50, null=True, blank=True)
     
-    # ✅ FIXED: Status choices ko Frontend se match kiya gaya taaki 400 error na aaye
-    STATUS_CHOICES = (
-        ('ACTIVE', 'Activate'),
-        ('DEACTIVATED', 'Deactivate'),
-        ('HIDDEN', 'Hibernate/Hide')
-    )
     status = models.CharField(max_length=20, default='ACTIVE', choices=STATUS_CHOICES)
     
     created_at = models.DateTimeField(auto_now_add=True)
