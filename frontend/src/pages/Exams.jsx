@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from "react";
 import SidebarModern from "../components/SidebarModern";
-import { Clock, CheckCircle, FileText, UserCheck, Brain, Plus, Trash, Save, FileOutput, Eye, Edit2, X, Sparkles, Zap, ChevronLeft, ChevronRight, RefreshCw, Layers, Award, BarChart2 } from "lucide-react";
+import { Clock, CheckCircle, FileText, UserCheck, Brain, Plus, Trash, Save, FileOutput, Eye, Edit2, X, Sparkles, Zap, ChevronLeft, ChevronRight, RefreshCw, Layers, Award, BarChart2, Target, CheckSquare } from "lucide-react";
 import toast, { Toaster } from 'react-hot-toast';
 import api from "../api/axios";
 import jsPDF from "jspdf";
@@ -11,7 +11,7 @@ export default function Exams() {
   const [loaded, setLoaded] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
 
-  // --- PAPER SETTER STATE (✅ SUPER ADMIN FIELDS ADDED) ---
+  // --- PAPER SETTER STATE (SUPER ADMIN FIELDS ADDED) ---
   const [questions, setQuestions] = useState([]);
   
   const [newQ, setNewQ] = useState({ 
@@ -23,7 +23,7 @@ export default function Exams() {
   const [editingId, setEditingId] = useState(null);
   const [viewQ, setViewQ] = useState(null);
   
-  // ✅ ADDED: Class, Subject, and Teacher Name
+  // ADDED: Class, Subject, and Teacher Name
   const [examMeta, setExamMeta] = useState({ 
       examName: "", className: "", subject: "", examineeBody: "", 
       timeAllowed: "", maxMarks: "", paperSetNumber: "", 
@@ -47,9 +47,13 @@ export default function Exams() {
   });
   const [aiScore, setAiScore] = useState(null);
 
+  // --- NEW UPDATE: LIVE OMR & RESULT STATE ---
+  const [studentAnswers, setStudentAnswers] = useState({});
+  const [examResult, setExamResult] = useState(null);
+
   useEffect(() => {
       setLoaded(true);
-      if (activeTab === 'setter') {
+      if (activeTab === 'setter' || activeTab === 'omr') {
           fetchQuestions();
       } else if (activeTab === 'evaluation') {
           fetchEvaluationData();
@@ -65,9 +69,9 @@ export default function Exams() {
       } catch (error) {
           console.warn("Backend not connected. Using local data.");
           setQuestions([
-              { id: 1, text: "Explain Newton's Laws of Motion.", q_type: "Descriptive", difficulty: "Medium", marks: 10, negative_marks: 0 },
-              { id: 2, text: "What is the powerhouse of the cell?", q_type: "MCQ", difficulty: "Easy", marks: 2, negative_marks: 0.5, option_a: "Nucleus", option_b: "Mitochondria", correct_option: "B" },
-              { id: 3, text: "Water boils at 100°C.", q_type: "True/False", difficulty: "Easy", marks: 1, negative_marks: 0.25 }
+              { id: 1, text: "Explain Newton's Laws of Motion.", q_type: "Descriptive", difficulty: "Medium", marks: 10, negative_marks: 0, unattempted_marks: 0 },
+              { id: 2, text: "What is the powerhouse of the cell?", q_type: "MCQ", difficulty: "Easy", marks: 2, negative_marks: 0.5, unattempted_marks: 0, option_a: "Nucleus", option_b: "Mitochondria", option_c: "Ribosome", option_d: "Cytoplasm", correct_option: "B" },
+              { id: 3, text: "Water boils at 100°C.", q_type: "True/False", difficulty: "Easy", marks: 1, negative_marks: 0.25, unattempted_marks: 0, option_a: "True", option_b: "False", correct_option: "A" }
           ]);
       } finally {
           setLoadingData(false);
@@ -148,7 +152,7 @@ export default function Exams() {
           doc.setFontSize(18);
           doc.text(examMeta.examName, 105, 15, null, null, "center");
           
-          // ✅ PDF HEADER UPDATED WITH CLASS, SUBJECT & TEACHER
+          // PDF HEADER UPDATED WITH CLASS, SUBJECT & TEACHER
           doc.setFontSize(10);
           doc.text(`Class: ${examMeta.className || "N/A"} | Subject: ${examMeta.subject || "N/A"} | Set By: ${examMeta.teacherName || "N/A"}`, 105, 23, null, null, "center");
           doc.text(`Place: ${examMeta.placeOfExam || "N/A"} | Set: ${examMeta.paperSetNumber || "N/A"} | Board: ${examMeta.examineeBody || "N/A"} | Time: ${examMeta.timeAllowed} | Max: ${examMeta.maxMarks}`, 105, 29, null, null, "center");
@@ -218,6 +222,67 @@ export default function Exams() {
       }
   };
 
+  // --- NEW UPDATE: OMR SUBMISSION & CALCULATION (CONNECTED TO BACKEND) ---
+  const handleOMRSelect = (qId, option) => {
+      setStudentAnswers({ ...studentAnswers, [qId]: option });
+  };
+
+  const submitOMR = async () => {
+      const loadId = toast.loading("Calculating & Saving Results to Database...");
+      let totalMaxMarks = 0;
+      let obtainedMarks = 0;
+      let correctCount = 0;
+      let incorrectCount = 0;
+      let unattemptedCount = 0;
+
+      const mcqQuestions = questions.filter(q => q.q_type === 'MCQ' || q.q_type === 'True/False');
+
+      mcqQuestions.forEach(q => {
+          totalMaxMarks += (q.marks || 0);
+          const studentAns = studentAnswers[q.id];
+
+          if (!studentAns) {
+              unattemptedCount++;
+              obtainedMarks -= (q.unattempted_marks || 0);
+          } else if (studentAns === q.correct_option) {
+              correctCount++;
+              obtainedMarks += (q.marks || 0);
+          } else {
+              incorrectCount++;
+              obtainedMarks -= (q.negative_marks || 0);
+          }
+      });
+
+      const percentage = totalMaxMarks > 0 ? (obtainedMarks / totalMaxMarks) * 100 : 0;
+      let grade = "F";
+      if (percentage >= 90) grade = "A+";
+      else if (percentage >= 80) grade = "A";
+      else if (percentage >= 70) grade = "B+";
+      else if (percentage >= 60) grade = "B";
+      else if (percentage >= 50) grade = "C";
+      else if (percentage >= 40) grade = "D";
+
+      try {
+          // Sending data to Django Backend SubmitExamAPI (Assuming exam ID 1 for testing)
+          await api.post("exams/submit/1/", {
+              answers: studentAnswers,
+              final_score: obtainedMarks,
+              percentage: percentage
+          });
+          toast.success("Result Saved to Database Successfully!", { id: loadId });
+      } catch (error) {
+          console.warn("Backend not ready or offline. Saving Locally.");
+          toast.success("Result Generated (Local Mode)", { id: loadId });
+      }
+
+      setTimeout(() => {
+          setExamResult({
+              totalQuestions: mcqQuestions.length,
+              totalMaxMarks, obtainedMarks, correctCount, incorrectCount, unattemptedCount,
+              percentage: percentage.toFixed(2), grade
+          });
+      }, 500);
+  };
 
   return (
     <div className="exams-page-wrapper">
@@ -234,6 +299,10 @@ export default function Exams() {
                     <button onClick={() => setActiveTab('setter')} className={`tab-btn ${activeTab === 'setter' ? 'active' : ''}`}>
                         <Plus size={18}/> Paper Setter
                     </button>
+                    {/* NEW OMR TAB ADDED HERE */}
+                    <button onClick={() => setActiveTab('omr')} className={`tab-btn ${activeTab === 'omr' ? 'active' : ''}`}>
+                        <Target size={18}/> Live OMR Exam
+                    </button>
                     <button onClick={() => setActiveTab('evaluation')} className={`tab-btn ${activeTab === 'evaluation' ? 'active' : ''}`}>
                         <CheckCircle size={18}/> Evaluation
                     </button>
@@ -243,7 +312,7 @@ export default function Exams() {
             {activeTab === 'setter' && (
                 <div className="content-wrapper">
 
-                    {/* ✅ EXAM META DATA (ADDED CLASS, SUBJECT, TEACHER) */}
+                    {/* EXAM META DATA (ADDED CLASS, SUBJECT, TEACHER) */}
                     <div className="card shadow-md stagger-1" style={{marginBottom: '20px'}}>
                         <div className="card-header">
                             <h3 style={{display:'flex', alignItems:'center', gap:'8px'}}><Layers size={18} color="#3b82f6"/> Exam Configuration</h3>
@@ -391,7 +460,119 @@ export default function Exams() {
                 </div>
             )}
 
-            {/* TAB 2: EVALUATION */}
+            {/* TAB 2: LIVE OMR EXAM (NEW UPDATE) */}
+            {activeTab === 'omr' && (
+                <div className="content-wrapper stagger-1">
+                    {!examResult ? (
+                        <>
+                            <div className="exam-meta-header card shadow-md" style={{padding: '20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                                <div>
+                                    <h2 style={{margin:0, color:'#1e293b'}}>{examMeta.examName || "Practice Test"} - Live OMR Exam</h2>
+                                    <p style={{margin:'5px 0 0', color:'#64748b'}}>Class: {examMeta.className} | Sub: {examMeta.subject}</p>
+                                </div>
+                                <div style={{textAlign: 'right'}}>
+                                    <div className="badge medium" style={{fontSize: '1rem', padding: '8px 15px'}}>Time: {examMeta.timeAllowed}</div>
+                                </div>
+                            </div>
+
+                            <div className="card shadow-md" style={{padding: '30px'}}>
+                                {questions.filter(q => q.q_type === 'MCQ' || q.q_type === 'True/False').length > 0 ? (
+                                    questions.filter(q => q.q_type === 'MCQ' || q.q_type === 'True/False').map((q, index) => (
+                                        <div key={q.id} className="omr-question-row">
+                                            <div className="omr-q-text">
+                                                <span className="q-no">{index + 1}.</span> {q.text}
+                                                <div className="q-marking-info">(+{q.marks} / -{q.negative_marks || 0})</div>
+                                            </div>
+                                            
+                                            <div className="omr-options-grid">
+                                                {q.q_type === 'MCQ' ? (
+                                                    ['A', 'B', 'C', 'D'].map(opt => (
+                                                        <div key={opt} className="omr-option-wrapper">
+                                                            <div 
+                                                                className={`omr-bubble ${studentAnswers[q.id] === opt ? 'selected' : ''}`}
+                                                                onClick={() => handleOMRSelect(q.id, opt)}
+                                                            >
+                                                                {opt}
+                                                            </div>
+                                                            <span className="omr-opt-text">{q[`option_${opt.toLowerCase()}`] || `Option ${opt}`}</span>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    ['A', 'B'].map((opt, idx) => (
+                                                        <div key={opt} className="omr-option-wrapper">
+                                                            <div 
+                                                                className={`omr-bubble ${studentAnswers[q.id] === opt ? 'selected' : ''}`}
+                                                                onClick={() => handleOMRSelect(q.id, opt)}
+                                                            >
+                                                                {opt}
+                                                            </div>
+                                                            <span className="omr-opt-text">{idx === 0 ? 'True' : 'False'}</span>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div style={{textAlign: 'center', padding: '40px', color: '#64748b'}}>No Objective Questions (MCQ/True-False) found in this paper set.</div>
+                                )}
+
+                                {questions.filter(q => q.q_type === 'MCQ' || q.q_type === 'True/False').length > 0 && (
+                                    <div style={{textAlign: 'center', marginTop: '40px', borderTop: '2px dashed #e2e8f0', paddingTop: '30px'}}>
+                                        <button onClick={submitOMR} className="btn-primary" style={{padding: '15px 40px', fontSize: '1.2rem', background: '#10b981'}}>
+                                            <CheckSquare size={24} style={{marginRight: '10px'}}/> Submit Exam & Calculate Result
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    ) : (
+                        /* OMR RESULT DASHBOARD */
+                        <div className="card shadow-md scale-up-bounce" style={{padding: '40px', textAlign: 'center'}}>
+                            <div style={{width: '80px', height: '80px', background: '#dcfce7', color: '#16a34a', borderRadius: '50%', display: 'flex', alignItems: 'center', justify: 'center', margin: '0 auto 20px'}}>
+                                <Award size={40} />
+                            </div>
+                            <h2 style={{fontSize: '2.5rem', color: '#1e293b', margin: '0 0 5px'}}>Exam Completed!</h2>
+                            <p style={{color: '#64748b', fontSize: '1.1rem', marginBottom: '30px'}}>Auto-Calculated Result with Negative Marking applied.</p>
+
+                            <div className="result-stats-grid">
+                                <div className="r-stat-card">
+                                    <div className="r-label">Max Marks</div>
+                                    <div className="r-value">{examResult.totalMaxMarks}</div>
+                                </div>
+                                <div className="r-stat-card" style={{borderBottom: '4px solid #10b981'}}>
+                                    <div className="r-label">Correct (+{examResult.correctCount})</div>
+                                    <div className="r-value" style={{color: '#10b981'}}>{examResult.correctCount}</div>
+                                </div>
+                                <div className="r-stat-card" style={{borderBottom: '4px solid #ef4444'}}>
+                                    <div className="r-label">Incorrect (-{examResult.incorrectCount})</div>
+                                    <div className="r-value" style={{color: '#ef4444'}}>{examResult.incorrectCount}</div>
+                                </div>
+                                <div className="r-stat-card" style={{borderBottom: '4px solid #f59e0b'}}>
+                                    <div className="r-label">Not Attempted</div>
+                                    <div className="r-value" style={{color: '#f59e0b'}}>{examResult.unattemptedCount}</div>
+                                </div>
+                            </div>
+
+                            <div className="final-score-box">
+                                <div>
+                                    <div style={{fontSize: '1rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold'}}>Obtained Marks</div>
+                                    <div style={{fontSize: '4.5rem', fontWeight: '900', color: '#3b82f6', lineHeight: 1}}>{examResult.obtainedMarks} <span style={{fontSize:'1.5rem', color:'#94a3b8'}}>/ {examResult.totalMaxMarks}</span></div>
+                                    <div style={{fontSize: '1.2rem', color: '#475569', marginTop: '10px', fontWeight: 'bold'}}>Percentage: {examResult.percentage}%</div>
+                                </div>
+                                <div className="grade-circle">
+                                    <span style={{fontSize: '1rem', opacity: 0.8}}>GRADE</span>
+                                    <strong style={{fontSize: '4rem', lineHeight: 1}}>{examResult.grade}</strong>
+                                </div>
+                            </div>
+
+                            <button onClick={() => {setExamResult(null); setStudentAnswers({});}} className="btn-secondary" style={{marginTop: '30px'}}><RefreshCw size={18}/> Retake Exam</button>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* TAB 3: EVALUATION */}
             {activeTab === 'evaluation' && (
                 <div className="content-wrapper">
                     <div className="card shadow-md stagger-1">
@@ -590,7 +771,6 @@ export default function Exams() {
 
         </div>
 
-        {/* 🚀 CSS PRESERVED 100% AS IT WAS */}
         <style>{`
             :root {
                 --primary: #3b82f6;
@@ -771,6 +951,27 @@ export default function Exams() {
             .btn-ai { background: #16a34a; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; gap: 8px; align-items: center; transition: 0.2s; white-space: nowrap; }
             .btn-ai:hover { background: #15803d; }
 
+            /* NEW CSS: OMR SPECIFIC STYLES ADDED HERE */
+            .omr-question-row { display: flex; flex-direction: column; gap: 15px; padding: 20px 0; border-bottom: 1px solid #f1f5f9; }
+            .omr-q-text { font-size: 1.15rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;}
+            .q-no { background: #3b82f6; color: white; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 1rem; }
+            .q-marking-info { font-size: 0.85rem; color: #94a3b8; background: #f1f5f9; padding: 2px 8px; border-radius: 6px; }
+            
+            .omr-options-grid { display: flex; gap: 30px; flex-wrap: wrap; margin-left: 40px; }
+            .omr-option-wrapper { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+            .omr-bubble { width: 35px; height: 35px; border-radius: 50%; border: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #64748b; font-size: 1.1rem; transition: 0.2s; background: white; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+            .omr-bubble:hover { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; }
+            .omr-bubble.selected { background: #3b82f6; border-color: #3b82f6; color: white; box-shadow: 0 4px 10px rgba(59,130,246,0.4); transform: scale(1.1); }
+            .omr-opt-text { font-size: 1rem; color: #475569; font-weight: 500; }
+
+            .result-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 40px; }
+            .r-stat-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; }
+            .r-label { font-size: 0.9rem; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 10px; }
+            .r-value { font-size: 2rem; font-weight: 900; color: #1e293b; }
+
+            .final-score-box { background: linear-gradient(135deg, #eff6ff, #e0e7ff); border: 1px solid #bfdbfe; padding: 40px; border-radius: 24px; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 10px 30px rgba(59,130,246,0.1); }
+            .grade-circle { width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(139,92,246,0.4); border: 4px solid white; }
+
             @media (max-width: 1024px) {
                 .exams-main-content { margin-left: 0 !important; max-width: 100%; width: 100%; }
             }
@@ -781,8 +982,8 @@ export default function Exams() {
                 .exams-container { display: block !important; }
                 .exams-main-content { margin-left: 0 !important; padding: 15px !important; padding-top: 85px !important; padding-bottom: 150px !important; width: 100vw !important; max-width: 100vw !important; height: auto !important; min-height: 100vh !important; overflow: visible !important; display: block !important; }
                 .page-header { flex-direction: column; align-items: flex-start !important; gap: 15px; }
-                .tab-switch { width: 100%; display: flex; justify-content: space-between; }
-                .tab-btn { flex: 1; justify-content: center; }
+                .tab-switch { width: 100%; display: flex; justify-content: space-between; overflow-x: auto; padding-bottom: 5px;}
+                .tab-btn { flex: 1; justify-content: center; min-width: 120px;}
                 .form-grid { display: flex !important; flex-direction: column !important; gap: 15px; width: 100%; }
                 .table-card-header { flex-direction: column; align-items: flex-start !important; gap: 10px; }
                 .action-group { width: 100%; justify-content: space-between; margin-left: 0 !important; }
@@ -796,6 +997,8 @@ export default function Exams() {
                 .stats-grid { grid-template-columns: 1fr; }
                 .grid-3-col { display: flex !important; flex-direction: column !important; }
                 .footer-actions-modal { flex-direction: column; }
+                .result-stats-grid { grid-template-columns: 1fr 1fr; }
+                .final-score-box { flex-direction: column; gap: 30px; text-align: center; }
             }
         `}</style>
     </div>
