@@ -40,13 +40,14 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_filters',
     'django_cleanup.apps.CleanupConfig',
+    'rest_framework_simplejwt', # ✅ ADDED JWT APP HERE
 
     # Project apps
     'api',
     'accounts',
     'dashboard',     
-    'chatbot',       # ✅ ADDED
-    'centers',       # ✅ ADDED: Exam Centers ke liye
+    'chatbot',       
+    'centers',       
     'locations',
     'visitors',
     'logs',
@@ -78,7 +79,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Static files serve karne ke liye
+    'whitenoise.middleware.WhiteNoiseMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -88,9 +89,8 @@ MIDDLEWARE = [
 ]
 
 # --------------------------------------------------
-# URL CONFIG (FIXED HERE)
+# URL CONFIG
 # --------------------------------------------------
-# ✅ Wapas 'core.urls' kiya kyunki tumhara folder name 'core' hai
 ROOT_URLCONF = 'core.urls'  
 
 TEMPLATES = [
@@ -110,9 +110,8 @@ TEMPLATES = [
 ]
 
 # --------------------------------------------------
-# WSGI (FIXED HERE)
+# WSGI
 # --------------------------------------------------
-# ✅ Wapas 'core.wsgi.application' kiya
 WSGI_APPLICATION = 'core.wsgi.application' 
 
 # --------------------------------------------------
@@ -149,8 +148,6 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Development mein WhiteNoise ko temporarily hata sakte ho agar issue kare, 
-# lekin abhi rehne do kyunki DEBUG=True hai.
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
@@ -160,27 +157,27 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'accounts.User'
 
 # --------------------------------------------------
-# DRF + JWT
+# DRF + JWT SETTINGS
 # --------------------------------------------------
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'rest_framework.authentication.SessionAuthentication', # Browsable API login ke liye
+        'rest_framework.authentication.SessionAuthentication', 
     ),
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny', # Development easy banane ke liye
+        'rest_framework.permissions.AllowAny', 
     ],
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1), # ✅ CHANGED: 30 minutes bahut kam tha, testing me dikkat aati
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
 # TWILIO SETTINGS
-# TWILIO SETTINGS (Secured with .env)
 TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
 TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER')
+
 CORS_ALLOW_ALL_ORIGINS = True

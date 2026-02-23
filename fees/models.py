@@ -9,8 +9,10 @@ from courses.models import Course
 class FeeTransaction(models.Model):
     PAYMENT_MODES = [
         ('Cash', 'Cash'),
-        ('UPI / Online', 'UPI / Online'),
+        ('UPI / Bank Transfer', 'UPI / Bank Transfer'),
         ('Cheque', 'Cheque'),
+        ('Online Gateway (Secure)', 'Online Gateway (Secure)'),
+        ('Online Gateway', 'Online Gateway'), # Fallback
     ]
 
     STATUS_CHOICES = [
@@ -24,12 +26,12 @@ class FeeTransaction(models.Model):
     transaction_id = models.CharField(max_length=100, unique=True, help_text="Unique Receipt No (e.g. REC-2026-101)")
     payment_date = models.DateField(default=now)
     
-    # Student Details (Stored as Text to preserve Receipt History even if Student is deleted)
+    # Student Details
     student_name = models.CharField(max_length=150)
     roll_no = models.CharField(max_length=50, blank=True, null=True)
-    student_class = models.CharField(max_length=50)  # e.g., "10-A"
+    student_class = models.CharField(max_length=50)  
 
-    # Optional Link to Actual Student Record (For advanced queries)
+    # Optional Link to Actual Student Record
     student = models.ForeignKey(Student, on_delete=models.SET_NULL, null=True, blank=True, related_name='transactions')
 
     # Financials
@@ -41,8 +43,10 @@ class FeeTransaction(models.Model):
     payment_mode = models.CharField(max_length=50, choices=PAYMENT_MODES, default='Cash')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Paid')
     
-    # 🔥 JSON Field for Fee Breakdown (Tuition, Transport, Library, Fine)
-    # Ye Frontend ke "breakdown" object ko store karega
+    # 🔥 NEW: To store who approved the discount
+    discount_approved_by = models.CharField(max_length=150, blank=True, null=True)
+
+    # JSON Field for Fee Breakdown (Tuition, Transport, Library, Fine, Discount)
     breakdown = models.JSONField(default=dict, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -56,7 +60,7 @@ class FeeTransaction(models.Model):
 
 
 # ----------------------------------------------------------------
-# 2. Fee Plan (For Future Automation - Optional)
+# 2. Fee Plan (For Future Automation)
 # ----------------------------------------------------------------
 class FeePlan(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
@@ -69,7 +73,7 @@ class FeePlan(models.Model):
 
 
 # ----------------------------------------------------------------
-# 3. Installment (For Tracking Dues - Optional)
+# 3. Installment (For Tracking Dues)
 # ----------------------------------------------------------------
 class Installment(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
@@ -80,7 +84,6 @@ class Installment(models.Model):
     penalty_applied = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     def calculate_penalty(self):
-        """Automatic Penalty Calculation based on Due Date"""
         if not self.is_paid and now().date() > self.due_date:
             days_late = (now().date() - self.due_date).days
             fee_plan = FeePlan.objects.filter(course=self.student.course).first() if hasattr(self.student, 'course') else None
