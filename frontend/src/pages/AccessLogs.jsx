@@ -5,7 +5,9 @@ import toast, { Toaster } from 'react-hot-toast';
 import { 
   ShieldCheck, Activity, Clock, User, 
   Search, Filter, Monitor, Download, RefreshCw, 
-  PlusCircle, Edit3, Trash2, LogIn, AlertCircle, Calendar, Eye, X, PieChart, BarChart2, ChevronLeft, ChevronRight
+  PlusCircle, Edit3, Trash2, LogIn, AlertCircle, Calendar, Eye, X, PieChart, BarChart2, ChevronLeft, ChevronRight,
+  MessageSquare, HelpCircle, Lightbulb, ThumbsUp, AlertOctagon,
+  TrendingUp, Copy, Share2, Send, Save // ✅ Added new icons for Trajectory and Modal Actions
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -19,7 +21,8 @@ export default function AccessLogs() {
   const [filterType, setFilterType] = useState("ALL");
   const [dateRange, setDateRange] = useState("ALL");
 
-  // ✅ Pagination States
+  // Pagination States
+  const [selectedRows, setSelectedRows] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -51,7 +54,6 @@ export default function AccessLogs() {
     fetchLogs();
   }, []);
 
-  // FIXED FETCH LOGIC: Added Dummy Data Fallback for testing
   const fetchLogs = async () => {
     setLoading(true);
     try {
@@ -60,20 +62,35 @@ export default function AccessLogs() {
           setLogs(res.data.results || res.data);
           toast.success("Logs Synced Successfully! 🔄");
       } else {
-          throw new Error("No data"); // Force to fallback
+          throw new Error("No data"); 
       }
     } catch (err) {
       console.warn("Backend API not reachable. Loading Dummy Data for UI Testing.");
-      // DUMMY DATA ADDED SO YOU CAN TEST PAGINATION
-      const dummyLogs = Array.from({ length: 15 }, (_, i) => ({
+      
+      const actionTypes = ["CREATE", "UPDATE", "DELETE", "LOGIN", "INQUIRED", "FAQ", "SUGGESTION", "FEEDBACK", "COMPLAIN"];
+      const userTypes = ["MANAGER", "PROVIDER", "SEEKER", "GUEST", "OWNER"]; // ✅ Added User Types from requirement
+      
+      const dummyLogs = Array.from({ length: 25 }, (_, i) => ({
           id: i + 1,
-          action_type: i % 3 === 0 ? "CREATE" : i % 2 === 0 ? "UPDATE" : "DELETE",
+          action_type: actionTypes[i % actionTypes.length],
           target_repr: `Demo Service Rule ${i+1}`,
           target_model: "ServiceMaster",
           actor_name: i % 2 === 0 ? "Naveen Soni" : "Admin Panel",
           ip_address: `192.168.1.${i+10}`,
           timestamp: new Date(Date.now() - (i * 10000000)).toISOString(),
-          details: `This is a dummy log generated for testing pagination. Log ID: ${i+1}`
+          details: `System modified object ${i+1}. Action recorded via Django ORM. Validated by Auth Middleware.`,
+          mobile: `+91 987654321${i % 10}`,
+          email: `user${i+1}@shivaddaedu.co.in`,
+          place_id: `PL-${1000+i}`,
+          subplace_id: `SUBPL-${50+i}`,
+          services_id: `SRV-${200+i}`,
+          latitude: `28.98${i % 9}`,
+          longitude: `77.70${i % 9}`,
+          // ✅ Added User Group and Status details as per requirement
+          user_type: userTypes[i % userTypes.length],
+          registration_status: i % 3 === 0 ? "NON-REGISTERED" : "REGISTERED",
+          group_id: `GRP-0${i % 5}`,
+          subgroup_id: `SGRP-0${i % 3}`,
       }));
       setLogs(dummyLogs);
       toast.success("Offline Mode: Mock Data Loaded.");
@@ -84,15 +101,15 @@ export default function AccessLogs() {
 
   const handleExport = () => {
     if (logs.length === 0) return toast.error("No logs available to export.");
-    
+    const logsToExport = selectedRows.length > 0 ? logs.filter(l => selectedRows.includes(l.id)) : logs;
+
     toast.promise(
         new Promise((resolve) => {
             setTimeout(() => {
-                const headers = ["ID,Action,Target,Actor,IP,Timestamp,Details"];
-                const rows = logs.map(log => 
-                    `${log.id},${log.action_type},"${log.target_repr} (${log.target_model})",${log.actor_name || 'System'},${log.ip_address},${new Date(log.timestamp).toISOString()},"${log.details || ''}"`
+                const headers = ["ID,Action,Target,Actor,UserType,Status,IP,Mobile,Email,PlaceID,Timestamp,Details"];
+                const rows = logsToExport.map(log => 
+                    `${log.id},${log.action_type},"${log.target_repr}",${log.actor_name || 'System'},${log.user_type},${log.registration_status},${log.ip_address},${log.mobile || ''},${log.email || ''},${log.place_id || ''},${new Date(log.timestamp).toISOString()},"${log.details || ''}"`
                 );
-                
                 const csvContent = [headers, ...rows].join("\n");
                 const blob = new Blob([csvContent], { type: "text/csv" });
                 const url = window.URL.createObjectURL(blob);
@@ -109,46 +126,68 @@ export default function AccessLogs() {
     );
   };
 
+  // ✅ New Action: Copy to Clipboard
+  const handleCopyLog = (log) => {
+      const logText = `ID: ${log.id} | Action: ${log.action_type} | User: ${log.actor_name} (${log.user_type}) | IP: ${log.ip_address} | Details: ${log.details}`;
+      navigator.clipboard.writeText(logText);
+      toast.success("Log Details Copied!");
+  };
+
+  // ✅ New Action: Mock Share/Send
+  const handleShareLog = () => toast("Share interface opened", { icon: '🔗' });
+  const handleSendLog = () => toast("Log sent to administrator inbox", { icon: '📨' });
+
+  const handleBulkDelete = () => {
+    if (selectedRows.length === 0) return;
+    setLogs(logs.filter(log => !selectedRows.includes(log.id)));
+    setSelectedRows([]);
+    toast.success(`${selectedRows.length} Logs Deleted Permanently.`);
+  };
+
   const toggleFilter = () => {
-    const types = ["ALL", "CREATE", "UPDATE", "DELETE", "LOGIN"];
+    const types = ["ALL", "CREATE", "UPDATE", "DELETE", "LOGIN", "INQUIRED", "FAQ", "SUGGESTION", "FEEDBACK", "COMPLAIN"];
     const nextIndex = (types.indexOf(filterType) + 1) % types.length;
     setFilterType(types[nextIndex]);
-    setCurrentPage(1); // Reset pagination on filter
+    setCurrentPage(1); 
   };
 
   const toggleDateRange = () => {
     const ranges = ["ALL", "TODAY", "WEEK"];
     const nextIndex = (ranges.indexOf(dateRange) + 1) % ranges.length;
     setDateRange(ranges[nextIndex]);
-    setCurrentPage(1); // Reset pagination on filter
+    setCurrentPage(1); 
   };
 
   const handleViewLog = (log) => setSelectedLog(log);
 
-  // 1. Filtering Logic
+  const handleSelectAll = (e) => {
+    if (e.target.checked) setSelectedRows(currentLogs.map(log => log.id));
+    else setSelectedRows([]);
+  };
+
+  const handleSelectRow = (id) => {
+    if (selectedRows.includes(id)) setSelectedRows(selectedRows.filter(rowId => rowId !== id));
+    else setSelectedRows([...selectedRows, id]);
+  };
+
   const filteredLogs = logs.filter(log => {
     const matchesSearch = 
         log.target_repr?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         log.action_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         log.actor_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         log.ip_address?.includes(searchTerm);
-
     const matchesType = filterType === "ALL" || log.action_type === filterType;
-
     let matchesDate = true;
     const logDate = new Date(log.timestamp);
     const today = new Date();
-    
-    if (dateRange === "TODAY") {
-        matchesDate = logDate.toDateString() === today.toDateString();
-    } else if (dateRange === "WEEK") {
+    if (dateRange === "TODAY") matchesDate = logDate.toDateString() === today.toDateString();
+    else if (dateRange === "WEEK") {
         const lastWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
         matchesDate = logDate >= lastWeek;
     }
     return matchesSearch && matchesType && matchesDate;
   });
 
-  // 2. Pagination Logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentLogs = filteredLogs.slice(indexOfFirstItem, indexOfLastItem);
@@ -163,6 +202,11 @@ export default function AccessLogs() {
       case 'UPDATE': return { bg: 'rgba(219, 234, 254, 0.9)', text: '#1d4ed8', icon: <Edit3 size={14}/>, border: '#93c5fd', shadow: '0 0 10px rgba(59, 130, 246, 0.2)' };
       case 'DELETE': return { bg: 'rgba(254, 226, 226, 0.9)', text: '#b91c1c', icon: <Trash2 size={14}/>, border: '#fca5a5', shadow: '0 0 10px rgba(239, 68, 68, 0.2)' };
       case 'LOGIN':  return { bg: 'rgba(243, 232, 255, 0.9)', text: '#7e22ce', icon: <LogIn size={14}/>, border: '#d8b4fe', shadow: '0 0 10px rgba(168, 85, 247, 0.2)' };
+      case 'INQUIRED': return { bg: '#fef3c7', text: '#b45309', icon: <Search size={14}/>, border: '#fcd34d', shadow: 'none' };
+      case 'FAQ': return { bg: '#e0f2fe', text: '#0369a1', icon: <HelpCircle size={14}/>, border: '#7dd3fc', shadow: 'none' };
+      case 'SUGGESTION': return { bg: '#fdf4ff', text: '#a21caf', icon: <Lightbulb size={14}/>, border: '#f5d0fe', shadow: 'none' };
+      case 'FEEDBACK': return { bg: '#dcfce7', text: '#166534', icon: <ThumbsUp size={14}/>, border: '#86efac', shadow: 'none' };
+      case 'COMPLAIN': return { bg: '#fee2e2', text: '#991b1b', icon: <AlertOctagon size={14}/>, border: '#fca5a5', shadow: 'none' };
       default:       return { bg: '#f3f4f6', text: '#374151', icon: <Activity size={14}/>, border: '#e5e7eb', shadow: 'none' };
     }
   };
@@ -181,7 +225,6 @@ export default function AccessLogs() {
         {/* HEADER */}
         <motion.div initial={{opacity:0, y:-20}} animate={{opacity:1, y:0}} className="access-header-wrap">
           <div className="header-title-sec">
-            {/* ✅ ICON HEIGHT STRETCH FIXED HERE */}
             <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.5 }} className="title-icon">
               <Activity size={28} color="white"/>
             </motion.div>
@@ -262,6 +305,31 @@ export default function AccessLogs() {
                                 })}
                             </div>
                         </div>
+
+                        {/* ✅ NEW GRAPH: TRAJECTORY LINE CHART */}
+                        <div className="graph-card">
+                            <h3 className="graph-title"><TrendingUp size={18}/> Live Trajectory</h3>
+                            <div className="trajectory-container" style={{display: 'flex', alignItems:'center', height:'110px', width:'100%', position: 'relative'}}>
+                                <svg viewBox="0 0 100 40" preserveAspectRatio="none" style={{width:'100%', height:'100%', overflow:'visible'}}>
+                                    <motion.path 
+                                        d="M0,30 Q10,25 20,15 T40,10 T60,20 T80,5 T100,15" 
+                                        fill="none" 
+                                        stroke="url(#gradient)" 
+                                        strokeWidth="3"
+                                        strokeLinecap="round"
+                                        initial={{ pathLength: 0 }} 
+                                        animate={{ pathLength: 1 }} 
+                                        transition={{ duration: 2, ease: "easeInOut" }}
+                                    />
+                                    <defs>
+                                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stopColor="#8b5cf6" />
+                                            <stop offset="100%" stopColor="#3b82f6" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                            </div>
+                        </div>
                     </div>
                 </motion.div>
             )}
@@ -282,6 +350,16 @@ export default function AccessLogs() {
                     <input placeholder="Search logs by User, IP, or Module..." className="modern-input-search" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                 </div>
                 <div className="access-toolbar-actions">
+                    {selectedRows.length > 0 && (
+                        <>
+                            <button onClick={handleBulkDelete} className="btn-outline" style={{color: '#ef4444', borderColor: '#fca5a5'}}>
+                                <Trash2 size={14}/> Delete ({selectedRows.length})
+                            </button>
+                            <button onClick={handleExport} className="btn-outline" style={{color: '#0ea5e9', borderColor: '#bae6fd'}}>
+                                <Download size={14}/> Export ({selectedRows.length})
+                            </button>
+                        </>
+                    )}
                     <button onClick={toggleFilter} className={`filter-btn ${filterType !== 'ALL' ? 'active-filter' : ''}`}>
                         <Filter size={14}/> {filterType === 'ALL' ? 'Filter Type' : filterType}
                     </button>
@@ -295,6 +373,14 @@ export default function AccessLogs() {
                 <table className="custom-data-table">
                     <thead>
                         <tr>
+                            <th style={{width: '40px', padding: '16px'}}>
+                                <input 
+                                  type="checkbox" 
+                                  className="custom-checkbox"
+                                  onChange={handleSelectAll} 
+                                  checked={selectedRows.length === currentLogs.length && currentLogs.length > 0} 
+                                />
+                            </th>
                             <th style={{minWidth:'150px'}}>EVENT TYPE</th>
                             <th style={{minWidth:'220px'}}>TARGET ENTITY</th>
                             <th style={{minWidth:'200px'}}>INITIATED BY</th>
@@ -305,19 +391,27 @@ export default function AccessLogs() {
                     </thead>
                     <motion.tbody variants={containerVariants} initial="hidden" animate="visible">
                         {loading ? (
-                            <tr><td colSpan="6" className="empty-table-cell">
+                            <tr><td colSpan="7" className="empty-table-cell">
                                 <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} style={{display:'inline-block'}}><RefreshCw size={28} /></motion.div>
                                 <div style={{marginTop:'10px'}}>Fetching latest logs...</div>
                             </td></tr>
                         ) : currentLogs.length === 0 ? (
-                            <tr><td colSpan="6" className="empty-table-cell">
+                            <tr><td colSpan="7" className="empty-table-cell">
                                 <ShieldCheck size={40} style={{marginBottom:'10px', opacity:0.3}}/>
                                 <div>No logs found.</div>
                             </td></tr>
                         ) : currentLogs.map((log) => {
                             const style = getActionStyle(log.action_type);
                             return (
-                                <motion.tr variants={itemVariants} key={log.id} whileHover={{ backgroundColor: '#f8fafc' }}>
+                                <motion.tr variants={itemVariants} key={log.id} whileHover={{ backgroundColor: '#f8fafc' }} style={{ backgroundColor: selectedRows.includes(log.id) ? '#f0f9ff' : 'transparent' }}>
+                                    <td className="td-style" style={{padding: '16px'}}>
+                                        <input 
+                                          type="checkbox" 
+                                          className="custom-checkbox"
+                                          checked={selectedRows.includes(log.id)}
+                                          onChange={() => handleSelectRow(log.id)}
+                                        />
+                                    </td>
                                     <td className="td-style">
                                         <span className="action-badge" style={{background: style.bg, color: style.text, border: `1px solid ${style.border}`, boxShadow: style.shadow}}>
                                             {style.icon} {log.action_type}
@@ -327,7 +421,7 @@ export default function AccessLogs() {
                                         <div className="entity-title">{log.target_repr || 'System Process'}</div>
                                         <div className="entity-sub">
                                             <div className="tiny-dot"></div>
-                                            {log.target_model} <span style={{opacity:0.4}}>|</span> ID: {log.target_object_id}
+                                            {log.target_model} <span style={{opacity:0.4}}>|</span> ID: {log.target_object_id || log.id}
                                         </div>
                                     </td>
                                     <td className="td-style">
@@ -335,7 +429,7 @@ export default function AccessLogs() {
                                             <div className="actor-avatar">{log.actor_name ? log.actor_name.charAt(0).toUpperCase() : 'S'}</div>
                                             <div>
                                                 <div className="actor-name">{log.actor_name || 'System Admin'}</div>
-                                                <div className="actor-role">Super Administrator</div>
+                                                <div className="actor-role">{log.user_type || 'ADMIN'}</div> {/* ✅ User Type added here */}
                                             </div>
                                         </div>
                                     </td>
@@ -392,14 +486,30 @@ export default function AccessLogs() {
                     <div className="modal-details-card">
                         <DetailRow label="Action Type" value={selectedLog.action_type} highlight />
                         <DetailRow label="Target Entity" value={`${selectedLog.target_repr} (${selectedLog.target_model})`} />
-                        <DetailRow label="Performed By" value={selectedLog.actor_name || 'System Admin'} />
+                        
+                        {/* ✅ Added User Type, Status and Groups to Detail Modal */}
+                        <DetailRow label="Performed By (Type)" value={`${selectedLog.actor_name} (${selectedLog.user_type})`} />
+                        <DetailRow label="Registration Status" value={selectedLog.registration_status} />
+                        <DetailRow label="Group & Subgroup ID" value={`${selectedLog.group_id} / ${selectedLog.subgroup_id}`} />
+                        
+                        <DetailRow label="Mobile / Email" value={`${selectedLog.mobile} | ${selectedLog.email}`} />
+                        <DetailRow label="Place ID & Subplace ID" value={`${selectedLog.place_id} | ${selectedLog.subplace_id}`} />
+                        <DetailRow label="Coordinates (Lat, Long)" value={`${selectedLog.latitude}, ${selectedLog.longitude}`} />
                         <DetailRow label="Source IP" value={selectedLog.ip_address} />
                         <DetailRow label="Timestamp" value={new Date(selectedLog.timestamp).toLocaleString()} />
                     </div>
 
                     <div className="log-console-title"><Activity size={16}/> System Changes Log:</div>
                     <div className="log-console-box hide-scrollbar">
-                        {selectedLog.details || "No detailed system changes recorded for this event. Payload was processed smoothly by the Django ORM."}
+                        {selectedLog.details}
+                    </div>
+
+                    {/* ✅ Added ACTION BUTTONS (Copy, Share, Send, Save As) */}
+                    <div className="modal-action-buttons">
+                        <button className="modal-btn-sm" onClick={() => handleCopyLog(selectedLog)}><Copy size={14}/> Copy</button>
+                        <button className="modal-btn-sm" onClick={handleShareLog}><Share2 size={14}/> Share</button>
+                        <button className="modal-btn-sm" onClick={handleSendLog}><Send size={14}/> Send</button>
+                        <button className="modal-btn-sm" onClick={() => { setSelectedRows([selectedLog.id]); handleExport(); }}><Save size={14}/> Save As</button>
                     </div>
 
                     <button onClick={() => setSelectedLog(null)} className="btn-gradient w-full mt-4">Close Details</button>
@@ -428,7 +538,6 @@ export default function AccessLogs() {
 
         .access-header-wrap { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; flex-wrap: wrap; gap: 20px;}
         
-        /* ✅ FIXED: ICON ALIGNMENT AND HEIGHT ISSUE */
         .header-title-sec { display: flex; align-items: center; gap: 15px; }
         .title-icon { width: 54px; height: 54px; flex-shrink: 0; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 16px; box-shadow: 0 8px 20px -6px rgba(99, 102, 241, 0.6); display: flex; align-items: center; justify-content: center;}
         
@@ -492,6 +601,8 @@ export default function AccessLogs() {
         .active-filter { background: #e0f2fe; color: #0284c7; border-color: #bae6fd;}
         .active-date { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0;}
 
+        .custom-checkbox { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary); }
+
         .responsive-table-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .custom-data-table { width: 100%; min-width: 800px; border-collapse: collapse; }
         .custom-data-table thead { background: #f8fafc; }
@@ -532,7 +643,12 @@ export default function AccessLogs() {
         .modal-title { font-size: 1.4rem; font-weight: 800; color: var(--text); margin: 0;}
         .modal-details-card { background: #f8fafc; border-radius: 16px; padding: 20px; border: 1px solid #e2e8f0; margin-bottom: 20px;}
         .log-console-title { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;}
-        .log-console-box { background: #0f172a; color: #e2e8f0; padding: 15px; border-radius: 12px; font-family: monospace; font-size: 0.85rem; line-height: 1.5; max-height: 150px; overflow-y: auto;}
+        .log-console-box { background: #0f172a; color: #e2e8f0; padding: 15px; border-radius: 12px; font-family: monospace; font-size: 0.85rem; line-height: 1.5; max-height: 150px; overflow-y: auto; margin-bottom: 15px;}
+        
+        /* ✅ CSS for new Modal Buttons */
+        .modal-action-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+        .modal-btn-sm { display: flex; align-items: center; gap: 6px; background: white; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.75rem; font-weight: 700; color: #475569; transition: 0.2s; flex: 1; justify-content: center;}
+        .modal-btn-sm:hover { background: #f1f5f9; color: #1e293b; border-color: #94a3b8; }
 
         /* MOBILE RESPONSIVENESS */
         @media (max-width: 1024px) { .access-main-view { margin-left: 0; max-width: 100%; } }
@@ -575,7 +691,7 @@ export default function AccessLogs() {
 const DetailRow = ({ label, value, highlight }) => (
   <div style={{display:'flex', justifyContent:'space-between', marginBottom:'12px', borderBottom:'1px dashed #cbd5e1', paddingBottom:'8px'}}>
       <span style={{color:'#64748b', fontSize:'0.85rem', fontWeight:'600'}}>{label}</span>
-      <span style={{color: highlight ? '#4f46e5' : '#1e293b', fontWeight: highlight ? '800' : '600', fontSize:'0.85rem'}}>{value}</span>
+      <span style={{color: highlight ? '#4f46e5' : '#1e293b', fontWeight: highlight ? '800' : '600', fontSize:'0.85rem', textAlign: 'right'}}>{value}</span>
   </div>
 );
 

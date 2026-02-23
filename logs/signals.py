@@ -4,7 +4,6 @@ from institutions.models import Institution
 from .models import ActivityLog
 import socket
 
-# Helper to get IP (Simple version)
 def get_ip():
     try:
         return socket.gethostbyname(socket.gethostname())
@@ -14,17 +13,18 @@ def get_ip():
 @receiver(post_save, sender=Institution)
 def log_institution_save(sender, instance, created, **kwargs):
     action = 'CREATE' if created else 'UPDATE'
-    # Note: 'actor' yahan direct nahi milta signals me, usually request middleware se lete hain.
-    # Abhi ke liye hum actor ko 'System' ya null rakhenge, ya Frontend se bhejna padega.
-    # Lekin automatic tracking ke liye ye basic structure hai.
     
+    # ✅ Ab signals me bhi direct create karte waqt naye parameters pass kar sakte hain
     ActivityLog.objects.create(
         action_type=action,
         target_model='Institution',
         target_object_id=str(instance.id),
         target_repr=instance.name,
         ip_address=get_ip(),
-        details=f"Plan: {instance.subscription_plan} | Principal: {instance.principal_name}"
+        details=f"Plan: {instance.subscription_plan} | Principal: {instance.principal_name}",
+        user_type='SYSTEM',
+        place_id=getattr(instance, 'place_id', None),
+        email=getattr(instance, 'email', None)
     )
 
 @receiver(post_delete, sender=Institution)
@@ -35,5 +35,6 @@ def log_institution_delete(sender, instance, **kwargs):
         target_object_id=str(instance.id),
         target_repr=instance.name,
         ip_address=get_ip(),
-        details="School deleted from system"
+        details="School deleted from system",
+        user_type='SYSTEM'
     )
