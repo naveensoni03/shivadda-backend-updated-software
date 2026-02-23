@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from "react";
 import SidebarModern from "../components/SidebarModern";
-import { Clock, CheckCircle, FileText, UserCheck, Brain, Plus, Trash, Save, FileOutput, Eye, Edit2, X, Sparkles, Zap, ChevronLeft, ChevronRight, RefreshCw, Layers, Award, BarChart2, Target, CheckSquare } from "lucide-react";
+import { Clock, CheckCircle, FileText, UserCheck, Brain, Plus, Trash, Save, FileOutput, Eye, Edit2, X, Sparkles, Zap, ChevronLeft, ChevronRight, RefreshCw, Layers, Award, BarChart2, Target, CheckSquare, ShoppingCart, List } from "lucide-react";
 import toast, { Toaster } from 'react-hot-toast';
 import api from "../api/axios";
 import jsPDF from "jspdf";
@@ -15,23 +15,24 @@ export default function Exams() {
   const [questions, setQuestions] = useState([]);
   
   const [newQ, setNewQ] = useState({ 
-      text: "", q_type: "Descriptive", difficulty: "Medium", section: "A",
+      text: "", q_type: "Descriptive", difficulty: "Medium", section: "A", level: "Level 1",
       marks: 5, negative_marks: 0, unattempted_marks: 0, 
-      option_a: "", option_b: "", option_c: "", option_d: "", option_e: "", correct_option: "" 
+      option_a: "", option_b: "", option_c: "", option_d: "", option_e: "", option_f: "", option_g: "", option_h: "", correct_option: "" 
   });
 
   const [editingId, setEditingId] = useState(null);
   const [viewQ, setViewQ] = useState(null);
   
-  // GLOBAL EXAM META (Upar wala form)
+  // ✅ ADDED EXAM TYPE & PAPER TYPE
   const [examMeta, setExamMeta] = useState({ 
       examName: "", className: "", subClass: "", subject: "", subSubject: "",
       unit: "", chapter: "", examineeBody: "", timeAllowed: "", maxMarks: "", 
       paperId: "", paperSetNumber: "", placeOfExam: "", examPassword: "", 
-      validity: "", permission: "", teacherName: "" 
+      validity: "", permission: "Management", teacherName: "", 
+      modeOfExam: "Online", toolsAllowed: "None",
+      examType: "Actual Exam", paperType: "Both" // NEW
   });
 
-  // EDIT MODAL SPECIFIC META (Taaki edit karte time sirf usi specific question ka data dikhe)
   const [editMeta, setEditMeta] = useState({});
   
   const [showEditModal, setShowEditModal] = useState(false);
@@ -54,6 +55,7 @@ export default function Exams() {
   // --- OMR & RESULT STATE ---
   const [studentAnswers, setStudentAnswers] = useState({});
   const [examResult, setExamResult] = useState(null);
+  const [detailedResults, setDetailedResults] = useState([]); // NEW
 
   useEffect(() => {
       setLoaded(true);
@@ -74,16 +76,12 @@ export default function Exams() {
           console.warn("Backend not connected. Using local dummy data.");
           setQuestions([
               { 
-                  id: 1, text: "Explain Newton's Laws of Motion.", q_type: "Descriptive", difficulty: "Medium", section: "A", marks: 10, negative_marks: 0, unattempted_marks: 0, 
-                  exam_meta: { className: "10th", subClass: "A", subject: "Science", subSubject: "Physics", unit: "01", chapter: "04", paperId: "PHY-101", examPassword: "123", validity: "2 Hrs", permission: "All"} 
+                  id: 1, text: "Explain Newton's Laws of Motion.", q_type: "Descriptive", difficulty: "Medium", level: "Level 2", section: "A", marks: 10, negative_marks: 0, unattempted_marks: 0, 
+                  exam_meta: { className: "10th", subClass: "A", subject: "Science", subSubject: "Physics", unit: "01", chapter: "04", paperId: "PHY-101", examPassword: "123", validity: "2 Hrs", permission: "Management", modeOfExam: "Online", toolsAllowed: "AI ChatGPT", examType: "Mock Test", paperType: "Both"} 
               },
               { 
-                  id: 2, text: "What is the powerhouse of the cell?", q_type: "MCQ", difficulty: "Easy", section: "A", marks: 2, negative_marks: 0.5, unattempted_marks: 0, option_a: "Nucleus", option_b: "Mitochondria", option_c: "Ribosome", option_d: "Cytoplasm", correct_option: "B", 
-                  exam_meta: { className: "10th", subClass: "B", subject: "Science", subSubject: "Biology", unit: "02", chapter: "05", paperId: "BIO-201", examPassword: "abc", validity: "3 Hrs", permission: "Admin"} 
-              },
-              { 
-                  id: 3, text: "Water boils at 100°C.", q_type: "True/False", difficulty: "Easy", section: "B", marks: 1, negative_marks: 0.25, unattempted_marks: 0, option_a: "True", option_b: "False", correct_option: "A", 
-                  exam_meta: { className: "10th", subClass: "A", subject: "Science", subSubject: "Chemistry", unit: "01", chapter: "02", paperId: "CHE-01", examPassword: "xyz", validity: "1 Hr", permission: "Guest"} 
+                  id: 2, text: "Select the correct properties of a noble gas:", q_type: "MCQ", difficulty: "Hard", level: "Level 3", section: "A", marks: 4, negative_marks: 1, unattempted_marks: 0, option_a: "Reactive", option_b: "Odorless", option_c: "Colorless", option_d: "Flammable", option_e: "Stable", option_f: "Toxic", correct_option: "E", 
+                  exam_meta: { className: "10th", subClass: "B", subject: "Science", subSubject: "Chemistry", unit: "02", chapter: "05", paperId: "CHE-201", examPassword: "abc", validity: "3 Hrs", permission: "Seekers", modeOfExam: "Offline", toolsAllowed: "None", examType: "Actual Exam", paperType: "Objective"} 
               }
           ]);
       } finally {
@@ -96,7 +94,6 @@ export default function Exams() {
       const loadId = toast.loading("Saving...");
 
       try {
-          // Edit mode vs Add mode structure logic
           let questionPayload;
           
           if (editingId) {
@@ -107,13 +104,13 @@ export default function Exams() {
               setEditingId(null);
               setShowEditModal(false);
           } else {
-              questionPayload = { ...newQ, exam_meta: { ...examMeta } }; // ADD mode uses global upper form
+              questionPayload = { ...newQ, exam_meta: { ...examMeta } }; 
               const res = await api.post(API_ENDPOINT, questionPayload);
               const savedQ = res.data && res.data.id ? res.data : { ...questionPayload, id: Date.now() };
               setQuestions([savedQ, ...questions]);
               toast.success("Saved to Database!", { id: loadId });
           }
-          setNewQ({ text: "", q_type: "Descriptive", difficulty: "Medium", section: "A", marks: 5, negative_marks: 0, unattempted_marks: 0, option_a: "", option_b: "", option_c: "", option_d: "", option_e: "", correct_option: "" });
+          setNewQ({ text: "", q_type: "Descriptive", difficulty: "Medium", section: "A", level: "Level 1", marks: 5, negative_marks: 0, unattempted_marks: 0, option_a: "", option_b: "", option_c: "", option_d: "", option_e: "", option_f: "", option_g: "", option_h: "", correct_option: "" });
           setEditMeta({});
       } catch (error) {
           const fakeId = Date.now();
@@ -127,7 +124,7 @@ export default function Exams() {
               setQuestions([{ ...questionPayload, id: fakeId }, ...questions]);
           }
           toast.success("Saved Locally (DB Offline)", { id: loadId });
-          setNewQ({ text: "", q_type: "Descriptive", difficulty: "Medium", section: "A", marks: 5, negative_marks: 0, unattempted_marks: 0, option_a: "", option_b: "", option_c: "", option_d: "", option_e: "", correct_option: "" });
+          setNewQ({ text: "", q_type: "Descriptive", difficulty: "Medium", section: "A", level: "Level 1", marks: 5, negative_marks: 0, unattempted_marks: 0, option_a: "", option_b: "", option_c: "", option_d: "", option_e: "", option_f: "", option_g: "", option_h: "", correct_option: "" });
           setEditMeta({});
       }
   };
@@ -153,11 +150,12 @@ export default function Exams() {
 
   const handleEditClick = (q) => {
       setNewQ({
-        text: q.text, q_type: q.q_type, marks: q.marks, difficulty: q.difficulty || "Medium", section: q.section || "A",
+        text: q.text, q_type: q.q_type, marks: q.marks, difficulty: q.difficulty || "Medium", section: q.section || "A", level: q.level || "Level 1",
         negative_marks: q.negative_marks || 0, unattempted_marks: q.unattempted_marks || 0,
-        option_a: q.option_a || "", option_b: q.option_b || "", option_c: q.option_c || "", option_d: q.option_d || "", option_e: q.option_e || "", correct_option: q.correct_option || ""
+        option_a: q.option_a || "", option_b: q.option_b || "", option_c: q.option_c || "", option_d: q.option_d || "", 
+        option_e: q.option_e || "", option_f: q.option_f || "", option_g: q.option_g || "", option_h: q.option_h || "", 
+        correct_option: q.correct_option || ""
       });
-      // ✅ Populating Edit Modal's internal state with the specific record's meta
       setEditMeta(q.exam_meta || {});
       setEditingId(q.id);
       setShowEditModal(true);
@@ -165,7 +163,7 @@ export default function Exams() {
 
   const handleCancelEdit = () => {
       setEditingId(null);
-      setNewQ({ text: "", q_type: "Descriptive", difficulty: "Medium", section: "A", marks: 5, negative_marks: 0, unattempted_marks: 0, option_a: "", option_b: "", option_c: "", option_d: "", option_e: "", correct_option: "" });
+      setNewQ({ text: "", q_type: "Descriptive", difficulty: "Medium", section: "A", level: "Level 1", marks: 5, negative_marks: 0, unattempted_marks: 0, option_a: "", option_b: "", option_c: "", option_d: "", option_e: "", option_f: "", option_g: "", option_h: "", correct_option: "" });
       setEditMeta({});
       setShowEditModal(false);
   };
@@ -183,19 +181,20 @@ export default function Exams() {
           
           doc.text(`Class/Sec: ${classStr} | Subject: ${subStr} | Set By: ${examMeta.teacherName || "N/A"}`, 105, 23, null, null, "center");
           doc.text(`Place: ${examMeta.placeOfExam || "N/A"} | Paper ID: ${examMeta.paperId || "N/A"} | Set: ${examMeta.paperSetNumber || "N/A"}`, 105, 29, null, null, "center");
-          doc.text(`Board: ${examMeta.examineeBody || "N/A"} | Time: ${examMeta.timeAllowed} | Max: ${examMeta.maxMarks}`, 105, 35, null, null, "center");
+          doc.text(`Type: ${examMeta.examType} | Mode: ${examMeta.modeOfExam} | Max: ${examMeta.maxMarks}`, 105, 35, null, null, "center");
 
           const tableRows = questions.map((q, i) => [
               i + 1,
               q.section || "A",
-              q.q_type === 'MCQ' ? `${q.text}\nA) ${q.option_a} B) ${q.option_b}\nC) ${q.option_c} D) ${q.option_d}` : q.text,
+              q.level || "Level 1",
+              q.q_type === 'MCQ' ? `${q.text}\nA) ${q.option_a} B) ${q.option_b} C) ${q.option_c} D) ${q.option_d}\nE) ${q.option_e} F) ${q.option_f} G) ${q.option_g} H) ${q.option_h}`.replace(/ [A-H]\) $/g, '') : q.text,
               q.q_type,
               q.difficulty || "Medium",
               `+${q.marks} / -${q.negative_marks || 0}`
           ]);
 
           if (typeof doc.autoTable === 'function') {
-              doc.autoTable({ head: [["Q.No", "Sec", "Question", "Type", "Diff", "Marking"]], body: tableRows, startY: 40 });
+              doc.autoTable({ head: [["Q.No", "Sec", "Level", "Question", "Type", "Diff", "Marking"]], body: tableRows, startY: 40 });
           } else {
                doc.text("Table generation failed. Raw data below:", 10, 45);
           }
@@ -267,26 +266,45 @@ export default function Exams() {
       let totalCorrectMarksAwarded = 0;
       let totalIncorrectMarksDeducted = 0;
       let totalUnattemptedMarksDeducted = 0;
+      
+      let detailedLog = []; // NEW
 
       const mcqQuestions = questions.filter(q => q.q_type === 'MCQ' || q.q_type === 'True/False');
 
-      mcqQuestions.forEach(q => {
+      mcqQuestions.forEach((q, idx) => {
           totalMaxMarks += (q.marks || 0);
           const studentAns = studentAnswers[q.id];
+          
+          let logEntry = {
+              qNo: idx + 1,
+              mm: q.marks || 0,
+              section: q.section || "A",
+              correctOption: q.correct_option || "-",
+              attempted: studentAns ? studentAns : "Not Attempted",
+              status: "",
+              marksAwarded: 0
+          };
 
           if (!studentAns) {
               unattemptedCount++;
               totalUnattemptedMarksDeducted += (q.unattempted_marks || 0);
               obtainedMarks -= (q.unattempted_marks || 0);
+              logEntry.status = "Unattempted";
+              logEntry.marksAwarded = -(q.unattempted_marks || 0);
           } else if (studentAns === q.correct_option) {
               correctCount++;
               totalCorrectMarksAwarded += (q.marks || 0);
               obtainedMarks += (q.marks || 0);
+              logEntry.status = "Correct";
+              logEntry.marksAwarded = (q.marks || 0);
           } else {
               incorrectCount++;
               totalIncorrectMarksDeducted += (q.negative_marks || 0);
               obtainedMarks -= (q.negative_marks || 0);
+              logEntry.status = "Incorrect";
+              logEntry.marksAwarded = -(q.negative_marks || 0);
           }
+          detailedLog.push(logEntry);
       });
 
       const percentage = totalMaxMarks > 0 ? (obtainedMarks / totalMaxMarks) * 100 : 0;
@@ -317,6 +335,7 @@ export default function Exams() {
               totalCorrectMarksAwarded, totalIncorrectMarksDeducted, totalUnattemptedMarksDeducted,
               percentage: percentage.toFixed(2), grade
           });
+          setDetailedResults(detailedLog);
       }, 500);
   };
 
@@ -347,7 +366,7 @@ export default function Exams() {
             {activeTab === 'setter' && (
                 <div className="content-wrapper">
 
-                    {/* ✅ GLOBAL EXAM META DATA (Saves entirely to 'examMeta') */}
+                    {/* ✅ GLOBAL EXAM META DATA */}
                     <div className="card shadow-md stagger-1 mb-20">
                         <div className="card-header">
                             <h3 style={{display:'flex', alignItems:'center', gap:'8px'}}><Layers size={18} color="#3b82f6"/> Exam Configuration</h3>
@@ -355,6 +374,18 @@ export default function Exams() {
                         <div className="card-body form-grid">
                             <div className="input-group"><input type="text" placeholder="Name of Exam (e.g. Final)" className="input-field" value={examMeta.examName} onChange={e => setExamMeta({...examMeta, examName: e.target.value})} /></div>
                             
+                            {/* ✅ NEW EXAM TYPE & PAPER TYPE DROPDOWNS */}
+                            <div className="input-group">
+                                <select className="input-field" value={examMeta.examType} onChange={e => setExamMeta({...examMeta, examType: e.target.value})}>
+                                    <option value="Mock Test">Mock Test</option><option value="Actual Exam">Actual Exam</option><option value="Practice">Practice</option><option value="Both">Both</option>
+                                </select>
+                            </div>
+                            <div className="input-group">
+                                <select className="input-field" value={examMeta.paperType} onChange={e => setExamMeta({...examMeta, paperType: e.target.value})}>
+                                    <option value="Objective">Objective</option><option value="Descriptive">Descriptive</option><option value="Both">Both</option><option value="None">None</option>
+                                </select>
+                            </div>
+
                             <div className="input-group"><input type="text" placeholder="Class (e.g. 10th)" className="input-field" value={examMeta.className} onChange={e => setExamMeta({...examMeta, className: e.target.value})} /></div>
                             <div className="input-group"><input type="text" placeholder="Sub-Class/Section (e.g. A, B)" className="input-field" value={examMeta.subClass} onChange={e => setExamMeta({...examMeta, subClass: e.target.value})} /></div>
                             <div className="input-group"><input type="text" placeholder="Subject (e.g. Science)" className="input-field" value={examMeta.subject} onChange={e => setExamMeta({...examMeta, subject: e.target.value})} /></div>
@@ -365,7 +396,22 @@ export default function Exams() {
                             <div className="input-group"><input type="text" placeholder="Paper ID" className="input-field" value={examMeta.paperId} onChange={e => setExamMeta({...examMeta, paperId: e.target.value})} /></div>
                             <div className="input-group"><input type="password" placeholder="Exam Password" className="input-field" value={examMeta.examPassword} onChange={e => setExamMeta({...examMeta, examPassword: e.target.value})} /></div>
                             <div className="input-group"><input type="text" placeholder="Validity" className="input-field" value={examMeta.validity} onChange={e => setExamMeta({...examMeta, validity: e.target.value})} /></div>
-                            <div className="input-group"><input type="text" placeholder="Permission / Omission" className="input-field" value={examMeta.permission} onChange={e => setExamMeta({...examMeta, permission: e.target.value})} /></div>
+                            
+                            <div className="input-group">
+                                <select className="input-field" value={examMeta.permission} onChange={e => setExamMeta({...examMeta, permission: e.target.value})}>
+                                    <option value="Management">Management</option><option value="Provider">Provider</option><option value="Seekers">Seekers</option><option value="Guest">Guest</option><option value="Permanent">Permanent</option><option value="Adhoc">Adhoc</option><option value="Daily Wagers">Daily Wagers</option><option value="Others">Others</option>
+                                </select>
+                            </div>
+                            <div className="input-group">
+                                <select className="input-field" value={examMeta.modeOfExam} onChange={e => setExamMeta({...examMeta, modeOfExam: e.target.value})}>
+                                    <option value="Online">Online</option><option value="Offline">Offline</option><option value="Both">Both</option><option value="None">None</option>
+                                </select>
+                            </div>
+                            <div className="input-group">
+                                <select className="input-field" value={examMeta.toolsAllowed} onChange={e => setExamMeta({...examMeta, toolsAllowed: e.target.value})}>
+                                    <option value="None">None (No Tools)</option><option value="AI ChatGPT">AI ChatGPT Allowed</option><option value="Live Class">Live Class</option><option value="Recorded Video">Recorded Video</option><option value="Digitalised Board">Digitalised Board</option>
+                                </select>
+                            </div>
 
                             <div className="input-group"><input type="text" placeholder="Examinee Body (e.g. CBSE)" className="input-field" value={examMeta.examineeBody} onChange={e => setExamMeta({...examMeta, examineeBody: e.target.value})} /></div>
                             <div className="input-group"><input type="text" placeholder="Place of Exam" className="input-field" value={examMeta.placeOfExam} onChange={e => setExamMeta({...examMeta, placeOfExam: e.target.value})} /></div>
@@ -402,19 +448,30 @@ export default function Exams() {
                             </select>
 
                             <input type="text" placeholder="Section (e.g. A, B)" className="input-field hover-glow" value={newQ.section} onChange={(e) => setNewQ({...newQ, section: e.target.value})} />
+                            
+                            <select className="input-field hover-glow" value={newQ.level} onChange={(e) => setNewQ({...newQ, level: e.target.value})}>
+                                <option value="Level 1">Level 1</option><option value="Level 2">Level 2</option><option value="Level 3">Level 3</option><option value="Level 4">Level 4</option>
+                            </select>
 
                             <input type="number" placeholder="+ Marks (Correct)" className="input-field hover-glow" value={newQ.marks} onChange={(e) => setNewQ({...newQ, marks: parseFloat(e.target.value) || 0})} />
                             <input type="number" placeholder="- Marks (Incorrect)" className="input-field hover-glow" value={newQ.negative_marks} onChange={(e) => setNewQ({...newQ, negative_marks: parseFloat(e.target.value) || 0})} />
                             <input type="number" placeholder="0 Marks (Not Attempt)" className="input-field hover-glow" value={newQ.unattempted_marks} onChange={(e) => setNewQ({...newQ, unattempted_marks: parseFloat(e.target.value) || 0})} />
 
                             {newQ.q_type === 'MCQ' && (
-                                <div className="mcq-options-row full-width-grid">
+                                <div className="mcq-options-row full-width-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px'}}>
                                     <input type="text" placeholder="Option A" className="input-field" value={newQ.option_a} onChange={(e) => setNewQ({...newQ, option_a: e.target.value})} />
                                     <input type="text" placeholder="Option B" className="input-field" value={newQ.option_b} onChange={(e) => setNewQ({...newQ, option_b: e.target.value})} />
                                     <input type="text" placeholder="Option C" className="input-field" value={newQ.option_c} onChange={(e) => setNewQ({...newQ, option_c: e.target.value})} />
                                     <input type="text" placeholder="Option D" className="input-field" value={newQ.option_d} onChange={(e) => setNewQ({...newQ, option_d: e.target.value})} />
-                                    <select className="input-field option-correct-select" value={newQ.correct_option} onChange={(e) => setNewQ({...newQ, correct_option: e.target.value})}>
-                                        <option value="">Ans?</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                                    <input type="text" placeholder="Option E" className="input-field" value={newQ.option_e} onChange={(e) => setNewQ({...newQ, option_e: e.target.value})} />
+                                    <input type="text" placeholder="Option F" className="input-field" value={newQ.option_f} onChange={(e) => setNewQ({...newQ, option_f: e.target.value})} />
+                                    <input type="text" placeholder="Option G" className="input-field" value={newQ.option_g} onChange={(e) => setNewQ({...newQ, option_g: e.target.value})} />
+                                    <input type="text" placeholder="Option H" className="input-field" value={newQ.option_h} onChange={(e) => setNewQ({...newQ, option_h: e.target.value})} />
+                                    
+                                    <select className="input-field option-correct-select" style={{gridColumn: 'span 4'}} value={newQ.correct_option} onChange={(e) => setNewQ({...newQ, correct_option: e.target.value})}>
+                                        <option value="">Select Correct Ans?</option>
+                                        <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                                        <option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
                                     </select>
                                 </div>
                             )}
@@ -445,10 +502,10 @@ export default function Exams() {
                                             <tr>
                                                 <th>Q. No</th>
                                                 <th>Section</th>
+                                                <th>Level</th>
                                                 <th>Question</th>
                                                 <th>Class (Sec)</th>
                                                 <th>Subject (Sub)</th>
-                                                {/* ✅ Table Me Naye Columns Render Hote Hue */}
                                                 <th>Unit</th>
                                                 <th>Chapter</th>
                                                 <th>Type</th>
@@ -462,6 +519,7 @@ export default function Exams() {
                                                 <tr key={q.id} className="table-row fade-in-row" style={{animationDelay: `${i * 0.05}s`}}>
                                                     <td style={{color: '#64748b'}}>{indexOfFirstItem + i + 1}</td>
                                                     <td style={{fontWeight: 600, color: '#3b82f6'}}>{q.section || "A"}</td>
+                                                    <td style={{fontWeight: 600, color: '#f59e0b'}}>{q.level || "Level 1"}</td>
                                                     <td className="truncate-text" style={{fontWeight: 600, color: '#1e293b'}} title={q.text}>{q.text}</td>
                                                     
                                                     <td style={{color: '#475569', fontSize: '0.85rem'}}>
@@ -474,7 +532,6 @@ export default function Exams() {
                                                         {q.exam_meta?.subSubject ? ` - ${q.exam_meta.subSubject}` : ""}
                                                     </td>
                                                     
-                                                    {/* ✅ Unit And Chapter Direct object se */}
                                                     <td style={{color: '#475569', fontSize: '0.85rem'}}>{q.exam_meta?.unit || "-"}</td>
                                                     <td style={{color: '#475569', fontSize: '0.85rem'}}>{q.exam_meta?.chapter || "-"}</td>
 
@@ -490,7 +547,7 @@ export default function Exams() {
                                                     </td>
                                                 </tr>
                                             )) : (
-                                                <tr><td colSpan="11" style={{textAlign:'center', padding:'20px'}}>No Questions in Database yet. Add one above!</td></tr>
+                                                <tr><td colSpan="12" style={{textAlign:'center', padding:'20px'}}>No Questions in Database yet. Add one above!</td></tr>
                                             )}
                                         </tbody>
                                 </table>
@@ -526,6 +583,11 @@ export default function Exams() {
                                         Sub: {examMeta.subject} {examMeta.subSubject ? `- ${examMeta.subSubject}` : ''} |
                                         Paper ID: {examMeta.paperId || 'N/A'}
                                     </p>
+                                    <div style={{marginTop: '5px'}}>
+                                        <span className="badge medium" style={{marginRight: '5px'}}>{examMeta.examType}</span>
+                                        <span className="badge medium" style={{marginRight: '5px'}}>{examMeta.modeOfExam} Mode</span>
+                                        <span className="badge medium">Tools: {examMeta.toolsAllowed}</span>
+                                    </div>
                                 </div>
                                 <div className="omr-header-right">
                                     <div className="badge medium" style={{fontSize: '1rem', padding: '8px 15px'}}>Time: {examMeta.timeAllowed}</div>
@@ -534,44 +596,49 @@ export default function Exams() {
 
                             <div className="card shadow-md" style={{padding: '30px'}}>
                                 {questions.filter(q => q.q_type === 'MCQ' || q.q_type === 'True/False').length > 0 ? (
-                                    questions.filter(q => q.q_type === 'MCQ' || q.q_type === 'True/False').map((q, index) => (
-                                        <div key={q.id} className="omr-question-row">
-                                            <div className="omr-q-text">
-                                                <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-                                                    <span className="q-no">{index + 1}.</span> {q.text}
+                                    questions.filter(q => q.q_type === 'MCQ' || q.q_type === 'True/False').map((q, index) => {
+                                        const activeOptions = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].filter(opt => q[`option_${opt.toLowerCase()}`] && q[`option_${opt.toLowerCase()}`].trim() !== "");
+                                        const finalOptions = activeOptions.length > 0 ? activeOptions : ['A', 'B', 'C', 'D']; 
+
+                                        return (
+                                            <div key={q.id} className="omr-question-row">
+                                                <div className="omr-q-text">
+                                                    <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+                                                        <span className="q-no">{index + 1}.</span> {q.text}
+                                                    </div>
+                                                    <div className="q-marking-info">Sec: {q.section || 'A'} | {q.level || 'Level 1'} | (+{q.marks} / -{q.negative_marks || 0})</div>
                                                 </div>
-                                                <div className="q-marking-info">Sec: {q.section || 'A'} | (+{q.marks} / -{q.negative_marks || 0})</div>
-                                            </div>
-                                            
-                                            <div className="omr-options-grid">
-                                                {q.q_type === 'MCQ' ? (
-                                                    ['A', 'B', 'C', 'D'].map(opt => (
-                                                        <div key={opt} className="omr-option-wrapper">
-                                                            <div 
-                                                                className={`omr-bubble ${studentAnswers[q.id] === opt ? 'selected' : ''}`}
-                                                                onClick={() => handleOMRSelect(q.id, opt)}
-                                                            >
-                                                                {opt}
+                                                
+                                                <div className="omr-options-grid">
+                                                    {q.q_type === 'MCQ' ? (
+                                                        finalOptions.map(opt => (
+                                                            <div key={opt} className="omr-option-wrapper">
+                                                                <div 
+                                                                    className={`omr-bubble ${studentAnswers[q.id] === opt ? 'selected' : ''}`}
+                                                                    onClick={() => handleOMRSelect(q.id, opt)}
+                                                                >
+                                                                    {opt}
+                                                                </div>
+                                                                <span className="omr-opt-text">{q[`option_${opt.toLowerCase()}`] || `Option ${opt}`}</span>
                                                             </div>
-                                                            <span className="omr-opt-text">{q[`option_${opt.toLowerCase()}`] || `Option ${opt}`}</span>
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    ['A', 'B'].map((opt, idx) => (
-                                                        <div key={opt} className="omr-option-wrapper">
-                                                            <div 
-                                                                className={`omr-bubble ${studentAnswers[q.id] === opt ? 'selected' : ''}`}
-                                                                onClick={() => handleOMRSelect(q.id, opt)}
-                                                            >
-                                                                {opt}
+                                                        ))
+                                                    ) : (
+                                                        ['A', 'B'].map((opt, idx) => (
+                                                            <div key={opt} className="omr-option-wrapper">
+                                                                <div 
+                                                                    className={`omr-bubble ${studentAnswers[q.id] === opt ? 'selected' : ''}`}
+                                                                    onClick={() => handleOMRSelect(q.id, opt)}
+                                                                >
+                                                                    {opt}
+                                                                </div>
+                                                                <span className="omr-opt-text">{idx === 0 ? 'True' : 'False'}</span>
                                                             </div>
-                                                            <span className="omr-opt-text">{idx === 0 ? 'True' : 'False'}</span>
-                                                        </div>
-                                                    ))
-                                                )}
+                                                        ))
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))
+                                        )
+                                    })
                                 ) : (
                                     <div style={{textAlign: 'center', padding: '40px', color: '#64748b'}}>No Objective Questions (MCQ/True-False) found in this paper set.</div>
                                 )}
@@ -626,8 +693,52 @@ export default function Exams() {
                                     <strong style={{fontSize: '4rem', lineHeight: 1}}>{examResult.grade}</strong>
                                 </div>
                             </div>
+                            
+                            {/* ✅ NEW DETAILED OMR SUMMARY TABLE */}
+                            <div style={{marginTop: '40px', textAlign: 'left'}}>
+                                <h3 style={{color: '#1e293b', borderBottom: '2px solid #e2e8f0', paddingBottom: '10px', marginBottom: '20px'}}>Detailed OMR Sheet Summary</h3>
+                                <div className="table-wrapper">
+                                    <table className="modern-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Ans No.</th>
+                                                <th>MM</th>
+                                                <th>Section</th>
+                                                <th>Correct Option</th>
+                                                <th>Your Attempt</th>
+                                                <th>Status</th>
+                                                <th>Marks Awarded</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {detailedResults.map((res, i) => (
+                                                <tr key={i} style={{background: res.status === 'Correct' ? '#f0fdf4' : res.status === 'Incorrect' ? '#fef2f2' : '#fffbeb'}}>
+                                                    <td style={{fontWeight: 'bold'}}>{res.qNo}</td>
+                                                    <td>{res.mm}</td>
+                                                    <td>{res.section}</td>
+                                                    <td style={{fontWeight: 'bold', color: '#10b981'}}>{res.correctOption}</td>
+                                                    <td style={{fontWeight: 'bold'}}>{res.attempted}</td>
+                                                    <td>
+                                                        <span className={`badge ${res.status === 'Correct' ? 'easy' : res.status === 'Incorrect' ? 'hard' : 'medium'}`}>
+                                                            {res.status}
+                                                        </span>
+                                                    </td>
+                                                    <td style={{fontWeight: 'bold', color: res.marksAwarded > 0 ? '#10b981' : res.marksAwarded < 0 ? '#ef4444' : '#f59e0b'}}>
+                                                        {res.marksAwarded > 0 ? `+${res.marksAwarded}` : res.marksAwarded}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
 
-                            <button onClick={() => {setExamResult(null); setStudentAnswers({});}} className="btn-secondary" style={{marginTop: '30px'}}><RefreshCw size={18}/> Retake Exam</button>
+                            <div style={{display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '30px', flexWrap: 'wrap'}}>
+                                <button onClick={() => {setExamResult(null); setStudentAnswers({});}} className="btn-secondary"><RefreshCw size={18}/> Retake Exam</button>
+                                <button className="btn-success" onClick={() => toast("Awardlist Generated Successfully!")}><List size={18}/> Generate Awardlists</button>
+                                <button className="btn-primary" style={{background: '#8b5cf6'}} onClick={() => toast("Request Sent to Payment Gateway!")}><ShoppingCart size={18}/> Get Evaluated Sheet (PAY RS)</button>
+                                <button className="btn-primary" style={{background: '#f59e0b'}} onClick={() => toast("Request Sent to Payment Gateway!")}><ShoppingCart size={18}/> Corrected Answer Sheet (PAY RS)</button>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -709,7 +820,7 @@ export default function Exams() {
 
                         <div className="modal-header-premium" style={{ flexShrink: 0 }}>
                             <div className="header-text">
-                                <span className="subtitle">Question Details | Sec: {viewQ.section || 'A'}</span>
+                                <span className="subtitle">Sec: {viewQ.section || 'A'} | {viewQ.level || 'Level 1'}</span>
                                 <h3>Overview</h3>
                             </div>
                             <button onClick={() => setViewQ(null)} className="close-btn-premium"><X size={24}/></button>
@@ -720,15 +831,18 @@ export default function Exams() {
                                 <div className="q-icon"><FileText size={32}/></div>
                                 <p className="q-text">"{viewQ.text}"</p>
                                 {viewQ.q_type === 'MCQ' && (
-                                    <div style={{marginTop: '15px', color: '#475569', fontSize: '0.95rem'}}>
+                                    <div style={{marginTop: '15px', color: '#475569', fontSize: '0.95rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px'}}>
                                         <div style={{fontWeight: viewQ.correct_option === 'A' ? 'bold': 'normal', color: viewQ.correct_option === 'A' ? '#10b981': ''}}>A) {viewQ.option_a}</div>
                                         <div style={{fontWeight: viewQ.correct_option === 'B' ? 'bold': 'normal', color: viewQ.correct_option === 'B' ? '#10b981': ''}}>B) {viewQ.option_b}</div>
-                                        <div style={{fontWeight: viewQ.correct_option === 'C' ? 'bold': 'normal', color: viewQ.correct_option === 'C' ? '#10b981': ''}}>C) {viewQ.option_c}</div>
-                                        <div style={{fontWeight: viewQ.correct_option === 'D' ? 'bold': 'normal', color: viewQ.correct_option === 'D' ? '#10b981': ''}}>D) {viewQ.option_d}</div>
+                                        {viewQ.option_c && <div style={{fontWeight: viewQ.correct_option === 'C' ? 'bold': 'normal', color: viewQ.correct_option === 'C' ? '#10b981': ''}}>C) {viewQ.option_c}</div>}
+                                        {viewQ.option_d && <div style={{fontWeight: viewQ.correct_option === 'D' ? 'bold': 'normal', color: viewQ.correct_option === 'D' ? '#10b981': ''}}>D) {viewQ.option_d}</div>}
+                                        {viewQ.option_e && <div style={{fontWeight: viewQ.correct_option === 'E' ? 'bold': 'normal', color: viewQ.correct_option === 'E' ? '#10b981': ''}}>E) {viewQ.option_e}</div>}
+                                        {viewQ.option_f && <div style={{fontWeight: viewQ.correct_option === 'F' ? 'bold': 'normal', color: viewQ.correct_option === 'F' ? '#10b981': ''}}>F) {viewQ.option_f}</div>}
+                                        {viewQ.option_g && <div style={{fontWeight: viewQ.correct_option === 'G' ? 'bold': 'normal', color: viewQ.correct_option === 'G' ? '#10b981': ''}}>G) {viewQ.option_g}</div>}
+                                        {viewQ.option_h && <div style={{fontWeight: viewQ.correct_option === 'H' ? 'bold': 'normal', color: viewQ.correct_option === 'H' ? '#10b981': ''}}>H) {viewQ.option_h}</div>}
                                     </div>
                                 )}
                                 
-                                {/* ✅ View Meta Info specific to this question */}
                                 <div style={{marginTop: '15px', display: 'flex', gap: '10px', flexWrap: 'wrap'}}>
                                     <span className="badge medium">Unit: {viewQ.exam_meta?.unit || "N/A"}</span>
                                     <span className="badge medium">Chapter: {viewQ.exam_meta?.chapter || "N/A"}</span>
@@ -770,7 +884,7 @@ export default function Exams() {
                 </div>
             )}
 
-            {/* 2. EDIT QUESTION MODAL (✅ USES `editMeta` so it doesn't conflict with global `examMeta`) */}
+            {/* 2. EDIT QUESTION MODAL */}
             {showEditModal && (
                 <div className="modal-overlay glass-overlay fade-in" onClick={handleCancelEdit}>
                     <div className="modal-content premium-modal scale-up-bounce" onClick={e => e.stopPropagation()} style={{padding: '30px', overflowY: 'auto', maxHeight: '90vh', width: '700px', maxWidth: '95vw', display: 'flex', flexDirection: 'column'}}>
@@ -784,7 +898,7 @@ export default function Exams() {
                                 <input type="text" placeholder="Enter Question Text..." className="input-field" value={newQ.text} onChange={(e) => setNewQ({...newQ, text: e.target.value})} style={{width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '1rem', boxSizing: 'border-box'}} />
                             </div>
 
-                            <div className="grid-3-col" style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', width: '100%', marginBottom: '15px'}}>
+                            <div className="grid-3-col" style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '15px', width: '100%', marginBottom: '15px'}}>
                                 <select className="input-field hover-glow" value={newQ.q_type} onChange={(e) => setNewQ({...newQ, q_type: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px'}}>
                                     <option value="Descriptive">Descriptive</option>
                                     <option value="MCQ">MCQ</option>
@@ -795,7 +909,10 @@ export default function Exams() {
                                 <select className="input-field hover-glow" value={newQ.difficulty} onChange={(e) => setNewQ({...newQ, difficulty: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px'}}>
                                     <option value="Easy">Easy</option><option value="Medium">Medium</option><option value="Hard">Hard</option>
                                 </select>
-                                <input type="text" placeholder="Section (e.g. A, B)" className="input-field hover-glow" value={newQ.section} onChange={(e) => setNewQ({...newQ, section: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px', boxSizing: 'border-box'}} />
+                                <input type="text" placeholder="Section (A, B)" className="input-field hover-glow" value={newQ.section} onChange={(e) => setNewQ({...newQ, section: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px', boxSizing: 'border-box'}} />
+                                <select className="input-field hover-glow" value={newQ.level} onChange={(e) => setNewQ({...newQ, level: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px'}}>
+                                    <option value="Level 1">Level 1</option><option value="Level 2">Level 2</option><option value="Level 3">Level 3</option><option value="Level 4">Level 4</option>
+                                </select>
                             </div>
 
                             <div className="grid-3-col" style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', width: '100%', marginBottom: '25px'}}>
@@ -805,13 +922,18 @@ export default function Exams() {
                             </div>
 
                             {newQ.q_type === 'MCQ' && (
-                                <div className="mcq-options-row full-width-grid" style={{marginBottom: '25px'}}>
-                                    <input type="text" placeholder="Option A" className="input-field" style={{flex: 1, padding: '12px', borderRadius: '10px'}} value={newQ.option_a} onChange={(e) => setNewQ({...newQ, option_a: e.target.value})} />
-                                    <input type="text" placeholder="Option B" className="input-field" style={{flex: 1, padding: '12px', borderRadius: '10px'}} value={newQ.option_b} onChange={(e) => setNewQ({...newQ, option_b: e.target.value})} />
-                                    <input type="text" placeholder="Option C" className="input-field" style={{flex: 1, padding: '12px', borderRadius: '10px'}} value={newQ.option_c} onChange={(e) => setNewQ({...newQ, option_c: e.target.value})} />
-                                    <input type="text" placeholder="Option D" className="input-field" style={{flex: 1, padding: '12px', borderRadius: '10px'}} value={newQ.option_d} onChange={(e) => setNewQ({...newQ, option_d: e.target.value})} />
-                                    <select className="input-field option-correct-select" style={{padding: '12px', borderRadius: '10px'}} value={newQ.correct_option} onChange={(e) => setNewQ({...newQ, correct_option: e.target.value})}>
-                                        <option value="">Ans?</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                                <div className="mcq-options-row full-width-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '25px'}}>
+                                    <input type="text" placeholder="Option A" className="input-field" value={newQ.option_a} onChange={(e) => setNewQ({...newQ, option_a: e.target.value})} style={{padding: '12px', borderRadius: '10px'}}/>
+                                    <input type="text" placeholder="Option B" className="input-field" value={newQ.option_b} onChange={(e) => setNewQ({...newQ, option_b: e.target.value})} style={{padding: '12px', borderRadius: '10px'}}/>
+                                    <input type="text" placeholder="Option C" className="input-field" value={newQ.option_c} onChange={(e) => setNewQ({...newQ, option_c: e.target.value})} style={{padding: '12px', borderRadius: '10px'}}/>
+                                    <input type="text" placeholder="Option D" className="input-field" value={newQ.option_d} onChange={(e) => setNewQ({...newQ, option_d: e.target.value})} style={{padding: '12px', borderRadius: '10px'}}/>
+                                    <input type="text" placeholder="Option E" className="input-field" value={newQ.option_e} onChange={(e) => setNewQ({...newQ, option_e: e.target.value})} style={{padding: '12px', borderRadius: '10px'}}/>
+                                    <input type="text" placeholder="Option F" className="input-field" value={newQ.option_f} onChange={(e) => setNewQ({...newQ, option_f: e.target.value})} style={{padding: '12px', borderRadius: '10px'}}/>
+                                    <input type="text" placeholder="Option G" className="input-field" value={newQ.option_g} onChange={(e) => setNewQ({...newQ, option_g: e.target.value})} style={{padding: '12px', borderRadius: '10px'}}/>
+                                    <input type="text" placeholder="Option H" className="input-field" value={newQ.option_h} onChange={(e) => setNewQ({...newQ, option_h: e.target.value})} style={{padding: '12px', borderRadius: '10px'}}/>
+                                    
+                                    <select className="input-field option-correct-select" style={{gridColumn: 'span 4', padding: '12px', borderRadius: '10px'}} value={newQ.correct_option} onChange={(e) => setNewQ({...newQ, correct_option: e.target.value})}>
+                                        <option value="">Ans?</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
                                     </select>
                                 </div>
                             )}
@@ -819,13 +941,16 @@ export default function Exams() {
                             <hr style={{borderTop: '1px solid #e2e8f0', margin: '20px 0'}} />
                             <div style={{fontSize: '0.9rem', color: '#64748b', marginBottom: '15px', fontWeight: 'bold', textTransform: 'uppercase'}}>Update Exam Metadata for this Question</div>
                             
-                            {/* ✅ MAPS TO `editMeta` state exclusively */}
                             <div className="grid-3-col" style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', width: '100%', marginBottom: '15px'}}>
                                 <input type="text" placeholder="Unit (e.g. 01)" className="input-field hover-glow" value={editMeta.unit || ""} onChange={(e) => setEditMeta({...editMeta, unit: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px', boxSizing: 'border-box'}} />
                                 <input type="text" placeholder="Chapter (e.g. 05)" className="input-field hover-glow" value={editMeta.chapter || ""} onChange={(e) => setEditMeta({...editMeta, chapter: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px', boxSizing: 'border-box'}} />
                                 <input type="text" placeholder="Paper ID" className="input-field hover-glow" value={editMeta.paperId || ""} onChange={(e) => setEditMeta({...editMeta, paperId: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px', boxSizing: 'border-box'}} />
                                 <input type="text" placeholder="Validity" className="input-field hover-glow" value={editMeta.validity || ""} onChange={(e) => setEditMeta({...editMeta, validity: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px', boxSizing: 'border-box'}} />
-                                <input type="text" placeholder="Permission" className="input-field hover-glow" value={editMeta.permission || ""} onChange={(e) => setEditMeta({...editMeta, permission: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px', boxSizing: 'border-box'}} />
+                                
+                                <select className="input-field hover-glow" value={editMeta.permission || "Management"} onChange={(e) => setEditMeta({...editMeta, permission: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px', boxSizing: 'border-box'}}>
+                                    <option value="Management">Management</option><option value="Provider">Provider</option><option value="Seekers">Seekers</option><option value="Guest">Guest</option><option value="Permanent">Permanent</option><option value="Adhoc">Adhoc</option><option value="Daily Wagers">Daily Wagers</option><option value="Others">Others</option>
+                                </select>
+                                
                                 <input type="password" placeholder="Exam Password" className="input-field hover-glow" value={editMeta.examPassword || ""} onChange={(e) => setEditMeta({...editMeta, examPassword: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px', boxSizing: 'border-box'}} />
                             </div>
 
@@ -1073,10 +1198,6 @@ export default function Exams() {
             .final-score-box { background: linear-gradient(135deg, #eff6ff, #e0e7ff); border: 1px solid #bfdbfe; padding: 40px; border-radius: 24px; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 10px 30px rgba(59,130,246,0.1); flex-wrap: wrap; gap: 20px;}
             .grade-circle { width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(139,92,246,0.4); border: 4px solid white; flex-shrink: 0;}
 
-            .mcq-options-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
-            .mcq-options-row .input-field { flex: 1; min-width: 150px; }
-            .option-correct-select { flex: 0.5; min-width: 100px; }
-
             /* =========================================================
                MOBILE RESPONSIVENESS FIXES
                ========================================================= */
@@ -1109,7 +1230,7 @@ export default function Exams() {
                 
                 .form-grid { display: flex !important; flex-direction: column !important; gap: 15px; width: 100%; box-sizing: border-box;}
                 .grid-3-col, .grid-2-col { display: flex !important; flex-direction: column !important; gap: 15px; width: 100%;}
-                .mcq-options-row { flex-direction: column; }
+                .mcq-options-row { display: grid !important; grid-template-columns: 1fr 1fr !important; }
                 .mcq-options-row .input-field, .option-correct-select { width: 100%; flex: none; }
                 
                 .save-db-btn { width: 100%; }

@@ -26,6 +26,12 @@ class Exam(models.Model):
     exam_password = models.CharField(max_length=100, blank=True, null=True)
     validity = models.CharField(max_length=100, blank=True, null=True)
     permission = models.CharField(max_length=100, blank=True, null=True)
+    
+    # ✅ NEW: Toggles and Modes Added from Frontend
+    mode_of_exam = models.CharField(max_length=50, blank=True, null=True)
+    tools_allowed = models.CharField(max_length=255, blank=True, null=True)
+    exam_type = models.CharField(max_length=50, blank=True, null=True) # Mock Test etc.
+    paper_type = models.CharField(max_length=50, blank=True, null=True) # Objective/Descriptive
 
     total_marks = models.IntegerField(default=100)
     passing_marks = models.IntegerField(default=33)
@@ -51,19 +57,23 @@ class QuestionBank(models.Model):
     
     # --- NEW FRONTEND FIELDS ---
     section = models.CharField(max_length=50, default="A", blank=True, null=True)
-    exam_meta = models.JSONField(default=dict, blank=True, null=True) # Nested JSON support
+    level = models.CharField(max_length=50, default="Level 1", blank=True, null=True) # ✅ NEW LEVEL FIELD
+    exam_meta = models.JSONField(default=dict, blank=True, null=True)
 
     # --- MARKING SCHEME ---
     marks = models.FloatField(default=5.0) 
     negative_marks = models.FloatField(default=0.0) 
     unattempted_marks = models.FloatField(default=0.0) 
     
-    # --- OMR OPTIONS ---
+    # --- OMR OPTIONS (✅ EXTENDED UP TO H) ---
     option_a = models.CharField(max_length=255, null=True, blank=True)
     option_b = models.CharField(max_length=255, null=True, blank=True)
     option_c = models.CharField(max_length=255, null=True, blank=True)
     option_d = models.CharField(max_length=255, null=True, blank=True)
     option_e = models.CharField(max_length=255, null=True, blank=True)
+    option_f = models.CharField(max_length=255, null=True, blank=True) # ✅ NEW
+    option_g = models.CharField(max_length=255, null=True, blank=True) # ✅ NEW
+    option_h = models.CharField(max_length=255, null=True, blank=True) # ✅ NEW
     correct_option = models.CharField(max_length=10, blank=True, null=True)
 
     subject = models.CharField(max_length=100, blank=True, null=True)
@@ -81,12 +91,17 @@ class Question(models.Model):
     text = models.TextField()
     
     section = models.CharField(max_length=50, default="A", blank=True, null=True)
+    level = models.CharField(max_length=50, default="Level 1", blank=True, null=True) # ✅ NEW LEVEL FIELD
     
+    # --- OMR OPTIONS (✅ EXTENDED UP TO H) ---
     option_a = models.CharField(max_length=255, null=True, blank=True)
     option_b = models.CharField(max_length=255, null=True, blank=True)
     option_c = models.CharField(max_length=255, null=True, blank=True)
     option_d = models.CharField(max_length=255, null=True, blank=True)
     option_e = models.CharField(max_length=255, null=True, blank=True)
+    option_f = models.CharField(max_length=255, null=True, blank=True) # ✅ NEW
+    option_g = models.CharField(max_length=255, null=True, blank=True) # ✅ NEW
+    option_h = models.CharField(max_length=255, null=True, blank=True) # ✅ NEW
     correct_option = models.CharField(max_length=10, blank=True, null=True)
     
     marks = models.FloatField(default=1.0)

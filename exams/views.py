@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 
 from batches.models import Batch
 from courses.models import Course
-from .models import Exam, Question, QuestionBank, DescriptiveSubmission, AIEvaluationLog, AnswerEvaluation
+from .models import Exam, Question, QuestionBank, DescriptiveSubmission, AIEvaluationLog, AnswerEvaluation, ExamAttempt, StudentAnswer
 from .serializers import ExamSerializer, QuestionSerializer, QuestionBankSerializer, EvaluationSerializer
 
 User = get_user_model()
@@ -65,12 +65,18 @@ class QuestionBankAPI(APIView):
             return Response({"error": "Question not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-# ---------------- SUBMIT EXAM (✅ UPDATED FOR NEGATIVE & UNATTEMPTED) ----------------
+# ---------------- SUBMIT EXAM (✅ UPDATED: NOW SAVES ATTEMPT TO DB) ----------------
 class SubmitExamAPI(APIView):
     def post(self, request, exam_id):
         try:
             data = request.data
             exam = Exam.objects.get(id=exam_id)
+            
+            # Use authenticated user or fallback to first user for testing
+            student = request.user if request.user.is_authenticated else User.objects.first()
+
+            # Create the Attempt Record
+            attempt = ExamAttempt.objects.create(exam=exam, student=student)
 
             score = 0
             total = exam.total_marks
@@ -79,6 +85,7 @@ class SubmitExamAPI(APIView):
             for q in exam.questions.all():
                 if q.q_type in ['MCQ', 'True/False']:
                     student_ans = answers.get(str(q.id))
+                    is_correct = False
                     
                     if not student_ans:
                         # Question not attempted
@@ -86,9 +93,23 @@ class SubmitExamAPI(APIView):
                     elif student_ans == q.correct_option:
                         # Correct Answer
                         score += q.marks
+                        is_correct = True
                     else:
                         # Incorrect Answer
                         score -= q.negative_marks
+
+                    # Save specific answer to DB if attempted
+                    if student_ans:
+                        StudentAnswer.objects.create(
+                            attempt=attempt,
+                            question=q,
+                            selected_option=student_ans,
+                            is_correct=is_correct
+                        )
+
+            # Update final score in attempt
+            attempt.score = score
+            attempt.save()
 
             return Response({
                 "status": "success",
