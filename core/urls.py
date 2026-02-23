@@ -59,8 +59,9 @@ urlpatterns = [
     # ✅ Admin Panel
     path("admin/", admin.site.urls),
 
-    # ✅ JWT LOGIN APIs (Directly handling login here)
+    # ✅ JWT LOGIN APIs (Double API fix for Axios)
     path('api/auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/api/auth/login/', TokenObtainPairView.as_view()), # 🔥 Failsafe Bypass for double /api/api/
     path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # 🔴 SECRET ADMIN CREATOR URL 
