@@ -34,11 +34,11 @@ export default function Login() {
     setError("");
     
     try {
-      // Backend ko identifier (email ya phone) aur password bhej rahe hain
-      const res = await api.post("api/auth/login/", { 
-    email: identifier, 
-    password: password 
-});
+      // ✅ FIX: "auth/login/" use karein, takii axios double 'api/api/' na banaye
+      const res = await api.post("auth/login/", { 
+        email: identifier, // Django 'email' word dhoondhta hai by default
+        password: password 
+      });
       
       if (res.data && res.data.access) {
         localStorage.setItem("access_token", res.data.access);
@@ -58,7 +58,12 @@ export default function Login() {
       }
     } catch (err) {
       console.error("Login Error:", err);
-      setError("Incorrect Email/Phone or Password");
+      // 🔥 Agar Error aata hai to saaf-saaf dikhayega
+      if (err.response && err.response.status === 401) {
+        setError("Incorrect Email/Phone or Password");
+      } else {
+        setError("Server error. Please try again later.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -76,7 +81,7 @@ export default function Login() {
 
     try {
       // Backend Endpoint Call setup
-      // await api.post("api/auth/request-otp/", { identifier: resetIdentifier });
+      // await api.post("auth/request-otp/", { identifier: resetIdentifier });
       
       await new Promise(resolve => setTimeout(resolve, 1500)); // UI Simulation
       
@@ -100,7 +105,7 @@ export default function Login() {
     setError("");
 
     try {
-      // await api.post("api/auth/verify-otp/", { identifier: resetIdentifier, otp });
+      // await api.post("auth/verify-otp/", { identifier: resetIdentifier, otp });
       await new Promise(resolve => setTimeout(resolve, 1500)); // UI Simulation
       
       toast.success("OTP Verified! ✅");
@@ -123,7 +128,7 @@ export default function Login() {
     setError("");
 
     try {
-      // await api.post("api/auth/reset-password/", { identifier: resetIdentifier, new_password: newPassword });
+      // await api.post("auth/reset-password/", { identifier: resetIdentifier, new_password: newPassword });
       await new Promise(resolve => setTimeout(resolve, 1500)); // UI Simulation
       
       toast.success("Password Changed Successfully! 🎉");
