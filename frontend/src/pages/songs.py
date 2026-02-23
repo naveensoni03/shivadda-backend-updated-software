@@ -11,19 +11,20 @@ def print_char_by_char(text, delay=0.10):
 
 def play_lyrics():
     lyrics_lines = [
-        "*Arz kiya hai hamene bhi* ",
-        "*likha khuch tere bare me hai*",
-        "*Aise tu lage ke Gulaab hai or Aise tu lage ke Gulshan hai*",
-        "*Bagon me dil ke khil ke *",
-        "*in fizayon me chhahe Ho haye  *",
-        "*Or bese ham to tere hi Gulaam hai....*",
+        "*Tere liye Ghar banayun* ",
+        "*deewarein neele rang se sajayun*",
+        "*pasand hai tumhe maloom hai *",
+        "*Tumne bataya thaa ek dafe. *",
+        "*Neele phool layun tere kiye *",
+        "*khat likhu tere liyeee *",
+        "*Me khuda mein manu nahi par mangu duaa tere liyeee........ *",
     ]
 
-    print("🎵 Song start ho raha hai...\n")
+    
     
     for line in lyrics_lines:
-        print_char_by_char(line, delay=0.15)
-        time.sleep(0.53) 
+        print_char_by_char(line, delay=0.1)
+        time.sleep(0.21) 
 
 if __name__ == "__main__":
     play_lyrics()
