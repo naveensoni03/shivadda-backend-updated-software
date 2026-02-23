@@ -35,7 +35,10 @@ export default function Login() {
     
     try {
       // Backend ko identifier (email ya phone) aur password bhej rahe hain
-      const res = await api.post("api/auth/login/", { identifier, password });
+      const res = await api.post("api/auth/login/", { 
+    email: identifier, 
+    password: password 
+});
       
       if (res.data && res.data.access) {
         localStorage.setItem("access_token", res.data.access);
