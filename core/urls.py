@@ -5,17 +5,43 @@ from django.conf.urls.static import static
 from django.http import HttpResponse
 from rest_framework.routers import DefaultRouter 
 
+# ✅ NEW IMPORTS FOR LOGIN & SUPERUSER
+from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
 # Imports from Views
 from chatbot.views import AIChatAPI
 from visitors.views import VisitorViewSet
 from accounts.views import UserManagementViewSet
-# ✅ NOTE: logs import yahan se hata diya hai kyunki ab wo logs/urls.py me sambhala jayega
 
-# ✅ Router Setup for Global ViewSets
 router = DefaultRouter()
 router.register(r'visitors', VisitorViewSet, basename='visitors')
 router.register(r'users', UserManagementViewSet, basename='users')
-# ✅ NOTE: logs router se hata diya gaya hai
+
+# 🔥 SECRET FUNCTION: Live Server par Superuser banane ke liye
+def create_live_admin(request):
+    User = get_user_model()
+    email = 'superadmin1@gmail.com'
+    password = 'adminpassword123' # <--- Aap yahan apna password badal sakte hain
+
+    if not User.objects.filter(email=email).exists():
+        try:
+            # User banayen
+            user = User.objects.create_superuser(email=email, password=password)
+            
+            # Agar 'full_name' ya 'first_name' field hai to use set karein
+            if hasattr(user, 'full_name'):
+                user.full_name = 'Super Admin'
+            elif hasattr(user, 'first_name'):
+                user.first_name = 'Super'
+            user.save()
+            
+            return HttpResponse(f"<h1>✅ Live Superuser Created!</h1><p><b>Email:</b> {email}</p><p><b>Password:</b> {password}</p><p>Ab aap Frontend par aaram se Login kar sakte hain! 🚀</p>")
+        except Exception as e:
+            return HttpResponse(f"<h1>❌ Error:</h1> <p>{e}</p>")
+    else:
+        return HttpResponse("<h1>⚠️ Superuser pehle se bana hua hai!</h1> <p>Aap sidhe frontend par login kar sakte hain.</p>")
+
 
 # ✅ Home Page Function
 def home(request):
@@ -33,6 +59,13 @@ urlpatterns = [
     # ✅ Admin Panel
     path("admin/", admin.site.urls),
 
+    # ✅ JWT LOGIN APIs (Directly handling login here)
+    path('api/auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    # 🔴 SECRET ADMIN CREATOR URL 
+    path('setup-live-admin/', create_live_admin), 
+
     # ✅ MAIN API ROUTER
     path("api/", include(router.urls)), 
 
@@ -40,7 +73,7 @@ urlpatterns = [
     path("api/auth/", include("accounts.urls")), 
     path("api/dashboard/", include("dashboard.urls")),
     path("api/agents/", include("agents.urls")),
-    path("api/logs/", include("logs.urls")), # ✅ ADDED: Naya logs urls directly include kiya hai
+    path("api/logs/", include("logs.urls")),
 
     # USERS & INSTITUTIONS
     path("api/students/", include("students.urls")),
@@ -49,7 +82,7 @@ urlpatterns = [
 
     # MASTER DATA
     path('api/locations/', include('locations.urls')),
-    path('api/centers/', include('centers.urls')),  # ✅ Exam Centers
+    path('api/centers/', include('centers.urls')),  
     path('api/services/', include('services.urls')),
 
     # ACADEMIC & ENROLLMENTS
@@ -72,7 +105,7 @@ urlpatterns = [
     path('api/chat/', AIChatAPI.as_view()),
 ]
 
-# ✅ FIXED: Static Files Handling for CSS/JS in Debug Mode
+# ✅ Static Files Handling for CSS/JS in Debug Mode
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
