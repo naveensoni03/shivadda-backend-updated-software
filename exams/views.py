@@ -8,7 +8,6 @@ from django.contrib.auth import get_user_model
 
 from batches.models import Batch
 from courses.models import Course
-# Updated imports to include AnswerEvaluation
 from .models import Exam, Question, QuestionBank, DescriptiveSubmission, AIEvaluationLog, AnswerEvaluation
 from .serializers import ExamSerializer, QuestionSerializer, QuestionBankSerializer, EvaluationSerializer
 
@@ -66,7 +65,7 @@ class QuestionBankAPI(APIView):
             return Response({"error": "Question not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-# ---------------- SUBMIT EXAM ----------------
+# ---------------- SUBMIT EXAM (✅ UPDATED FOR NEGATIVE & UNATTEMPTED) ----------------
 class SubmitExamAPI(APIView):
     def post(self, request, exam_id):
         try:
@@ -75,14 +74,21 @@ class SubmitExamAPI(APIView):
 
             score = 0
             total = exam.total_marks
+            answers = data.get("answers", {})
 
-            for qid, answer in data.get("answers", {}).items():
-                try:
-                    question = Question.objects.get(id=qid, exam=exam)
-                    if question.correct_option == answer:
-                        score += question.marks
-                except Question.DoesNotExist:
-                    pass
+            for q in exam.questions.all():
+                if q.q_type in ['MCQ', 'True/False']:
+                    student_ans = answers.get(str(q.id))
+                    
+                    if not student_ans:
+                        # Question not attempted
+                        score -= q.unattempted_marks
+                    elif student_ans == q.correct_option:
+                        # Correct Answer
+                        score += q.marks
+                    else:
+                        # Incorrect Answer
+                        score -= q.negative_marks
 
             return Response({
                 "status": "success",
@@ -191,16 +197,14 @@ def save_ai_quiz(request):
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
-# ---------------- EVALUATION APIs (UPDATED) ----------------
+# ---------------- EVALUATION APIs ----------------
 class EvaluationAPI(APIView):
     def get(self, request):
-        # Fetch detailed evaluation data
         evaluations = DescriptiveSubmission.objects.all().order_by('-id')
         serializer = EvaluationSerializer(evaluations, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        # Create new manual submission if needed (optional)
         serializer = EvaluationSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -208,37 +212,28 @@ class EvaluationAPI(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# ---------------- AI EVALUATE ANSWER (UPDATED) ----------------
+# ---------------- AI EVALUATE ANSWER ----------------
 class AIEvaluateAPI(APIView):
     def post(self, request):
         try:
             answer_text = request.data.get("answer", "")
             
-            # 1. Setup Dummy Data (Because we are testing)
-            # Find a user or create one
             student = User.objects.first()
             if not student:
-                 # Create a dummy user if DB is empty
                  student = User.objects.create_user(username='student_demo', password='password123')
                  
-            # Find a question or create one
             q_bank = QuestionBank.objects.first()
             if not q_bank:
                 q_bank = QuestionBank.objects.create(text="Demo Question?", difficulty="Medium")
 
-            # 2. Create the Submission Entry
-            # This is needed because AIEvaluationLog needs a OneToOne link to Submission
             submission = DescriptiveSubmission.objects.create(
                 student=student,
                 question=q_bank,
                 answer_text=answer_text
             )
 
-            # 3. Perform AI Logic (Mock logic for now - Replace with Gemini later)
-            # Simple logic: Length of answer determines score for demo
             calculated_score = min(100, max(40, len(answer_text) // 2))
             
-            # 4. Save to AIEvaluationLog Database
             log = AIEvaluationLog.objects.create(
                 submission=submission,
                 ai_score=calculated_score,
@@ -246,7 +241,6 @@ class AIEvaluateAPI(APIView):
                 confidence_score=0.98
             )
 
-            # 5. Return Response to Frontend
             return Response({
                 "status": "success",
                 "score": log.ai_score,
@@ -262,11 +256,9 @@ class AIEvaluateAPI(APIView):
 def send_sms(request):
     return JsonResponse({"status": "SMS sent successfully!"})
 
-
 @csrf_exempt
 def receive_sms(request):
     return JsonResponse({"status": "SMS received successfully!"})
-
 
 @csrf_exempt
 def get_incoming_messages(request):

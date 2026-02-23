@@ -11,11 +11,11 @@ export default function Exams() {
   const [loaded, setLoaded] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
 
-  // --- PAPER SETTER STATE (SUPER ADMIN FIELDS ADDED) ---
+  // --- PAPER SETTER STATE ---
   const [questions, setQuestions] = useState([]);
   
   const [newQ, setNewQ] = useState({ 
-      text: "", q_type: "Descriptive", difficulty: "Medium", 
+      text: "", q_type: "Descriptive", difficulty: "Medium", section: "A",
       marks: 5, negative_marks: 0, unattempted_marks: 0, 
       option_a: "", option_b: "", option_c: "", option_d: "", option_e: "", correct_option: "" 
   });
@@ -23,12 +23,16 @@ export default function Exams() {
   const [editingId, setEditingId] = useState(null);
   const [viewQ, setViewQ] = useState(null);
   
-  // ADDED: Class, Subject, and Teacher Name
+  // GLOBAL EXAM META (Upar wala form)
   const [examMeta, setExamMeta] = useState({ 
-      examName: "", className: "", subject: "", examineeBody: "", 
-      timeAllowed: "", maxMarks: "", paperSetNumber: "", 
-      placeOfExam: "", teacherName: "" 
+      examName: "", className: "", subClass: "", subject: "", subSubject: "",
+      unit: "", chapter: "", examineeBody: "", timeAllowed: "", maxMarks: "", 
+      paperId: "", paperSetNumber: "", placeOfExam: "", examPassword: "", 
+      validity: "", permission: "", teacherName: "" 
   });
+
+  // EDIT MODAL SPECIFIC META (Taaki edit karte time sirf usi specific question ka data dikhe)
+  const [editMeta, setEditMeta] = useState({});
   
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -38,7 +42,7 @@ export default function Exams() {
 
   const API_ENDPOINT = "exams/questions/";
 
-  // --- EVALUATION STATE (CONNECTED TO DB) ---
+  // --- EVALUATION STATE ---
   const [currentSubmission, setCurrentSubmission] = useState(null); 
   const [evaluations, setEvaluations] = useState({
       teacher1: { score: null, comments: "Pending Review", status: "Pending" },
@@ -47,7 +51,7 @@ export default function Exams() {
   });
   const [aiScore, setAiScore] = useState(null);
 
-  // --- NEW UPDATE: LIVE OMR & RESULT STATE ---
+  // --- OMR & RESULT STATE ---
   const [studentAnswers, setStudentAnswers] = useState({});
   const [examResult, setExamResult] = useState(null);
 
@@ -60,18 +64,27 @@ export default function Exams() {
       }
   }, [activeTab]);
 
-  // --- PAPER SETTER API ACTIONS ---
+  // --- ACTIONS ---
   const fetchQuestions = async () => {
       setLoadingData(true);
       try {
           const res = await api.get(API_ENDPOINT);
           setQuestions(Array.isArray(res.data) ? res.data : []);
       } catch (error) {
-          console.warn("Backend not connected. Using local data.");
+          console.warn("Backend not connected. Using local dummy data.");
           setQuestions([
-              { id: 1, text: "Explain Newton's Laws of Motion.", q_type: "Descriptive", difficulty: "Medium", marks: 10, negative_marks: 0, unattempted_marks: 0 },
-              { id: 2, text: "What is the powerhouse of the cell?", q_type: "MCQ", difficulty: "Easy", marks: 2, negative_marks: 0.5, unattempted_marks: 0, option_a: "Nucleus", option_b: "Mitochondria", option_c: "Ribosome", option_d: "Cytoplasm", correct_option: "B" },
-              { id: 3, text: "Water boils at 100°C.", q_type: "True/False", difficulty: "Easy", marks: 1, negative_marks: 0.25, unattempted_marks: 0, option_a: "True", option_b: "False", correct_option: "A" }
+              { 
+                  id: 1, text: "Explain Newton's Laws of Motion.", q_type: "Descriptive", difficulty: "Medium", section: "A", marks: 10, negative_marks: 0, unattempted_marks: 0, 
+                  exam_meta: { className: "10th", subClass: "A", subject: "Science", subSubject: "Physics", unit: "01", chapter: "04", paperId: "PHY-101", examPassword: "123", validity: "2 Hrs", permission: "All"} 
+              },
+              { 
+                  id: 2, text: "What is the powerhouse of the cell?", q_type: "MCQ", difficulty: "Easy", section: "A", marks: 2, negative_marks: 0.5, unattempted_marks: 0, option_a: "Nucleus", option_b: "Mitochondria", option_c: "Ribosome", option_d: "Cytoplasm", correct_option: "B", 
+                  exam_meta: { className: "10th", subClass: "B", subject: "Science", subSubject: "Biology", unit: "02", chapter: "05", paperId: "BIO-201", examPassword: "abc", validity: "3 Hrs", permission: "Admin"} 
+              },
+              { 
+                  id: 3, text: "Water boils at 100°C.", q_type: "True/False", difficulty: "Easy", section: "B", marks: 1, negative_marks: 0.25, unattempted_marks: 0, option_a: "True", option_b: "False", correct_option: "A", 
+                  exam_meta: { className: "10th", subClass: "A", subject: "Science", subSubject: "Chemistry", unit: "01", chapter: "02", paperId: "CHE-01", examPassword: "xyz", validity: "1 Hr", permission: "Guest"} 
+              }
           ]);
       } finally {
           setLoadingData(false);
@@ -83,30 +96,39 @@ export default function Exams() {
       const loadId = toast.loading("Saving...");
 
       try {
+          // Edit mode vs Add mode structure logic
+          let questionPayload;
+          
           if (editingId) {
-              await api.put(`${API_ENDPOINT}${editingId}/`, newQ);
-              setQuestions(questions.map(q => q.id === editingId ? { ...newQ, id: editingId } : q));
-              toast.success("Question Updated!", { id: loadId });
+              questionPayload = { ...newQ, exam_meta: { ...editMeta } };
+              await api.put(`${API_ENDPOINT}${editingId}/`, questionPayload);
+              setQuestions(questions.map(q => q.id === editingId ? { ...questionPayload, id: editingId } : q));
+              toast.success("Question Updated Successfully!", { id: loadId });
               setEditingId(null);
               setShowEditModal(false);
           } else {
-              const res = await api.post(API_ENDPOINT, newQ);
-              const savedQ = res.data && res.data.id ? res.data : { ...newQ, id: Date.now() };
+              questionPayload = { ...newQ, exam_meta: { ...examMeta } }; // ADD mode uses global upper form
+              const res = await api.post(API_ENDPOINT, questionPayload);
+              const savedQ = res.data && res.data.id ? res.data : { ...questionPayload, id: Date.now() };
               setQuestions([savedQ, ...questions]);
               toast.success("Saved to Database!", { id: loadId });
           }
-          setNewQ({ text: "", q_type: "Descriptive", difficulty: "Medium", marks: 5, negative_marks: 0, unattempted_marks: 0, option_a: "", option_b: "", option_c: "", option_d: "", option_e: "", correct_option: "" });
+          setNewQ({ text: "", q_type: "Descriptive", difficulty: "Medium", section: "A", marks: 5, negative_marks: 0, unattempted_marks: 0, option_a: "", option_b: "", option_c: "", option_d: "", option_e: "", correct_option: "" });
+          setEditMeta({});
       } catch (error) {
           const fakeId = Date.now();
           if (editingId) {
-              setQuestions(questions.map(q => q.id === editingId ? { ...newQ, id: editingId } : q));
+              const questionPayload = { ...newQ, exam_meta: { ...editMeta } };
+              setQuestions(questions.map(q => q.id === editingId ? { ...questionPayload, id: editingId } : q));
               setEditingId(null);
               setShowEditModal(false);
           } else {
-              setQuestions([{ ...newQ, id: fakeId }, ...questions]);
+              const questionPayload = { ...newQ, exam_meta: { ...examMeta } };
+              setQuestions([{ ...questionPayload, id: fakeId }, ...questions]);
           }
           toast.success("Saved Locally (DB Offline)", { id: loadId });
-          setNewQ({ text: "", q_type: "Descriptive", difficulty: "Medium", marks: 5, negative_marks: 0, unattempted_marks: 0, option_a: "", option_b: "", option_c: "", option_d: "", option_e: "", correct_option: "" });
+          setNewQ({ text: "", q_type: "Descriptive", difficulty: "Medium", section: "A", marks: 5, negative_marks: 0, unattempted_marks: 0, option_a: "", option_b: "", option_c: "", option_d: "", option_e: "", correct_option: "" });
+          setEditMeta({});
       }
   };
 
@@ -131,17 +153,20 @@ export default function Exams() {
 
   const handleEditClick = (q) => {
       setNewQ({
-        text: q.text, q_type: q.q_type, marks: q.marks, difficulty: q.difficulty || "Medium",
+        text: q.text, q_type: q.q_type, marks: q.marks, difficulty: q.difficulty || "Medium", section: q.section || "A",
         negative_marks: q.negative_marks || 0, unattempted_marks: q.unattempted_marks || 0,
         option_a: q.option_a || "", option_b: q.option_b || "", option_c: q.option_c || "", option_d: q.option_d || "", option_e: q.option_e || "", correct_option: q.correct_option || ""
       });
+      // ✅ Populating Edit Modal's internal state with the specific record's meta
+      setEditMeta(q.exam_meta || {});
       setEditingId(q.id);
       setShowEditModal(true);
   };
 
   const handleCancelEdit = () => {
       setEditingId(null);
-      setNewQ({ text: "", q_type: "Descriptive", difficulty: "Medium", marks: 5, negative_marks: 0, unattempted_marks: 0, option_a: "", option_b: "", option_c: "", option_d: "", option_e: "", correct_option: "" });
+      setNewQ({ text: "", q_type: "Descriptive", difficulty: "Medium", section: "A", marks: 5, negative_marks: 0, unattempted_marks: 0, option_a: "", option_b: "", option_c: "", option_d: "", option_e: "", correct_option: "" });
+      setEditMeta({});
       setShowEditModal(false);
   };
 
@@ -152,13 +177,17 @@ export default function Exams() {
           doc.setFontSize(18);
           doc.text(examMeta.examName, 105, 15, null, null, "center");
           
-          // PDF HEADER UPDATED WITH CLASS, SUBJECT & TEACHER
           doc.setFontSize(10);
-          doc.text(`Class: ${examMeta.className || "N/A"} | Subject: ${examMeta.subject || "N/A"} | Set By: ${examMeta.teacherName || "N/A"}`, 105, 23, null, null, "center");
-          doc.text(`Place: ${examMeta.placeOfExam || "N/A"} | Set: ${examMeta.paperSetNumber || "N/A"} | Board: ${examMeta.examineeBody || "N/A"} | Time: ${examMeta.timeAllowed} | Max: ${examMeta.maxMarks}`, 105, 29, null, null, "center");
+          const classStr = examMeta.subClass ? `${examMeta.className} (${examMeta.subClass})` : examMeta.className || "N/A";
+          const subStr = examMeta.subSubject ? `${examMeta.subject} - ${examMeta.subSubject}` : examMeta.subject || "N/A";
+          
+          doc.text(`Class/Sec: ${classStr} | Subject: ${subStr} | Set By: ${examMeta.teacherName || "N/A"}`, 105, 23, null, null, "center");
+          doc.text(`Place: ${examMeta.placeOfExam || "N/A"} | Paper ID: ${examMeta.paperId || "N/A"} | Set: ${examMeta.paperSetNumber || "N/A"}`, 105, 29, null, null, "center");
+          doc.text(`Board: ${examMeta.examineeBody || "N/A"} | Time: ${examMeta.timeAllowed} | Max: ${examMeta.maxMarks}`, 105, 35, null, null, "center");
 
           const tableRows = questions.map((q, i) => [
               i + 1,
+              q.section || "A",
               q.q_type === 'MCQ' ? `${q.text}\nA) ${q.option_a} B) ${q.option_b}\nC) ${q.option_c} D) ${q.option_d}` : q.text,
               q.q_type,
               q.difficulty || "Medium",
@@ -166,9 +195,9 @@ export default function Exams() {
           ]);
 
           if (typeof doc.autoTable === 'function') {
-              doc.autoTable({ head: [["Q.No", "Question", "Type", "Diff", "Marking"]], body: tableRows, startY: 35 });
+              doc.autoTable({ head: [["Q.No", "Sec", "Question", "Type", "Diff", "Marking"]], body: tableRows, startY: 40 });
           } else {
-               doc.text("Table generation failed. Raw data below:", 10, 40);
+               doc.text("Table generation failed. Raw data below:", 10, 45);
           }
           doc.save(`${examMeta.examName}_${examMeta.className}_${examMeta.subject}_Paper.pdf`);
           toast.success("Paper Set Generated! 💾");
@@ -183,7 +212,7 @@ export default function Exams() {
   const nextPage = () => setCurrentPage((prev) => (prev < totalPages ? prev + 1 : prev));
   const prevPage = () => setCurrentPage((prev) => (prev > 1 ? prev - 1 : prev));
 
-  // --- EVALUATION LOGIC (UNTOUCHED) ---
+  // --- EVALUATION LOGIC ---
   const fetchEvaluationData = async () => {
     try {
         const res = await api.get('exams/evaluations/');
@@ -222,7 +251,7 @@ export default function Exams() {
       }
   };
 
-  // --- NEW UPDATE: OMR SUBMISSION & CALCULATION (CONNECTED TO BACKEND) ---
+  // --- OMR SUBMISSION LOGIC ---
   const handleOMRSelect = (qId, option) => {
       setStudentAnswers({ ...studentAnswers, [qId]: option });
   };
@@ -234,6 +263,10 @@ export default function Exams() {
       let correctCount = 0;
       let incorrectCount = 0;
       let unattemptedCount = 0;
+      
+      let totalCorrectMarksAwarded = 0;
+      let totalIncorrectMarksDeducted = 0;
+      let totalUnattemptedMarksDeducted = 0;
 
       const mcqQuestions = questions.filter(q => q.q_type === 'MCQ' || q.q_type === 'True/False');
 
@@ -243,12 +276,15 @@ export default function Exams() {
 
           if (!studentAns) {
               unattemptedCount++;
+              totalUnattemptedMarksDeducted += (q.unattempted_marks || 0);
               obtainedMarks -= (q.unattempted_marks || 0);
           } else if (studentAns === q.correct_option) {
               correctCount++;
+              totalCorrectMarksAwarded += (q.marks || 0);
               obtainedMarks += (q.marks || 0);
           } else {
               incorrectCount++;
+              totalIncorrectMarksDeducted += (q.negative_marks || 0);
               obtainedMarks -= (q.negative_marks || 0);
           }
       });
@@ -263,7 +299,6 @@ export default function Exams() {
       else if (percentage >= 40) grade = "D";
 
       try {
-          // Sending data to Django Backend SubmitExamAPI (Assuming exam ID 1 for testing)
           await api.post("exams/submit/1/", {
               answers: studentAnswers,
               final_score: obtainedMarks,
@@ -279,6 +314,7 @@ export default function Exams() {
           setExamResult({
               totalQuestions: mcqQuestions.length,
               totalMaxMarks, obtainedMarks, correctCount, incorrectCount, unattemptedCount,
+              totalCorrectMarksAwarded, totalIncorrectMarksDeducted, totalUnattemptedMarksDeducted,
               percentage: percentage.toFixed(2), grade
           });
       }, 500);
@@ -291,7 +327,7 @@ export default function Exams() {
             <Toaster position="top-center" />
 
             <header className={`page-header ${loaded ? 'slide-in-top' : ''}`}>
-                <div>
+                <div className="header-titles">
                     <h1 className="page-title">Exam Controller <Sparkles size={24} className="sparkle-icon" color="#3b82f6" /></h1>
                     <p className="page-subtitle">Connected to Live Database ⚡</p>
                 </div>
@@ -299,7 +335,6 @@ export default function Exams() {
                     <button onClick={() => setActiveTab('setter')} className={`tab-btn ${activeTab === 'setter' ? 'active' : ''}`}>
                         <Plus size={18}/> Paper Setter
                     </button>
-                    {/* NEW OMR TAB ADDED HERE */}
                     <button onClick={() => setActiveTab('omr')} className={`tab-btn ${activeTab === 'omr' ? 'active' : ''}`}>
                         <Target size={18}/> Live OMR Exam
                     </button>
@@ -312,49 +347,42 @@ export default function Exams() {
             {activeTab === 'setter' && (
                 <div className="content-wrapper">
 
-                    {/* EXAM META DATA (ADDED CLASS, SUBJECT, TEACHER) */}
-                    <div className="card shadow-md stagger-1" style={{marginBottom: '20px'}}>
+                    {/* ✅ GLOBAL EXAM META DATA (Saves entirely to 'examMeta') */}
+                    <div className="card shadow-md stagger-1 mb-20">
                         <div className="card-header">
                             <h3 style={{display:'flex', alignItems:'center', gap:'8px'}}><Layers size={18} color="#3b82f6"/> Exam Configuration</h3>
                         </div>
                         <div className="card-body form-grid">
-                            <div className="input-group full-width" style={{gridColumn: 'span 1'}}>
-                                <input type="text" placeholder="Name of Exam (e.g. Final)" className="input-field" value={examMeta.examName} onChange={e => setExamMeta({...examMeta, examName: e.target.value})} />
-                            </div>
-                            <div className="input-group full-width" style={{gridColumn: 'span 1'}}>
-                                <input type="text" placeholder="Class (e.g. 10th)" className="input-field" value={examMeta.className} onChange={e => setExamMeta({...examMeta, className: e.target.value})} />
-                            </div>
-                            <div className="input-group full-width" style={{gridColumn: 'span 1'}}>
-                                <input type="text" placeholder="Subject (e.g. Physics)" className="input-field" value={examMeta.subject} onChange={e => setExamMeta({...examMeta, subject: e.target.value})} />
-                            </div>
-                            <div className="input-group full-width" style={{gridColumn: 'span 1'}}>
-                                <input type="text" placeholder="Examinee Body (e.g. CBSE)" className="input-field" value={examMeta.examineeBody} onChange={e => setExamMeta({...examMeta, examineeBody: e.target.value})} />
-                            </div>
-                            <div className="input-group full-width" style={{gridColumn: 'span 1'}}>
-                                <input type="text" placeholder="Place of Exam" className="input-field" value={examMeta.placeOfExam} onChange={e => setExamMeta({...examMeta, placeOfExam: e.target.value})} />
-                            </div>
-                            <div className="input-group full-width" style={{gridColumn: 'span 1'}}>
-                                <input type="text" placeholder="Paper Set Number (e.g. A, B)" className="input-field" value={examMeta.paperSetNumber} onChange={e => setExamMeta({...examMeta, paperSetNumber: e.target.value})} />
-                            </div>
-                            <div className="input-group full-width" style={{gridColumn: 'span 1'}}>
-                                <input type="text" placeholder="Time Allowed (e.g. 3 Hrs)" className="input-field" value={examMeta.timeAllowed} onChange={e => setExamMeta({...examMeta, timeAllowed: e.target.value})} />
-                            </div>
-                            <div className="input-group full-width" style={{gridColumn: 'span 1'}}>
-                                <input type="number" placeholder="Max Marks" className="input-field" value={examMeta.maxMarks} onChange={e => setExamMeta({...examMeta, maxMarks: e.target.value})} />
-                            </div>
-                            <div className="input-group full-width" style={{gridColumn: 'span 1'}}>
-                                <input type="text" placeholder="Paper Setter / Teacher Name" className="input-field" value={examMeta.teacherName} onChange={e => setExamMeta({...examMeta, teacherName: e.target.value})} />
-                            </div>
+                            <div className="input-group"><input type="text" placeholder="Name of Exam (e.g. Final)" className="input-field" value={examMeta.examName} onChange={e => setExamMeta({...examMeta, examName: e.target.value})} /></div>
+                            
+                            <div className="input-group"><input type="text" placeholder="Class (e.g. 10th)" className="input-field" value={examMeta.className} onChange={e => setExamMeta({...examMeta, className: e.target.value})} /></div>
+                            <div className="input-group"><input type="text" placeholder="Sub-Class/Section (e.g. A, B)" className="input-field" value={examMeta.subClass} onChange={e => setExamMeta({...examMeta, subClass: e.target.value})} /></div>
+                            <div className="input-group"><input type="text" placeholder="Subject (e.g. Science)" className="input-field" value={examMeta.subject} onChange={e => setExamMeta({...examMeta, subject: e.target.value})} /></div>
+                            <div className="input-group"><input type="text" placeholder="Sub-Subject (e.g. Physics)" className="input-field" value={examMeta.subSubject} onChange={e => setExamMeta({...examMeta, subSubject: e.target.value})} /></div>
+                            
+                            <div className="input-group"><input type="text" placeholder="Unit (e.g. 01)" className="input-field" value={examMeta.unit} onChange={e => setExamMeta({...examMeta, unit: e.target.value})} /></div>
+                            <div className="input-group"><input type="text" placeholder="Chapter (e.g. 05)" className="input-field" value={examMeta.chapter} onChange={e => setExamMeta({...examMeta, chapter: e.target.value})} /></div>
+                            <div className="input-group"><input type="text" placeholder="Paper ID" className="input-field" value={examMeta.paperId} onChange={e => setExamMeta({...examMeta, paperId: e.target.value})} /></div>
+                            <div className="input-group"><input type="password" placeholder="Exam Password" className="input-field" value={examMeta.examPassword} onChange={e => setExamMeta({...examMeta, examPassword: e.target.value})} /></div>
+                            <div className="input-group"><input type="text" placeholder="Validity" className="input-field" value={examMeta.validity} onChange={e => setExamMeta({...examMeta, validity: e.target.value})} /></div>
+                            <div className="input-group"><input type="text" placeholder="Permission / Omission" className="input-field" value={examMeta.permission} onChange={e => setExamMeta({...examMeta, permission: e.target.value})} /></div>
+
+                            <div className="input-group"><input type="text" placeholder="Examinee Body (e.g. CBSE)" className="input-field" value={examMeta.examineeBody} onChange={e => setExamMeta({...examMeta, examineeBody: e.target.value})} /></div>
+                            <div className="input-group"><input type="text" placeholder="Place of Exam" className="input-field" value={examMeta.placeOfExam} onChange={e => setExamMeta({...examMeta, placeOfExam: e.target.value})} /></div>
+                            <div className="input-group"><input type="text" placeholder="Paper Set Number (e.g. A, B)" className="input-field" value={examMeta.paperSetNumber} onChange={e => setExamMeta({...examMeta, paperSetNumber: e.target.value})} /></div>
+                            <div className="input-group"><input type="text" placeholder="Time Allowed (e.g. 3 Hrs)" className="input-field" value={examMeta.timeAllowed} onChange={e => setExamMeta({...examMeta, timeAllowed: e.target.value})} /></div>
+                            <div className="input-group"><input type="number" placeholder="Total Max Marks" className="input-field" value={examMeta.maxMarks} onChange={e => setExamMeta({...examMeta, maxMarks: e.target.value})} /></div>
+                            <div className="input-group"><input type="text" placeholder="Paper Setter / Teacher Name" className="input-field" value={examMeta.teacherName} onChange={e => setExamMeta({...examMeta, teacherName: e.target.value})} /></div>
                         </div>
                     </div>
 
-                    {/* FORM CARD (MCQ & Negative Marking Included) */}
+                    {/* QUESTION FORM */}
                     <div className="card shadow-md stagger-1">
                         <div className="card-header">
                             <h3 style={{display:'flex', alignItems:'center', gap:'8px'}}><FileText size={18} color="#f59e0b"/> Add New Question</h3>
                         </div>
                         <div className="card-body form-grid">
-                            <div className="input-group full-width">
+                            <div className="input-group full-width-grid">
                                 <input type="text" placeholder="Enter Question Text..." className="input-field" value={newQ.text} onChange={(e) => setNewQ({...newQ, text: e.target.value})} />
                                 <span className="focus-border"></span>
                             </div>
@@ -363,42 +391,45 @@ export default function Exams() {
                                 <option value="Descriptive">Descriptive</option>
                                 <option value="MCQ">MCQ</option>
                                 <option value="True/False">True/False</option>
+                                <option value="Both">Both</option>
+                                <option value="None">None</option>
                             </select>
                             
                             <select className="input-field hover-glow" value={newQ.difficulty} onChange={(e) => setNewQ({...newQ, difficulty: e.target.value})}>
-                                <option value="Easy">Easy</option>
-                                <option value="Medium">Medium</option>
-                                <option value="Hard">Hard</option>
+                                <option value="Easy">Easy Level</option>
+                                <option value="Medium">Medium Level</option>
+                                <option value="Hard">Hard Level</option>
                             </select>
+
+                            <input type="text" placeholder="Section (e.g. A, B)" className="input-field hover-glow" value={newQ.section} onChange={(e) => setNewQ({...newQ, section: e.target.value})} />
 
                             <input type="number" placeholder="+ Marks (Correct)" className="input-field hover-glow" value={newQ.marks} onChange={(e) => setNewQ({...newQ, marks: parseFloat(e.target.value) || 0})} />
                             <input type="number" placeholder="- Marks (Incorrect)" className="input-field hover-glow" value={newQ.negative_marks} onChange={(e) => setNewQ({...newQ, negative_marks: parseFloat(e.target.value) || 0})} />
                             <input type="number" placeholder="0 Marks (Not Attempt)" className="input-field hover-glow" value={newQ.unattempted_marks} onChange={(e) => setNewQ({...newQ, unattempted_marks: parseFloat(e.target.value) || 0})} />
 
                             {newQ.q_type === 'MCQ' && (
-                                <div className="full-width" style={{display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px'}}>
-                                    <input type="text" placeholder="Option A" className="input-field" style={{flex: 1}} value={newQ.option_a} onChange={(e) => setNewQ({...newQ, option_a: e.target.value})} />
-                                    <input type="text" placeholder="Option B" className="input-field" style={{flex: 1}} value={newQ.option_b} onChange={(e) => setNewQ({...newQ, option_b: e.target.value})} />
-                                    <input type="text" placeholder="Option C" className="input-field" style={{flex: 1}} value={newQ.option_c} onChange={(e) => setNewQ({...newQ, option_c: e.target.value})} />
-                                    <input type="text" placeholder="Option D" className="input-field" style={{flex: 1}} value={newQ.option_d} onChange={(e) => setNewQ({...newQ, option_d: e.target.value})} />
-                                    <select className="input-field" style={{flex: 0.5}} value={newQ.correct_option} onChange={(e) => setNewQ({...newQ, correct_option: e.target.value})}>
-                                        <option value="">Ans?</option>
-                                        <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                                <div className="mcq-options-row full-width-grid">
+                                    <input type="text" placeholder="Option A" className="input-field" value={newQ.option_a} onChange={(e) => setNewQ({...newQ, option_a: e.target.value})} />
+                                    <input type="text" placeholder="Option B" className="input-field" value={newQ.option_b} onChange={(e) => setNewQ({...newQ, option_b: e.target.value})} />
+                                    <input type="text" placeholder="Option C" className="input-field" value={newQ.option_c} onChange={(e) => setNewQ({...newQ, option_c: e.target.value})} />
+                                    <input type="text" placeholder="Option D" className="input-field" value={newQ.option_d} onChange={(e) => setNewQ({...newQ, option_d: e.target.value})} />
+                                    <select className="input-field option-correct-select" value={newQ.correct_option} onChange={(e) => setNewQ({...newQ, correct_option: e.target.value})}>
+                                        <option value="">Ans?</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
                                     </select>
                                 </div>
                             )}
 
-                            <div className="btn-group">
-                                <button onClick={handleSaveQuestion} className="btn-primary ripple-effect">Save to DB</button>
+                            <div className="btn-group full-width-grid" style={{marginTop: '10px'}}>
+                                <button onClick={handleSaveQuestion} className="btn-primary ripple-effect save-db-btn">Save to DB</button>
                             </div>
                         </div>
                     </div>
 
                     {/* TABLE CARD */}
                     <div className="card shadow-md stagger-2" style={{marginTop: '20px'}}>
-                        <div className="card-header table-card-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                        <div className="card-header table-card-header">
                             <h3>Database Records ({questions.length})</h3>
-                            <div style={{display:'flex', alignItems:'center', gap:'10px', marginLeft: 'auto'}} className="action-group">
+                            <div className="table-header-actions">
                                 <button onClick={fetchQuestions} className="icon-btn btn-view" title="Refresh Data"><RefreshCw size={16}/></button>
                                 <button onClick={generatePaper} className="btn-success ripple-effect"><FileOutput size={18}/> Generate Paper PDF</button>
                             </div>
@@ -413,7 +444,13 @@ export default function Exams() {
                                     <thead>
                                             <tr>
                                                 <th>Q. No</th>
+                                                <th>Section</th>
                                                 <th>Question</th>
+                                                <th>Class (Sec)</th>
+                                                <th>Subject (Sub)</th>
+                                                {/* ✅ Table Me Naye Columns Render Hote Hue */}
+                                                <th>Unit</th>
+                                                <th>Chapter</th>
                                                 <th>Type</th>
                                                 <th>Diff</th>
                                                 <th>Marks</th>
@@ -424,7 +461,23 @@ export default function Exams() {
                                             {currentQuestions.length > 0 ? currentQuestions.map((q, i) => (
                                                 <tr key={q.id} className="table-row fade-in-row" style={{animationDelay: `${i * 0.05}s`}}>
                                                     <td style={{color: '#64748b'}}>{indexOfFirstItem + i + 1}</td>
-                                                    <td className="truncate-text" style={{fontWeight: 600, color: '#1e293b'}}>{q.text}</td>
+                                                    <td style={{fontWeight: 600, color: '#3b82f6'}}>{q.section || "A"}</td>
+                                                    <td className="truncate-text" style={{fontWeight: 600, color: '#1e293b'}} title={q.text}>{q.text}</td>
+                                                    
+                                                    <td style={{color: '#475569', fontSize: '0.85rem'}}>
+                                                        {q.exam_meta?.className || "-"} 
+                                                        {q.exam_meta?.subClass ? ` (${q.exam_meta.subClass})` : ""}
+                                                    </td>
+                                                    
+                                                    <td style={{color: '#475569', fontSize: '0.85rem'}}>
+                                                        {q.exam_meta?.subject || "-"} 
+                                                        {q.exam_meta?.subSubject ? ` - ${q.exam_meta.subSubject}` : ""}
+                                                    </td>
+                                                    
+                                                    {/* ✅ Unit And Chapter Direct object se */}
+                                                    <td style={{color: '#475569', fontSize: '0.85rem'}}>{q.exam_meta?.unit || "-"}</td>
+                                                    <td style={{color: '#475569', fontSize: '0.85rem'}}>{q.exam_meta?.chapter || "-"}</td>
+
                                                     <td><span className="badge pop-in">{q.q_type}</span></td>
                                                     <td><span className={`badge pop-in ${(q.difficulty || 'Medium').toLowerCase()}`}>{q.difficulty || "Medium"}</span></td>
                                                     <td style={{fontWeight: 'bold', color: '#1e293b'}}>{q.marks}</td>
@@ -437,7 +490,7 @@ export default function Exams() {
                                                     </td>
                                                 </tr>
                                             )) : (
-                                                <tr><td colSpan="6" style={{textAlign:'center', padding:'20px'}}>No Questions in Database yet. Add one above!</td></tr>
+                                                <tr><td colSpan="11" style={{textAlign:'center', padding:'20px'}}>No Questions in Database yet. Add one above!</td></tr>
                                             )}
                                         </tbody>
                                 </table>
@@ -460,17 +513,21 @@ export default function Exams() {
                 </div>
             )}
 
-            {/* TAB 2: LIVE OMR EXAM (NEW UPDATE) */}
+            {/* TAB 2: LIVE OMR EXAM */}
             {activeTab === 'omr' && (
                 <div className="content-wrapper stagger-1">
                     {!examResult ? (
                         <>
-                            <div className="exam-meta-header card shadow-md" style={{padding: '20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                            <div className="exam-meta-header card shadow-md omr-header-card">
                                 <div>
                                     <h2 style={{margin:0, color:'#1e293b'}}>{examMeta.examName || "Practice Test"} - Live OMR Exam</h2>
-                                    <p style={{margin:'5px 0 0', color:'#64748b'}}>Class: {examMeta.className} | Sub: {examMeta.subject}</p>
+                                    <p style={{margin:'5px 0 0', color:'#64748b'}}>
+                                        Class: {examMeta.className} {examMeta.subClass ? `(${examMeta.subClass})` : ''} | 
+                                        Sub: {examMeta.subject} {examMeta.subSubject ? `- ${examMeta.subSubject}` : ''} |
+                                        Paper ID: {examMeta.paperId || 'N/A'}
+                                    </p>
                                 </div>
-                                <div style={{textAlign: 'right'}}>
+                                <div className="omr-header-right">
                                     <div className="badge medium" style={{fontSize: '1rem', padding: '8px 15px'}}>Time: {examMeta.timeAllowed}</div>
                                 </div>
                             </div>
@@ -480,8 +537,10 @@ export default function Exams() {
                                     questions.filter(q => q.q_type === 'MCQ' || q.q_type === 'True/False').map((q, index) => (
                                         <div key={q.id} className="omr-question-row">
                                             <div className="omr-q-text">
-                                                <span className="q-no">{index + 1}.</span> {q.text}
-                                                <div className="q-marking-info">(+{q.marks} / -{q.negative_marks || 0})</div>
+                                                <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+                                                    <span className="q-no">{index + 1}.</span> {q.text}
+                                                </div>
+                                                <div className="q-marking-info">Sec: {q.section || 'A'} | (+{q.marks} / -{q.negative_marks || 0})</div>
                                             </div>
                                             
                                             <div className="omr-options-grid">
@@ -518,8 +577,8 @@ export default function Exams() {
                                 )}
 
                                 {questions.filter(q => q.q_type === 'MCQ' || q.q_type === 'True/False').length > 0 && (
-                                    <div style={{textAlign: 'center', marginTop: '40px', borderTop: '2px dashed #e2e8f0', paddingTop: '30px'}}>
-                                        <button onClick={submitOMR} className="btn-primary" style={{padding: '15px 40px', fontSize: '1.2rem', background: '#10b981'}}>
+                                    <div className="submit-exam-wrapper">
+                                        <button onClick={submitOMR} className="btn-primary submit-exam-btn">
                                             <CheckSquare size={24} style={{marginRight: '10px'}}/> Submit Exam & Calculate Result
                                         </button>
                                     </div>
@@ -527,13 +586,12 @@ export default function Exams() {
                             </div>
                         </>
                     ) : (
-                        /* OMR RESULT DASHBOARD */
                         <div className="card shadow-md scale-up-bounce" style={{padding: '40px', textAlign: 'center'}}>
                             <div style={{width: '80px', height: '80px', background: '#dcfce7', color: '#16a34a', borderRadius: '50%', display: 'flex', alignItems: 'center', justify: 'center', margin: '0 auto 20px'}}>
                                 <Award size={40} />
                             </div>
                             <h2 style={{fontSize: '2.5rem', color: '#1e293b', margin: '0 0 5px'}}>Exam Completed!</h2>
-                            <p style={{color: '#64748b', fontSize: '1.1rem', marginBottom: '30px'}}>Auto-Calculated Result with Negative Marking applied.</p>
+                            <p style={{color: '#64748b', fontSize: '1.1rem', marginBottom: '30px'}}>Auto-Calculated Result with Detailed Formula Analysis.</p>
 
                             <div className="result-stats-grid">
                                 <div className="r-stat-card">
@@ -542,21 +600,24 @@ export default function Exams() {
                                 </div>
                                 <div className="r-stat-card" style={{borderBottom: '4px solid #10b981'}}>
                                     <div className="r-label">Correct (+{examResult.correctCount})</div>
-                                    <div className="r-value" style={{color: '#10b981'}}>{examResult.correctCount}</div>
+                                    <div className="r-value" style={{color: '#10b981'}}>{examResult.totalCorrectMarksAwarded}</div>
                                 </div>
                                 <div className="r-stat-card" style={{borderBottom: '4px solid #ef4444'}}>
                                     <div className="r-label">Incorrect (-{examResult.incorrectCount})</div>
-                                    <div className="r-value" style={{color: '#ef4444'}}>{examResult.incorrectCount}</div>
+                                    <div className="r-value" style={{color: '#ef4444'}}>{examResult.totalIncorrectMarksDeducted}</div>
                                 </div>
                                 <div className="r-stat-card" style={{borderBottom: '4px solid #f59e0b'}}>
                                     <div className="r-label">Not Attempted</div>
-                                    <div className="r-value" style={{color: '#f59e0b'}}>{examResult.unattemptedCount}</div>
+                                    <div className="r-value" style={{color: '#f59e0b'}}>{examResult.totalUnattemptedMarksDeducted}</div>
                                 </div>
                             </div>
 
                             <div className="final-score-box">
                                 <div>
                                     <div style={{fontSize: '1rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold'}}>Obtained Marks</div>
+                                    <div style={{fontSize: '0.85rem', color: '#94a3b8', margin: '8px 0'}}>
+                                        (Correct: {examResult.totalCorrectMarksAwarded}) - (Incorrect: {examResult.totalIncorrectMarksDeducted}) - (Not Attempt: {examResult.totalUnattemptedMarksDeducted})
+                                    </div>
                                     <div style={{fontSize: '4.5rem', fontWeight: '900', color: '#3b82f6', lineHeight: 1}}>{examResult.obtainedMarks} <span style={{fontSize:'1.5rem', color:'#94a3b8'}}>/ {examResult.totalMaxMarks}</span></div>
                                     <div style={{fontSize: '1.2rem', color: '#475569', marginTop: '10px', fontWeight: 'bold'}}>Percentage: {examResult.percentage}%</div>
                                 </div>
@@ -576,18 +637,19 @@ export default function Exams() {
             {activeTab === 'evaluation' && (
                 <div className="content-wrapper">
                     <div className="card shadow-md stagger-1">
-                         <div className="exam-meta-header">
+                         <div className="exam-meta-header omr-header-card">
                             <div>
                                 <h2 style={{margin:0, fontSize: '1.2rem', color: '#1e293b'}}>
-                                    {examMeta.examName || "Mid-Term Physics"} - {examMeta.className || "Class 10"}
+                                    {examMeta.examName || "Mid-Term Physics"} - {examMeta.className || "Class 10"} {examMeta.subClass ? `(${examMeta.subClass})` : ''}
                                 </h2>
-                                <p style={{margin: '5px 0 0', color: '#64748b', fontSize: '0.9rem'}}>Subject: {examMeta.subject || "Physics"} | Set By: {examMeta.teacherName || "Mr. Sharma"}</p>
+                                <p style={{margin: '5px 0 0', color: '#64748b', fontSize: '0.9rem'}}>Subject: {examMeta.subject || "Physics"} {examMeta.subSubject ? `- ${examMeta.subSubject}` : ''} | Set By: {examMeta.teacherName || "Mr. Sharma"}</p>
                                 <div className="tags" style={{marginTop: '10px'}}>
                                     <span className="meta-tag">Max Marks: {examMeta.maxMarks || "100"}</span>
                                     <span className="meta-tag">Time: {examMeta.timeAllowed || "3 Hrs"}</span>
+                                    <span className="meta-tag">Paper ID: {examMeta.paperId || "N/A"}</span>
                                 </div>
                             </div>
-                            <div className="meta-right">
+                            <div className="omr-header-right">
                                 <div style={{fontWeight: "bold", color: "#64748b"}}>Examinee Body: {examMeta.examineeBody || "CBSE"}</div>
                                 <div style={{fontSize: "0.9rem", color: "#94a3b8"}}>Paper Set: {examMeta.paperSetNumber || "A-102"}</div>
                             </div>
@@ -630,7 +692,7 @@ export default function Exams() {
                                     <div style={{fontSize: "0.8rem", color: "#166534"}}>AI Confidence: 98%</div>
                                 </div>
                             ) : (
-                                <button onClick={handleAiCheck} className="btn-ai ripple-effect">Run AI Analysis <Zap size={16}/></button>
+                                <button onClick={handleAiCheck} className="btn-ai ripple-effect ai-analysis-btn">Run AI Analysis <Zap size={16}/></button>
                             )}
                         </div>
                     </div>
@@ -647,7 +709,7 @@ export default function Exams() {
 
                         <div className="modal-header-premium" style={{ flexShrink: 0 }}>
                             <div className="header-text">
-                                <span className="subtitle">Question Details</span>
+                                <span className="subtitle">Question Details | Sec: {viewQ.section || 'A'}</span>
                                 <h3>Overview</h3>
                             </div>
                             <button onClick={() => setViewQ(null)} className="close-btn-premium"><X size={24}/></button>
@@ -665,6 +727,13 @@ export default function Exams() {
                                         <div style={{fontWeight: viewQ.correct_option === 'D' ? 'bold': 'normal', color: viewQ.correct_option === 'D' ? '#10b981': ''}}>D) {viewQ.option_d}</div>
                                     </div>
                                 )}
+                                
+                                {/* ✅ View Meta Info specific to this question */}
+                                <div style={{marginTop: '15px', display: 'flex', gap: '10px', flexWrap: 'wrap'}}>
+                                    <span className="badge medium">Unit: {viewQ.exam_meta?.unit || "N/A"}</span>
+                                    <span className="badge medium">Chapter: {viewQ.exam_meta?.chapter || "N/A"}</span>
+                                    <span className="badge medium">Paper ID: {viewQ.exam_meta?.paperId || "N/A"}</span>
+                                </div>
                             </div>
 
                             <div className="stats-grid">
@@ -701,50 +770,69 @@ export default function Exams() {
                 </div>
             )}
 
-            {/* 2. EDIT QUESTION MODAL */}
+            {/* 2. EDIT QUESTION MODAL (✅ USES `editMeta` so it doesn't conflict with global `examMeta`) */}
             {showEditModal && (
                 <div className="modal-overlay glass-overlay fade-in" onClick={handleCancelEdit}>
                     <div className="modal-content premium-modal scale-up-bounce" onClick={e => e.stopPropagation()} style={{padding: '30px', overflowY: 'auto', maxHeight: '90vh', width: '700px', maxWidth: '95vw', display: 'flex', flexDirection: 'column'}}>
                         <div className="modal-header-premium" style={{padding: '0 0 20px 0', borderBottom: '1px solid #e2e8f0', marginBottom: '20px', flexShrink: 0}}>
-                            <h3 style={{margin:0, color:'#1e293b', fontSize:'1.5rem'}}>Edit Question</h3>
+                            <h3 style={{margin:0, color:'#1e293b', fontSize:'1.5rem'}}>Edit Question & Attributes</h3>
                             <button onClick={handleCancelEdit} className="close-btn-premium" style={{width: '35px', height: '35px'}}><X size={18}/></button>
                         </div>
                         <div className="card-body form-grid-modal" style={{padding: 0, flex: 1}}>
-                            <div className="input-group full-width" style={{gridColumn: 'span 2', marginBottom: '15px'}}>
+                            
+                            <div className="input-group full-width-grid" style={{marginBottom: '15px'}}>
                                 <input type="text" placeholder="Enter Question Text..." className="input-field" value={newQ.text} onChange={(e) => setNewQ({...newQ, text: e.target.value})} style={{width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '1rem', boxSizing: 'border-box'}} />
                             </div>
-                            <div className="grid-3-col" style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', width: '100%', gridColumn: 'span 2', marginBottom: '15px'}}>
+
+                            <div className="grid-3-col" style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', width: '100%', marginBottom: '15px'}}>
                                 <select className="input-field hover-glow" value={newQ.q_type} onChange={(e) => setNewQ({...newQ, q_type: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px'}}>
                                     <option value="Descriptive">Descriptive</option>
                                     <option value="MCQ">MCQ</option>
                                     <option value="True/False">True/False</option>
+                                    <option value="Both">Both</option>
+                                    <option value="None">None</option>
                                 </select>
                                 <select className="input-field hover-glow" value={newQ.difficulty} onChange={(e) => setNewQ({...newQ, difficulty: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px'}}>
                                     <option value="Easy">Easy</option><option value="Medium">Medium</option><option value="Hard">Hard</option>
                                 </select>
-                                <input type="number" placeholder="+ Marks" className="input-field hover-glow" value={newQ.marks} onChange={(e) => setNewQ({...newQ, marks: parseFloat(e.target.value) || 0})} style={{width: '100%', padding: '12px', borderRadius: '10px', boxSizing: 'border-box'}} />
+                                <input type="text" placeholder="Section (e.g. A, B)" className="input-field hover-glow" value={newQ.section} onChange={(e) => setNewQ({...newQ, section: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px', boxSizing: 'border-box'}} />
                             </div>
 
-                            <div className="grid-3-col" style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', width: '100%', gridColumn: 'span 2', marginBottom: '25px'}}>
+                            <div className="grid-3-col" style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', width: '100%', marginBottom: '25px'}}>
+                                 <input type="number" placeholder="+ Marks" className="input-field hover-glow" value={newQ.marks} onChange={(e) => setNewQ({...newQ, marks: parseFloat(e.target.value) || 0})} style={{width: '100%', padding: '12px', borderRadius: '10px', boxSizing: 'border-box'}} />
                                  <input type="number" placeholder="- Negative Marks" className="input-field hover-glow" value={newQ.negative_marks} onChange={(e) => setNewQ({...newQ, negative_marks: parseFloat(e.target.value) || 0})} style={{width: '100%', padding: '12px', borderRadius: '10px', boxSizing: 'border-box'}} />
                                  <input type="number" placeholder="Unattempted Marks" className="input-field hover-glow" value={newQ.unattempted_marks} onChange={(e) => setNewQ({...newQ, unattempted_marks: parseFloat(e.target.value) || 0})} style={{width: '100%', padding: '12px', borderRadius: '10px', boxSizing: 'border-box'}} />
                             </div>
 
                             {newQ.q_type === 'MCQ' && (
-                                <div className="full-width" style={{display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '25px', gridColumn: 'span 2'}}>
+                                <div className="mcq-options-row full-width-grid" style={{marginBottom: '25px'}}>
                                     <input type="text" placeholder="Option A" className="input-field" style={{flex: 1, padding: '12px', borderRadius: '10px'}} value={newQ.option_a} onChange={(e) => setNewQ({...newQ, option_a: e.target.value})} />
                                     <input type="text" placeholder="Option B" className="input-field" style={{flex: 1, padding: '12px', borderRadius: '10px'}} value={newQ.option_b} onChange={(e) => setNewQ({...newQ, option_b: e.target.value})} />
                                     <input type="text" placeholder="Option C" className="input-field" style={{flex: 1, padding: '12px', borderRadius: '10px'}} value={newQ.option_c} onChange={(e) => setNewQ({...newQ, option_c: e.target.value})} />
                                     <input type="text" placeholder="Option D" className="input-field" style={{flex: 1, padding: '12px', borderRadius: '10px'}} value={newQ.option_d} onChange={(e) => setNewQ({...newQ, option_d: e.target.value})} />
-                                    <select className="input-field" style={{flex: 0.5, padding: '12px', borderRadius: '10px'}} value={newQ.correct_option} onChange={(e) => setNewQ({...newQ, correct_option: e.target.value})}>
+                                    <select className="input-field option-correct-select" style={{padding: '12px', borderRadius: '10px'}} value={newQ.correct_option} onChange={(e) => setNewQ({...newQ, correct_option: e.target.value})}>
                                         <option value="">Ans?</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
                                     </select>
                                 </div>
                             )}
+
+                            <hr style={{borderTop: '1px solid #e2e8f0', margin: '20px 0'}} />
+                            <div style={{fontSize: '0.9rem', color: '#64748b', marginBottom: '15px', fontWeight: 'bold', textTransform: 'uppercase'}}>Update Exam Metadata for this Question</div>
+                            
+                            {/* ✅ MAPS TO `editMeta` state exclusively */}
+                            <div className="grid-3-col" style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', width: '100%', marginBottom: '15px'}}>
+                                <input type="text" placeholder="Unit (e.g. 01)" className="input-field hover-glow" value={editMeta.unit || ""} onChange={(e) => setEditMeta({...editMeta, unit: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px', boxSizing: 'border-box'}} />
+                                <input type="text" placeholder="Chapter (e.g. 05)" className="input-field hover-glow" value={editMeta.chapter || ""} onChange={(e) => setEditMeta({...editMeta, chapter: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px', boxSizing: 'border-box'}} />
+                                <input type="text" placeholder="Paper ID" className="input-field hover-glow" value={editMeta.paperId || ""} onChange={(e) => setEditMeta({...editMeta, paperId: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px', boxSizing: 'border-box'}} />
+                                <input type="text" placeholder="Validity" className="input-field hover-glow" value={editMeta.validity || ""} onChange={(e) => setEditMeta({...editMeta, validity: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px', boxSizing: 'border-box'}} />
+                                <input type="text" placeholder="Permission" className="input-field hover-glow" value={editMeta.permission || ""} onChange={(e) => setEditMeta({...editMeta, permission: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px', boxSizing: 'border-box'}} />
+                                <input type="password" placeholder="Exam Password" className="input-field hover-glow" value={editMeta.examPassword || ""} onChange={(e) => setEditMeta({...editMeta, examPassword: e.target.value})} style={{width: '100%', padding: '12px', borderRadius: '10px', boxSizing: 'border-box'}} />
+                            </div>
+
                         </div>
-                        <div className="modal-footer-premium footer-actions-modal" style={{padding: '0', background: 'transparent', border: 'none', display: 'flex', gap: '10px', flexShrink: 0}}>
+                        <div className="modal-footer-premium footer-actions-modal" style={{padding: '0', background: 'transparent', border: 'none', display: 'flex', gap: '10px', flexShrink: 0, marginTop: '20px'}}>
                             <button onClick={handleCancelEdit} className="btn-secondary" style={{flex: 1, padding: '14px', borderRadius: '10px'}}>Cancel</button>
-                            <button onClick={handleSaveQuestion} className="btn-primary ripple-effect" style={{flex: 1, padding: '14px', borderRadius: '10px'}}>Update Question</button>
+                            <button onClick={handleSaveQuestion} className="btn-primary ripple-effect" style={{flex: 1, padding: '14px', borderRadius: '10px'}}>Update Record</button>
                         </div>
                     </div>
                 </div>
@@ -771,6 +859,7 @@ export default function Exams() {
 
         </div>
 
+        {/* 🚀 RESPONSIVE CSS STYLES (UNCHANGED) */}
         <style>{`
             :root {
                 --primary: #3b82f6;
@@ -791,7 +880,7 @@ export default function Exams() {
             .exams-main-content {
                 flex: 1; margin-left: 280px; padding: 30px; padding-bottom: 120px;
                 height: 100vh; overflow-y: auto; box-sizing: border-box;
-                max-width: calc(100% - 280px);
+                width: calc(100% - 280px); /* Strict width control */
             }
 
             .glass-overlay {
@@ -878,6 +967,7 @@ export default function Exams() {
             .input-field:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
 
             .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+            .header-titles { display: flex; flex-direction: column; }
             .page-title { font-size: 2rem; font-weight: 800; margin: 0; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
             .page-subtitle { color: #64748b; margin: 5px 0 0; }
 
@@ -885,25 +975,27 @@ export default function Exams() {
             .tab-btn { border: none; background: transparent; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #64748b; transition: 0.2s; white-space: nowrap; }
             .tab-btn.active { background: #eff6ff; color: var(--primary); }
 
-            .card { background: white; border-radius: 16px; padding: 25px; border: 1px solid #e2e8f0; box-sizing: border-box; width: 100%; }
+            .card { background: white; border-radius: 16px; padding: 25px; border: 1px solid #e2e8f0; box-sizing: border-box; width: 100%; max-width: 100%; overflow: hidden; }
             .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
             .card-header { display: flex; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; }
             .card-header h3 { margin: 0; font-size: 1.1rem; color: var(--text-main); }
+            .mb-20 { margin-bottom: 20px; }
 
-            .form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 0.5fr auto; gap: 15px; align-items: center; }
-            .full-width { grid-column: span 2; }
+            .form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px; align-items: center; width: 100%; }
+            .full-width { grid-column: span 1; }
+            .full-width-grid { grid-column: 1 / -1; width: 100%; }
 
             .input-field { padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; background: white; color: #1e293b; font-size: 0.9rem; transition: all 0.2s; width: 100%; font-weight: 600; box-sizing: border-box; }
 
             .btn-group { display: flex; gap: 10px; }
-            .btn-primary { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+            .btn-primary { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;}
             .btn-primary:hover { background: #2563eb; }
-            .btn-warning { background: #f59e0b; }
-            .btn-warning:hover { background: #d97706; }
-            .btn-secondary { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 12px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+            .btn-secondary { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 12px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center;}
             .btn-secondary:hover { background: #e2e8f0; }
             .btn-success { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; gap: 8px; align-items: center; transition: 0.2s; white-space: nowrap; }
             .btn-success:hover { background: #059669; }
+            
+            .save-db-btn { width: auto; }
 
             .table-wrapper { overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; display: block; }
             .modern-table { width: 100%; border-collapse: collapse; min-width: 700px; }
@@ -912,8 +1004,10 @@ export default function Exams() {
             .table-row { opacity: 0; animation: staggerUp 0.4s ease-out forwards; transition: 0.2s; }
             .table-row:hover { background: #f8fafc; }
 
-            .highlight-row { background: #fffbeb !important; border-left: 4px solid #f59e0b; }
             .truncate-text { max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+            .table-card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+            .table-header-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; flex-wrap: wrap; }
 
             .action-buttons { display: flex; gap: 10px; justify-content: center; }
             .icon-btn { border: none; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
@@ -934,8 +1028,11 @@ export default function Exams() {
             .page-btn:disabled { opacity: 0.5; cursor: not-allowed; background: #f1f5f9; }
             .nav-btn { width: auto; padding: 0 10px; }
 
-            .exam-meta-header { display: flex; justify-content: space-between; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0; }
+            .exam-meta-header { display: flex; justify-content: space-between; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0; align-items: center; flex-wrap: wrap; gap: 15px;}
+            .omr-header-card { padding: 20px; border-bottom: none; }
+            .omr-header-right { text-align: right; }
             .meta-tag { background: #f1f5f9; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; color: #475569; margin-right: 10px; display: inline-block; margin-bottom: 5px; }
+            
             .answer-sheet-preview { background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #cbd5e1; }
             .handwriting-font { font-family: 'Courier New', Courier, monospace; font-size: 1.05rem; color: #334155; line-height: 1.6; font-style: italic; }
 
@@ -947,57 +1044,100 @@ export default function Exams() {
             .eval-header { display: flex; gap: 8px; color: #64748b; font-weight: 700; font-size: 0.9rem; margin-bottom: 10px; }
             .eval-score { font-size: 2rem; font-weight: 800; color: #1e293b; margin-bottom: 5px; }
 
-            .ai-check-box { display: flex; justify-content: space-between; align-items: center; background: #f0fdf4; padding: 20px; border-radius: 12px; border: 1px solid #bbf7d0; }
+            .ai-check-box { display: flex; justify-content: space-between; align-items: center; background: #f0fdf4; padding: 20px; border-radius: 12px; border: 1px solid #bbf7d0; flex-wrap: wrap; gap: 15px;}
             .btn-ai { background: #16a34a; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; gap: 8px; align-items: center; transition: 0.2s; white-space: nowrap; }
             .btn-ai:hover { background: #15803d; }
 
             /* NEW CSS: OMR SPECIFIC STYLES ADDED HERE */
             .omr-question-row { display: flex; flex-direction: column; gap: 15px; padding: 20px 0; border-bottom: 1px solid #f1f5f9; }
             .omr-q-text { font-size: 1.15rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;}
-            .q-no { background: #3b82f6; color: white; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 1rem; }
+            .q-no { background: #3b82f6; color: white; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 1rem; flex-shrink: 0;}
             .q-marking-info { font-size: 0.85rem; color: #94a3b8; background: #f1f5f9; padding: 2px 8px; border-radius: 6px; }
             
             .omr-options-grid { display: flex; gap: 30px; flex-wrap: wrap; margin-left: 40px; }
             .omr-option-wrapper { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-            .omr-bubble { width: 35px; height: 35px; border-radius: 50%; border: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #64748b; font-size: 1.1rem; transition: 0.2s; background: white; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+            .omr-bubble { width: 35px; height: 35px; border-radius: 50%; border: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #64748b; font-size: 1.1rem; transition: 0.2s; background: white; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); flex-shrink: 0;}
             .omr-bubble:hover { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; }
-            .omr-bubble.selected { background: #3b82f6; border-color: #3b82f6; color: white; box-shadow: 0 4px 10px rgba(59,130,246,0.4); transform: scale(1.1); }
+            .omr-bubble.selected { background: #10b981; border-color: #10b981; color: white; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4); transform: scale(1.1); }
             .omr-opt-text { font-size: 1rem; color: #475569; font-weight: 500; }
+
+            .submit-exam-wrapper { text-align: center; margin-top: 40px; border-top: 2px dashed #e2e8f0; padding-top: 30px; display: flex; justify-content: center; width: 100%; box-sizing: border-box;}
+            .submit-exam-btn { padding: 15px 40px; font-size: 1.2rem; background: #10b981; width: auto; }
+            .submit-exam-btn:hover { background: #059669; }
 
             .result-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 40px; }
             .r-stat-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; }
             .r-label { font-size: 0.9rem; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 10px; }
             .r-value { font-size: 2rem; font-weight: 900; color: #1e293b; }
 
-            .final-score-box { background: linear-gradient(135deg, #eff6ff, #e0e7ff); border: 1px solid #bfdbfe; padding: 40px; border-radius: 24px; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 10px 30px rgba(59,130,246,0.1); }
-            .grade-circle { width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(139,92,246,0.4); border: 4px solid white; }
+            .final-score-box { background: linear-gradient(135deg, #eff6ff, #e0e7ff); border: 1px solid #bfdbfe; padding: 40px; border-radius: 24px; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 10px 30px rgba(59,130,246,0.1); flex-wrap: wrap; gap: 20px;}
+            .grade-circle { width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(139,92,246,0.4); border: 4px solid white; flex-shrink: 0;}
 
+            .mcq-options-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+            .mcq-options-row .input-field { flex: 1; min-width: 150px; }
+            .option-correct-select { flex: 0.5; min-width: 100px; }
+
+            /* =========================================================
+               MOBILE RESPONSIVENESS FIXES
+               ========================================================= */
             @media (max-width: 1024px) {
                 .exams-main-content { margin-left: 0 !important; max-width: 100%; width: 100%; }
+                .form-grid { grid-template-columns: 1fr 1fr; }
             }
 
             @media (max-width: 850px) {
                 html, body, #root { height: auto !important; min-height: 100vh !important; overflow-y: visible !important; }
                 .exams-page-wrapper { display: block !important; height: auto !important; min-height: 100vh !important; }
-                .exams-container { display: block !important; }
-                .exams-main-content { margin-left: 0 !important; padding: 15px !important; padding-top: 85px !important; padding-bottom: 150px !important; width: 100vw !important; max-width: 100vw !important; height: auto !important; min-height: 100vh !important; overflow: visible !important; display: block !important; }
+                
+                .exams-main-content { 
+                    margin-left: 0 !important; 
+                    padding: 15px !important; 
+                    padding-top: 85px !important; 
+                    padding-bottom: 150px !important; 
+                    width: 100% !important; 
+                    max-width: 100% !important; 
+                    height: auto !important; 
+                    min-height: 100vh !important; 
+                    overflow-x: hidden !important; 
+                    display: block !important; 
+                    box-sizing: border-box !important;
+                }
+                
                 .page-header { flex-direction: column; align-items: flex-start !important; gap: 15px; }
-                .tab-switch { width: 100%; display: flex; justify-content: space-between; overflow-x: auto; padding-bottom: 5px;}
-                .tab-btn { flex: 1; justify-content: center; min-width: 120px;}
-                .form-grid { display: flex !important; flex-direction: column !important; gap: 15px; width: 100%; }
-                .table-card-header { flex-direction: column; align-items: flex-start !important; gap: 10px; }
-                .action-group { width: 100%; justify-content: space-between; margin-left: 0 !important; }
-                .btn-success { flex: 1; justify-content: center; }
-                .exam-meta-header { flex-direction: column; gap: 10px; }
-                .meta-right { text-align: left !important; }
+                .tab-switch { width: 100%; display: flex; justify-content: flex-start; overflow-x: auto; padding-bottom: 5px; -webkit-overflow-scrolling: touch;}
+                .tab-btn { flex: 1; justify-content: center; min-width: 130px;}
+                
+                .form-grid { display: flex !important; flex-direction: column !important; gap: 15px; width: 100%; box-sizing: border-box;}
+                .grid-3-col, .grid-2-col { display: flex !important; flex-direction: column !important; gap: 15px; width: 100%;}
+                .mcq-options-row { flex-direction: column; }
+                .mcq-options-row .input-field, .option-correct-select { width: 100%; flex: none; }
+                
+                .save-db-btn { width: 100%; }
+
+                .table-card-header { flex-direction: column; align-items: flex-start !important; gap: 15px; }
+                .table-header-actions { margin-left: 0; width: 100%; justify-content: flex-start; }
+                .table-header-actions .btn-success, .table-header-actions .btn-view { flex: 1; justify-content: center; }
+                
+                .exam-meta-header { flex-direction: column; align-items: flex-start !important; gap: 10px; }
+                .omr-header-right, .meta-right { text-align: left !important; width: 100%;}
+                
                 .evaluation-grid { grid-template-columns: 1fr; gap: 15px; }
                 .ai-check-box { flex-direction: column; align-items: flex-start; gap: 15px; }
-                .btn-ai { width: 100%; justify-content: center; }
-                .modal-content { max-width: 90vw !important; }
+                .btn-ai, .ai-analysis-btn { width: 100%; justify-content: center; }
+                
+                .modal-content { max-width: 95vw !important; padding: 20px !important;}
                 .stats-grid { grid-template-columns: 1fr; }
-                .grid-3-col { display: flex !important; flex-direction: column !important; }
                 .footer-actions-modal { flex-direction: column; }
-                .result-stats-grid { grid-template-columns: 1fr 1fr; }
+                .footer-actions-modal button { width: 100%; }
+
+                .omr-options-grid { margin-left: 0; gap: 15px; flex-direction: column; }
+                .omr-q-text { align-items: flex-start; flex-direction: column; gap: 5px;}
+                .q-marking-info { align-self: flex-start; margin-left: 40px; margin-top: 0;}
+                
+                .submit-exam-wrapper { flex-direction: column; }
+                .submit-exam-btn { width: 100%; padding: 15px 20px; font-size: 1.1rem; }
+
+                .result-stats-grid { grid-template-columns: 1fr 1fr; gap: 15px;}
                 .final-score-box { flex-direction: column; gap: 30px; text-align: center; }
             }
         `}</style>

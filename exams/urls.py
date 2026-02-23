@@ -17,7 +17,6 @@ from .views import (
 urlpatterns = [
     path("", ExamAPI.as_view()),
 
-    # ✅ FULL CRUD
     path("questions/", QuestionBankAPI.as_view()),
     path("questions/<int:pk>/", QuestionBankAPI.as_view()),
 
@@ -28,7 +27,6 @@ urlpatterns = [
     path("generate-quiz/", generate_ai_quiz, name='generate_ai_quiz'),
     path("save-quiz/", save_ai_quiz, name='save_ai_quiz'),
 
-    # ✅ Evaluation APIs
     path("evaluations/", EvaluationAPI.as_view()),
     path("ai-evaluate/", AIEvaluateAPI.as_view()),
 

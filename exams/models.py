@@ -5,13 +5,13 @@ from batches.models import Batch
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-# 1. Exam Structure (✅ SUPER ADMIN META FIELDS ADDED)
+# 1. Exam Structure
 class Exam(models.Model):
     title = models.CharField(max_length=150)
     course = models.ForeignKey(Course, on_delete=models.CASCADE, null=True, blank=True)
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, null=True, blank=True)
     
-    # --- 🚀 NEW SUPER ADMIN FIELDS (Paper Setup) ---
+    # --- Paper Setup Fields ---
     class_name = models.CharField(max_length=100, blank=True, null=True)
     subject_name = models.CharField(max_length=100, blank=True, null=True)
     examinee_body = models.CharField(max_length=150, blank=True, null=True)
@@ -19,7 +19,14 @@ class Exam(models.Model):
     place_of_exam = models.CharField(max_length=150, blank=True, null=True)
     teacher_name = models.CharField(max_length=150, blank=True, null=True)
 
+    # --- NEW FIELDS FOR FRONTEND META ---
+    unit = models.CharField(max_length=100, blank=True, null=True)
     chapter_name = models.CharField(max_length=100, blank=True, null=True)
+    paper_id = models.CharField(max_length=100, blank=True, null=True)
+    exam_password = models.CharField(max_length=100, blank=True, null=True)
+    validity = models.CharField(max_length=100, blank=True, null=True)
+    permission = models.CharField(max_length=100, blank=True, null=True)
+
     total_marks = models.IntegerField(default=100)
     passing_marks = models.IntegerField(default=33)
     duration_minutes = models.IntegerField(default=60)
@@ -33,21 +40,25 @@ class Exam(models.Model):
         return f"{self.title} - Set {self.paper_set_number}"
 
 
-# 2. Question Bank (✅ OMR & NEGATIVE MARKING ADDED)
+# 2. Question Bank
 class QuestionBank(models.Model):
     DIFFICULTY_LEVELS = (('Easy', 'Easy'), ('Medium', 'Medium'), ('Hard', 'Hard'))
-    TYPE_CHOICES = (('MCQ', 'MCQ'), ('Descriptive', 'Descriptive'), ('True/False', 'True/False'))
+    TYPE_CHOICES = (('MCQ', 'MCQ'), ('Descriptive', 'Descriptive'), ('True/False', 'True/False'), ('Both', 'Both'), ('None', 'None'))
 
     text = models.TextField()
     q_type = models.CharField(max_length=50, choices=TYPE_CHOICES, default='Descriptive')
     difficulty = models.CharField(max_length=20, choices=DIFFICULTY_LEVELS, default='Medium')
     
-    # --- 🚀 NEW MARKING SCHEME ---
-    marks = models.FloatField(default=5.0) # Correct marks
-    negative_marks = models.FloatField(default=0.0) # Incorrect marks
-    unattempted_marks = models.FloatField(default=0.0) # Not attempted marks
+    # --- NEW FRONTEND FIELDS ---
+    section = models.CharField(max_length=50, default="A", blank=True, null=True)
+    exam_meta = models.JSONField(default=dict, blank=True, null=True) # Nested JSON support
+
+    # --- MARKING SCHEME ---
+    marks = models.FloatField(default=5.0) 
+    negative_marks = models.FloatField(default=0.0) 
+    unattempted_marks = models.FloatField(default=0.0) 
     
-    # --- 🚀 NEW OMR OPTIONS ---
+    # --- OMR OPTIONS ---
     option_a = models.CharField(max_length=255, null=True, blank=True)
     option_b = models.CharField(max_length=255, null=True, blank=True)
     option_c = models.CharField(max_length=255, null=True, blank=True)
@@ -69,7 +80,8 @@ class Question(models.Model):
     exam = models.ForeignKey(Exam, related_name='questions', on_delete=models.CASCADE)
     text = models.TextField()
     
-    # --- 🚀 SYNCED OMR & MARKING WITH QUESTION BANK ---
+    section = models.CharField(max_length=50, default="A", blank=True, null=True)
+    
     option_a = models.CharField(max_length=255, null=True, blank=True)
     option_b = models.CharField(max_length=255, null=True, blank=True)
     option_c = models.CharField(max_length=255, null=True, blank=True)
@@ -103,7 +115,7 @@ class ExamAttempt(models.Model):
 class StudentAnswer(models.Model):
     attempt = models.ForeignKey(ExamAttempt, related_name='answers', on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    selected_option = models.CharField(max_length=10) # Expanded for multi-options
+    selected_option = models.CharField(max_length=10)
     is_correct = models.BooleanField(default=False)
 
 
