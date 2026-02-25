@@ -3,798 +3,432 @@ import SidebarModern from "../components/SidebarModern";
 import api from "../api/axios";
 import toast, { Toaster } from 'react-hot-toast';
 import {
-    Users, UserPlus, Search, Edit3, Trash2, Eye,
-    CheckCircle, XCircle, Mail, Shield, Lock, X, ChevronLeft, ChevronRight, 
-    Calendar, User, Phone, Sparkles, AlertTriangle, Power, Smartphone, HardDrive, Moon, Filter, MapPin, CalendarClock
+  Users, UserPlus, Search, Edit3, Trash2, Eye,
+  CheckCircle, XCircle, Mail, Shield, Lock, X, ChevronLeft, ChevronRight, 
+  Calendar, User, Phone, Sparkles, AlertTriangle, Power, Smartphone, HardDrive, Moon, Filter, MapPin, CalendarClock,
+  Briefcase, GraduationCap, Home
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-// 🎨 PREMIUM THEME CONSTANTS
+// 🎨 PREMIUM THEME CONSTANTS (Updated Roles from Requirement)
 const ROLE_THEMES = {
-    SUPER_ADMIN: { 
-        color: '#8b5cf6', 
-        bg: 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)',
-        badgeBg: '#f3e8ff',
-        badgeText: '#6b21a8',
-        border: '4px solid #8b5cf6'
-    },
-    SCHOOL_ADMIN: { 
-        color: '#3b82f6', 
-        bg: 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)',
-        badgeBg: '#e0f2fe',
-        badgeText: '#0369a1',
-        border: '4px solid #3b82f6'
-    },
-    STAFF: { 
-        color: '#10b981', 
-        bg: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
-        badgeBg: '#dcfce7',
-        badgeText: '#15803d',
-        border: '4px solid #10b981'
-    },
-    AGENT: { 
-        color: '#f59e0b', 
-        bg: 'linear-gradient(135deg, #f59e0b 0%, #f97316 100%)',
-        badgeBg: '#ffedd5',
-        badgeText: '#c2410c',
-        border: '4px solid #f59e0b'
-    },
-    TEACHER: { 
-        color: '#ec4899', 
-        bg: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)',
-        badgeBg: '#fce7f3',
-        badgeText: '#be185d',
-        border: '4px solid #ec4899'
-    }
+  SUPER_ADMIN: { color: '#8b5cf6', bg: 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)', badgeBg: '#f3e8ff', badgeText: '#6b21a8', border: '4px solid #8b5cf6' },
+  SCHOOL_ADMIN: { color: '#3b82f6', bg: 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)', badgeBg: '#e0f2fe', badgeText: '#0369a1', border: '4px solid #3b82f6' },
+  STAFF: { color: '#10b981', bg: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)', badgeBg: '#dcfce7', badgeText: '#15803d', border: '4px solid #10b981' },
+  AGENT: { color: '#f59e0b', bg: 'linear-gradient(135deg, #f59e0b 0%, #f97316 100%)', badgeBg: '#ffedd5', badgeText: '#c2410c', border: '4px solid #f59e0b' },
+  TEACHER: { color: '#ec4899', bg: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)', badgeBg: '#fce7f3', badgeText: '#be185d', border: '4px solid #ec4899' },
+  OWNER: { color: '#6366f1', bg: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', badgeBg: '#eef2ff', badgeText: '#4338ca', border: '4px solid #6366f1' },
+  SEEKER: { color: '#14b8a6', bg: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)', badgeBg: '#ccfbf1', badgeText: '#0f766e', border: '4px solid #14b8a6' },
+  PARENT: { color: '#f43f5e', bg: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', badgeBg: '#ffe4e6', badgeText: '#be123c', border: '4px solid #f43f5e' },
+  GUEST: { color: '#64748b', bg: 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)', badgeBg: '#f1f5f9', badgeText: '#475569', border: '4px solid #64748b' }
 };
 
 const AVATAR_GRADIENTS = [
-    'linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%)',
-    'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
-    'linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)',
-    'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)',
-    'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',
+  'linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%)',
+  'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+  'linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)',
+  'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)',
+  'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',
 ];
 
 export default function UserManager() {
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [filterRole, setFilterRole] = useState("ALL");
-    const [filterLocation, setFilterLocation] = useState("ALL");
-    
-    // Checkbox State (Bulk Actions)
-    const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterRole, setFilterRole] = useState("ALL");
+  const [filterLocation, setFilterLocation] = useState("ALL");
+  
+  const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [userToToggle, setUserToToggle] = useState(null);
+  const [statusAction, setStatusAction] = useState(""); 
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(6);
 
-    // Modals
-    const [isFormOpen, setIsFormOpen] = useState(false);
-    const [isViewOpen, setIsViewOpen] = useState(false);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [userToDelete, setUserToDelete] = useState(null);
-    const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+  // ✅ ENHANCED FORM DATA WITH DEEP PROFILE DETAILS
+  const initialFormState = {
+      id: null, full_name: "", email: "", phone: "", role: "STAFF", password: "", account_status: "ACTIVE", location: "Global", validity_days: 365, is_disguised: false,
+      // New Requirement Fields
+      dob: "", gender: "Male", marital_status: "Single",
+      post_nature: "Permanent", working_group: "Office",
+      father_name: "", mother_name: "", parent_phone: "",
+      highest_qualification: "", qualification_type: "Academic", experience_years: 0,
+      address_permanent: "",
+      terms_accepted: false
+  };
+  const [formData, setFormData] = useState(initialFormState);
 
-    const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
-    const [userToToggle, setUserToToggle] = useState(null);
-    const [statusAction, setStatusAction] = useState(""); 
+  useEffect(() => { fetchUsers(); }, []);
 
-    const [selectedUser, setSelectedUser] = useState(null);
-    const [editMode, setEditMode] = useState(false);
-    
-    // Pagination
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(6);
+  const fetchUsers = async () => {
+      setLoading(true);
+      try {
+          const res = await api.get("users/");
+          setUsers(res.data.results || res.data);
+      } catch (err) { toast.error("Failed to sync users."); } finally { setLoading(false); }
+  };
 
-    const [formData, setFormData] = useState({
-        id: null, full_name: "", email: "", phone: "", role: "STAFF", password: "", account_status: "ACTIVE", location: "Global", validity_days: 365, is_disguised: false
-    });
+  const handleSelectAll = (e) => {
+      if (e.target.checked) setSelectedUserIds(currentUsers.map(u => u.id));
+      else setSelectedUserIds([]);
+  };
+  const handleSelectUser = (id) => setSelectedUserIds(prev => prev.includes(id) ? prev.filter(uId => uId !== id) : [...prev, id]);
+  const handleBulkDelete = async () => {
+      if (selectedUserIds.length === 0) return;
+      const loadToast = toast.loading("Processing...");
+      try {
+          await Promise.all(selectedUserIds.map(id => api.delete(`users/${id}/`)));
+          setUsers(users.filter(u => !selectedUserIds.includes(u.id)));
+          setSelectedUserIds([]);
+          toast.success(`${selectedUserIds.length} users deleted.`, { id: loadToast });
+          setIsBulkDeleteOpen(false);
+      } catch (err) { toast.error("Bulk deletion failed.", { id: loadToast }); }
+  };
+  const initiateDelete = (id) => { setUserToDelete(id); setIsDeleteModalOpen(true); };
+  const confirmDelete = async () => {
+      try {
+          await api.delete(`users/${userToDelete}/`);
+          setUsers(users.filter(u => u.id !== userToDelete));
+          toast.success("User deleted successfully!");
+          setIsDeleteModalOpen(false);
+      } catch (err) { toast.error("Delete failed."); }
+  };
+  const handleStatusToggleClick = (user) => {
+      const newStatus = user.account_status === 'HIBERNATE' ? 'ACTIVE' : 'HIBERNATE';
+      setUserToToggle(user); setStatusAction(newStatus); setIsStatusModalOpen(true);
+  };
+  const confirmStatusToggle = async () => {
+      const loadToast = toast.loading(`Marking as ${statusAction}...`);
+      try {
+          await api.patch(`users/${userToToggle.id}/update_status/`, { status: statusAction });
+          setUsers(users.map(u => u.id === userToToggle.id ? { ...u, account_status: statusAction, is_active: statusAction === 'ACTIVE' } : u));
+          toast.success(`Status updated!`, { id: loadToast });
+          setIsStatusModalOpen(false);
+      } catch (err) { toast.error("Update failed", { id: loadToast }); }
+  };
 
-    useEffect(() => { fetchUsers(); }, []);
+  // ✅ SAVE HANDLER WITH T&C VALIDATION
+  const handleSave = async (e) => {
+      e.preventDefault();
+      
+      // Check T&C Checkbox
+      if (!formData.terms_accepted) return toast.error("You must agree to the Terms & Conditions!");
 
-    const fetchUsers = async () => {
-        setLoading(true);
-        try {
-            const res = await api.get("users/");
-            setUsers(res.data.results || res.data);
-        } catch (err) { toast.error("Failed to sync users."); } finally { setLoading(false); }
-    };
+      const loadToast = toast.loading("Processing...");
+      const payload = { ...formData };
+      if (formData.password && formData.password.trim() !== "") payload.password = formData.password;
+      else delete payload.password;
 
-    // --- Bulk Action Handlers ---
-    const handleSelectAll = (e) => {
-        if (e.target.checked) {
-            setSelectedUserIds(currentUsers.map(u => u.id));
-        } else {
-            setSelectedUserIds([]);
-        }
-    };
+      try {
+          if (editMode) {
+              await api.patch(`users/${formData.id}/`, payload);
+              toast.success("User updated successfully!", { id: loadToast });
+          } else {
+              await api.post("users/", payload);
+              toast.success("User created successfully!", { id: loadToast });
+          }
+          fetchUsers(); closeForm();
+      } catch (err) {
+          console.error("Save Error:", err.response?.data);
+          toast.error("Operation failed.", { id: loadToast });
+      }
+  };
 
-    const handleSelectUser = (id) => {
-        setSelectedUserIds(prev => prev.includes(id) ? prev.filter(uId => uId !== id) : [...prev, id]);
-    };
+  const openForm = (user = null) => {
+      setEditMode(!!user);
+      setFormData(user ? { ...initialFormState, ...user, password: "", terms_accepted: true } : initialFormState);
+      setIsFormOpen(true);
+  };
+  
+  const openView = (user) => { setSelectedUser(user); setIsViewOpen(true); };
+  const closeForm = () => setIsFormOpen(false);
+  const closeView = () => setIsViewOpen(false);
 
-    const handleBulkDelete = async () => {
-        if (selectedUserIds.length === 0) return;
-        const loadToast = toast.loading("Processing Bulk Deletion...");
-        try {
-            await Promise.all(selectedUserIds.map(id => api.delete(`users/${id}/`)));
-            setUsers(users.filter(u => !selectedUserIds.includes(u.id)));
-            setSelectedUserIds([]);
-            toast.success(`${selectedUserIds.length} users deleted.`, { id: loadToast });
-            setIsBulkDeleteOpen(false);
-        } catch (err) {
-            toast.error("Bulk deletion failed. Some users might remain.", { id: loadToast });
-        }
-    };
+  // Filters & Pagination
+  const filteredUsers = users.filter(u => {
+      const matchesSearch = u.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || u.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesRole = filterRole === "ALL" || u.role === filterRole;
+      const matchesLocation = filterLocation === "ALL" || (u.location && u.location === filterLocation);
+      return matchesSearch && matchesRole && matchesLocation;
+  });
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-    const initiateDelete = (id) => {
-        setUserToDelete(id);
-        setIsDeleteModalOpen(true);
-    };
+  return (
+      <div style={{ display: "flex", background: "#f8fafc", height: "100vh", fontFamily: "'Inter', sans-serif", overflow: "hidden" }}>
+          <SidebarModern />
+          <Toaster position="top-center" toastOptions={{ style: { background: '#0f172a', color: 'white', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' } }} />
 
-    const confirmDelete = async () => {
-        if(!userToDelete) return;
-        try {
-            await api.delete(`users/${userToDelete}/`);
-            setUsers(users.filter(u => u.id !== userToDelete));
-            toast.success("User deleted successfully!");
-            setIsDeleteModalOpen(false);
-        } catch (err) { 
-            toast.error("Delete failed."); 
-        }
-    };
+          <div className="user-main-view hide-scrollbar">
+              {/* HERO HEADER */}
+              <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{duration: 0.6}} className="user-header-wrap">
+                  <div>
+                      <h1 className="responsive-title" style={{ fontWeight: '900', letterSpacing: '-1.5px', margin: 0, lineHeight: '1.1', background: 'linear-gradient(to right, #0f172a, #334155)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display:'flex', alignItems:'center', gap:'15px' }}>
+                          User Management <span style={{fontSize:'1.5rem'}}>✨</span>
+                      </h1>
+                      <p style={{ color: '#64748b', fontSize: '1.1rem', marginTop: '8px', fontWeight: '500' }}>Orchestrate your team's access and permissions.</p>
+                  </div>
+                  <div style={{display:'flex', gap:'15px', flexWrap:'wrap', justifyContent:'flex-start'}}>
+                       <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => selectedUserIds.length > 0 ? setIsBulkDeleteOpen(true) : toast("Select users first", {icon: '⚠️'})} style={{...secondaryBtn, opacity: selectedUserIds.length > 0 ? 1 : 0.5}}>
+                          <Trash2 size={18}/> Bulk Actions
+                      </motion.button>
+                      <motion.button whileHover={{ scale: 1.05, boxShadow: '0 20px 40px -10px rgba(79, 70, 229, 0.5)' }} whileTap={{ scale: 0.95 }} onClick={() => openForm()} style={primaryBtn}>
+                          <div style={{background:'rgba(255,255,255,0.2)', padding:'8px', borderRadius:'10px'}}><UserPlus size={22}/></div>
+                          <span>Add New User</span>
+                      </motion.button>
+                  </div>
+              </motion.div>
 
-    const handleStatusToggleClick = (user) => {
-        const newStatus = user.account_status === 'HIBERNATE' ? 'ACTIVE' : 'HIBERNATE';
-        setUserToToggle(user);
-        setStatusAction(newStatus);
-        setIsStatusModalOpen(true);
-    };
+              {/* FLOATING SEARCH */}
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }} style={{ marginBottom: '35px', display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                  <div style={{ position: 'relative', flex: 2, minWidth: '250px' }}>
+                      <Search size={22} strokeWidth={2.5} style={{position:'absolute', left:'25px', top:'50%', transform:'translateY(-50%)', color:'#6366f1'}} />
+                      <input placeholder="Search by name or email..." style={searchBar} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                  </div>
+                  <div className="filter-group">
+                      <div className="select-wrapper">
+                           <Filter size={16} className="select-icon" />
+                           <select style={filterSelect} value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
+                               <option value="ALL">All Roles</option>
+                               <option value="SUPER_ADMIN">Super Admin</option>
+                               <option value="STAFF">Staff</option>
+                               <option value="SEEKER">Student/Seeker</option>
+                               <option value="PARENT">Parent</option>
+                           </select>
+                      </div>
+                  </div>
+              </motion.div>
 
-    const confirmStatusToggle = async () => {
-        if(!userToToggle) return;
-        
-        const loadToast = toast.loading(`Marking as ${statusAction}...`);
-        try {
-            await api.patch(`users/${userToToggle.id}/update_status/`, { status: statusAction });
-            setUsers(users.map(u => u.id === userToToggle.id ? { ...u, account_status: statusAction, is_active: statusAction === 'ACTIVE' } : u));
-            toast.success(`User ${statusAction === 'ACTIVE' ? 'Activated' : 'Hibernated'}!`, { id: loadToast });
-            setIsStatusModalOpen(false);
-        } catch (err) {
-            if (err.response && err.response.status === 401) {
-                toast.error("🚨 Self-Hibernation Detected! You are locked out.", { id: loadToast, duration: 4000 });
-                localStorage.clear(); 
-                setTimeout(() => window.location.href = '/login', 2000); 
-            } else {
-                toast.error("Status update failed", { id: loadToast });
-            }
-        } finally {
-            if (statusAction !== 'HIBERNATE' || (statusAction === 'HIBERNATE' && !err?.response?.status === 401)) {
-                setUserToToggle(null);
-            }
-        }
-    };
+              {/* TABLE AREA */}
+              <div className="table-responsive-wrapper hide-scrollbar" style={{ flex: 1 }}>
+                  <table className="modern-table">
+                      <thead>
+                          <tr>
+                              <th style={{width: '30%'}}><input type="checkbox" onChange={handleSelectAll} checked={currentUsers.length > 0 && selectedUserIds.length === currentUsers.length} style={checkboxStyle}/> User Profile</th>
+                              <th style={{width: '15%'}}>Role</th>
+                              <th style={{width: '25%'}}>Contact Info</th>
+                              <th style={{width: '15%'}}>Status</th>
+                              <th style={{width: '15%', textAlign: 'right', paddingRight: '30px'}}>Actions</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          {currentUsers.map((user, i) => {
+                              const theme = ROLE_THEMES[user.role] || ROLE_THEMES.STAFF;
+                              const avatarBg = AVATAR_GRADIENTS[i % AVATAR_GRADIENTS.length];
+                              const isSelected = selectedUserIds.includes(user.id);
+                              return (
+                                  <motion.tr key={user.id} whileHover={{ y: -4, scale: 1.005, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.1)' }} className="table-row">
+                                      <td style={{ borderLeft: theme.border, background: isSelected ? '#f8fafc' : 'white' }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                              <input type="checkbox" checked={isSelected} onChange={() => handleSelectUser(user.id)} style={checkboxStyle}/>
+                                              <div style={{ ...avatar, background: avatarBg }}>{user.full_name?.charAt(0).toUpperCase()}</div>
+                                              <div>
+                                                  <div style={{ fontWeight: '800', color: '#1e293b', fontSize: '1.05rem' }}>{user.full_name}</div>
+                                                  <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600' }}>ID: #{user.id} | {user.location}</div>
+                                              </div>
+                                          </div>
+                                      </td>
+                                      <td style={{ background: isSelected ? '#f8fafc' : 'white' }}>
+                                          <span style={{ ...badge, background: theme.badgeBg, color: theme.badgeText, border: `1px solid ${theme.color}30` }}>
+                                              {user.role ? user.role.replace('_', ' ') : 'STAFF'}
+                                          </span>
+                                      </td>
+                                      <td style={{ background: isSelected ? '#f8fafc' : 'white' }}>
+                                          <div style={{ color: '#475569', fontWeight: '600', fontSize: '0.9rem', display:'flex', alignItems:'center', gap:'10px' }}><Mail size={14}/> {user.email}</div>
+                                      </td>
+                                      <td style={{ background: isSelected ? '#f8fafc' : 'white' }}>
+                                          <span style={{...statusBadge, color: user.account_status === 'ACTIVE' ? '#10b981' : '#ef4444', background: user.account_status === 'ACTIVE' ? '#dcfce7' : '#fee2e2'}}>
+                                              {user.account_status === 'ACTIVE' ? <CheckCircle size={14}/> : <XCircle size={14}/>} {user.account_status}
+                                          </span>
+                                      </td>
+                                      <td style={{ background: isSelected ? '#f8fafc' : 'white', textAlign: 'right', paddingRight: '30px' }}>
+                                          <div className="user-actions-wrap" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                                              <motion.button whileHover={{ scale: 1.15 }} onClick={() => handleStatusToggleClick(user)} style={{...actionBtn, background:'#f3f4f6'}}><Power size={18}/></motion.button>
+                                              <motion.button whileHover={{ scale: 1.15 }} onClick={() => openView(user)} style={{...actionBtn, color: '#3b82f6', background:'#eff6ff'}}><Eye size={18}/></motion.button>
+                                              <motion.button whileHover={{ scale: 1.15 }} onClick={() => openForm(user)} style={{...actionBtn, color: '#f59e0b', background:'#fffbeb'}}><Edit3 size={18}/></motion.button>
+                                              <motion.button whileHover={{ scale: 1.15 }} onClick={() => initiateDelete(user.id)} style={{...actionBtn, color: '#ef4444', background:'#fef2f2'}}><Trash2 size={18}/></motion.button>
+                                          </div>
+                                      </td>
+                                  </motion.tr>
+                              );
+                          })}
+                      </tbody>
+                  </table>
+              </div>
 
-    const handleSave = async (e) => {
-        e.preventDefault();
-        const loadToast = toast.loading("Processing...");
-        
-        const payload = {
-            full_name: formData.full_name,
-            email: formData.email,
-            phone: formData.phone,
-            role: formData.role,
-            account_status: formData.account_status,
-            location: formData.location, 
-            validity_days: formData.validity_days, 
-            is_disguised: formData.is_disguised 
-        };
-        if (formData.password && formData.password.trim() !== "") {
-            payload.password = formData.password;
-        }
+              {/* PAGINATION */}
+              {filteredUsers.length > itemsPerPage && (
+                  <div style={{ paddingTop: '20px', display: 'flex', justifyContent: 'center', gap: '15px' }}>
+                      <motion.button whileHover={{scale:1.1}} disabled={currentPage===1} onClick={()=>paginate(currentPage-1)} style={pageBtn}><ChevronLeft size={20}/></motion.button>
+                      <span style={{padding:'10px 24px', background:'white', borderRadius:'14px', fontWeight:'800', color:'#0f172a', boxShadow:'0 4px 10px rgba(0,0,0,0.05)'}}>{currentPage} / {totalPages}</span>
+                      <motion.button whileHover={{scale:1.1}} disabled={currentPage===totalPages} onClick={()=>paginate(currentPage+1)} style={pageBtn}><ChevronRight size={20}/></motion.button>
+                  </div>
+              )}
+          </div>
 
-        try {
-            if (editMode) {
-                await api.patch(`users/${formData.id}/`, payload);
-                toast.success("User updated successfully!", { id: loadToast });
-            } else {
-                await api.post("users/", payload);
-                toast.success("User created successfully!", { id: loadToast });
-            }
-            fetchUsers(); closeForm();
-        } catch (err) {
-            console.error("Save Error:", err.response?.data);
-            let errorMsg = "Operation failed.";
-            if (err.response && err.response.data) {
-                const firstKey = Object.keys(err.response.data)[0];
-                const firstError = err.response.data[firstKey];
-                errorMsg = Array.isArray(firstError) ? `${firstKey}: ${firstError[0]}` : `${firstKey}: ${firstError}`;
-            }
-            toast.error(errorMsg, { id: loadToast });
-        }
-    };
+          {/* 🛠️ GLASS MODAL - FORM (UPDATED WITH DEEP DETAILS) */}
+          <AnimatePresence>
+              {isFormOpen && (
+                  <div style={overlay}>
+                      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} style={modal} className="responsive-modal">
+                          <div style={modalHeader}>
+                              <div><h2 style={{fontSize:'1.8rem', fontWeight:'900', color:'#0f172a', margin:0}}>{editMode ? 'Edit User Profile' : 'Create New User'}</h2></div>
+                              <motion.button whileHover={{ rotate: 90 }} onClick={closeForm} style={closeBtn}><X size={22} /></motion.button>
+                          </div>
+                          <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxHeight:'70vh', overflowY:'auto', paddingRight:'5px' }} className="hide-scrollbar">
+                              <h4 style={sectionTitle}>Basic Information</h4>
+                              <div className="user-form-split">
+                                  <div style={inputGroup}><label style={labelStyle}>Full Name</label><input required value={formData.full_name} onChange={e => setFormData({ ...formData, full_name: e.target.value })} style={input} /></div>
+                                  <div style={inputGroup}><label style={labelStyle}>Role</label>
+                                      <select value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} style={input}>
+                                          {Object.keys(ROLE_THEMES).map(role => <option key={role} value={role}>{role.replace('_', ' ')}</option>)}
+                                      </select>
+                                  </div>
+                              </div>
+                              <div className="user-form-split">
+                                  <div style={inputGroup}><label style={labelStyle}>Email</label><input required type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} style={input} /></div>
+                                  <div style={inputGroup}><label style={labelStyle}>Phone</label><input value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} style={input} /></div>
+                              </div>
 
-    const openForm = (user = null) => {
-        setEditMode(!!user);
-        setFormData(user ? { ...user, password: "", location: user.location || "Global", validity_days: user.validity_days || 365, is_disguised: user.is_disguised || false } : { id: null, full_name: "", email: "", phone: "", role: "STAFF", password: "", account_status: "ACTIVE", location: "Global", validity_days: 365, is_disguised: false });
-        setIsFormOpen(true);
-    };
-    
-    const openView = (user) => {
-        setSelectedUser(user);
-        setIsViewOpen(true);
-    };
+                              <h4 style={sectionTitle}>Profile Details (Deep)</h4>
+                              <div className="user-form-split">
+                                  <div style={inputGroup}><label style={labelStyle}>Date of Birth</label><input type="date" value={formData.dob} onChange={e => setFormData({ ...formData, dob: e.target.value })} style={input} /></div>
+                                  <div style={inputGroup}><label style={labelStyle}>Gender</label>
+                                      <select value={formData.gender} onChange={e => setFormData({ ...formData, gender: e.target.value })} style={input}>
+                                          <option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
+                                      </select>
+                                  </div>
+                              </div>
+                              <div className="user-form-split">
+                                  <div style={inputGroup}><label style={labelStyle}>Nature of Post</label>
+                                      <select value={formData.post_nature} onChange={e => setFormData({ ...formData, post_nature: e.target.value })} style={input}>
+                                          <option value="Permanent">Permanent</option><option value="Adhoc">Adhoc</option><option value="Guest">Guest</option><option value="Temporary">Temporary</option>
+                                      </select>
+                                  </div>
+                                  <div style={inputGroup}><label style={labelStyle}>Working Group</label>
+                                      <select value={formData.working_group} onChange={e => setFormData({ ...formData, working_group: e.target.value })} style={input}>
+                                          <option value="Office">Office</option><option value="Field">Field</option><option value="Both">Both</option>
+                                      </select>
+                                  </div>
+                              </div>
 
-    const closeForm = () => setIsFormOpen(false);
-    const closeView = () => setIsViewOpen(false);
+                              <h4 style={sectionTitle}>Parents & Guardians (If Student/Seeker)</h4>
+                              <div className="user-form-split">
+                                  <div style={inputGroup}><label style={labelStyle}>Father's Name</label><input value={formData.father_name} onChange={e => setFormData({ ...formData, father_name: e.target.value })} style={input} /></div>
+                                  <div style={inputGroup}><label style={labelStyle}>Mother's Name</label><input value={formData.mother_name} onChange={e => setFormData({ ...formData, mother_name: e.target.value })} style={input} /></div>
+                              </div>
 
-    // Dynamic Filtering logic
-    const filteredUsers = users.filter(u => {
-        const matchesSearch = u.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || u.email?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesRole = filterRole === "ALL" || u.role === filterRole;
-        const matchesLocation = filterLocation === "ALL" || (u.location && u.location === filterLocation);
-        return matchesSearch && matchesRole && matchesLocation;
-    });
+                              <h4 style={sectionTitle}>Qualifications</h4>
+                              <div className="user-form-split">
+                                  <div style={inputGroup}><label style={labelStyle}>Highest Qualification</label><input placeholder="e.g. M.Tech" value={formData.highest_qualification} onChange={e => setFormData({ ...formData, highest_qualification: e.target.value })} style={input} /></div>
+                                  <div style={inputGroup}><label style={labelStyle}>Experience (Years)</label><input type="number" value={formData.experience_years} onChange={e => setFormData({ ...formData, experience_years: e.target.value })} style={input} /></div>
+                              </div>
 
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+                              <div style={inputGroup}><label style={labelStyle}>Permanent Address</label><textarea value={formData.address_permanent} onChange={e => setFormData({ ...formData, address_permanent: e.target.value })} style={{...input, height:'80px'}} /></div>
 
-    const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
-    const cardVariants = { hidden: { y: 30, opacity: 0 }, show: { y: 0, opacity: 1, transition: { type: 'spring', bounce: 0.4, duration: 0.8 } } };
+                              {!editMode && (
+                                  <div style={inputGroup}><label style={labelStyle}>Password</label><input required type="password" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} style={input} /></div>
+                              )}
 
-    return (
-        <div style={{ display: "flex", background: "#f8fafc", height: "100vh", fontFamily: "'Inter', sans-serif", overflow: "hidden" }}>
-            <SidebarModern />
-            <Toaster position="top-center" toastOptions={{ style: { background: '#0f172a', color: 'white', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' } }} />
+                              {/* ✅ TERMS & CONDITIONS CHECKBOX */}
+                              <div style={{display:'flex', alignItems:'flex-start', gap:'10px', marginTop:'10px', padding:'15px', background:'#f8fafc', borderRadius:'12px', border:'1px solid #e2e8f0'}}>
+                                  <input type="checkbox" id="termsCheck" checked={formData.terms_accepted} onChange={(e) => setFormData({...formData, terms_accepted: e.target.checked})} style={{marginTop:'3px', width:'18px', height:'18px', cursor:'pointer', accentColor:'#6366f1'}}/>
+                                  <label htmlFor="termsCheck" style={{fontSize:'0.8rem', color:'#64748b', lineHeight:'1.4', cursor:'pointer'}}>
+                                      I AM AGREE WITH ALL TERMS AND CONDITIONS OF THIS WEBSITE 1 PLACE 2 SERVICES. 3 USERS. I AM AGREED WITH ALL OF THEM.
+                                  </label>
+                              </div>
 
-            <div className="user-main-view hide-scrollbar">
+                              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" style={submitBtn}>
+                                  {editMode ? 'Save Profile' : 'Create User'}
+                              </motion.button>
+                          </form>
+                      </motion.div>
+                  </div>
+              )}
+          </AnimatePresence>
 
-                {/* 🔥 HERO HEADER */}
-                <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{duration: 0.6}} className="user-header-wrap">
-                    <div>
-                        <h1 className="responsive-title" style={{ fontWeight: '900', letterSpacing: '-1.5px', margin: 0, lineHeight: '1.1', background: 'linear-gradient(to right, #0f172a, #334155)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display:'flex', alignItems:'center', gap:'15px' }}>
-                            User Management <span style={{fontSize:'1.5rem'}}>✨</span>
-                        </h1>
-                        <p style={{ color: '#64748b', fontSize: '1.1rem', marginTop: '8px', fontWeight: '500' }}>Orchestrate your team's access and permissions.</p>
-                    </div>
-                    <div style={{display:'flex', gap:'15px', flexWrap:'wrap', justifyContent:'flex-start'}}>
-                         <motion.button 
-                            whileHover={{ scale: 1.05 }} 
-                            whileTap={{ scale: 0.95 }} 
-                            onClick={() => selectedUserIds.length > 0 ? setIsBulkDeleteOpen(true) : toast("Select users first", {icon: '⚠️'})} 
-                            style={{...secondaryBtn, opacity: selectedUserIds.length > 0 ? 1 : 0.5, border: selectedUserIds.length > 0 ? '1px solid #ef4444' : 'none', color: selectedUserIds.length > 0 ? '#ef4444' : '#94a3b8'}}
-                        >
-                            <Trash2 size={18}/> Bulk Actions
-                        </motion.button>
-                        <motion.button 
-                            whileHover={{ scale: 1.05, boxShadow: '0 20px 40px -10px rgba(79, 70, 229, 0.5)' }} 
-                            whileTap={{ scale: 0.95 }} 
-                            onClick={() => openForm()} 
-                            style={primaryBtn}
-                        >
-                            <div style={{background:'rgba(255,255,255,0.2)', padding:'8px', borderRadius:'10px'}}><UserPlus size={22}/></div>
-                            <span>Add New User</span>
-                        </motion.button>
-                    </div>
-                </motion.div>
+          {/* VIEW MODAL (UPDATED) */}
+          <AnimatePresence>
+              {isViewOpen && selectedUser && (
+                  <div style={overlay}>
+                      <motion.div initial={{ y: 50, opacity: 0, scale:0.9 }} animate={{ y: 0, opacity: 1, scale:1 }} exit={{ y: 50, opacity: 0, scale:0.9 }} style={{...modal, width:'500px', padding:'0', overflow:'hidden', border:'none'}} className="responsive-modal">
+                          <div style={{background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)', padding:'40px 30px', textAlign:'center', color:'white', position:'relative'}}>
+                              <motion.button whileHover={{ rotate: 90 }} onClick={closeView} style={{position:'absolute', top:'15px', right:'15px', background:'rgba(255,255,255,0.2)', border:'none', color:'white', borderRadius:'50%', width:'36px', height:'36px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center'}}><X size={20}/></motion.button>
+                              <div style={{ width: '90px', height: '90px', borderRadius: '24px', background: 'rgba(255,255,255,0.25)', margin: '0 auto 15px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: '800' }}>{selectedUser.full_name?.charAt(0).toUpperCase()}</div>
+                              <h2 style={{fontSize:'1.8rem', margin:0, fontWeight:'800'}}>{selectedUser.full_name}</h2>
+                              <p style={{fontSize:'1rem', opacity:0.9, marginTop:'5px'}}>{selectedUser.email}</p>
+                          </div>
+                          <div style={{padding:'35px', maxHeight:'50vh', overflowY:'auto'}} className="hide-scrollbar">
+                              <DetailRow icon={<Shield size={20}/>} label="Role" value={selectedUser.role} />
+                              <DetailRow icon={<Briefcase size={20}/>} label="Post Type" value={selectedUser.post_nature || "N/A"} />
+                              <DetailRow icon={<Home size={20}/>} label="Work Group" value={selectedUser.working_group || "N/A"} />
+                              <DetailRow icon={<GraduationCap size={20}/>} label="Qualification" value={selectedUser.highest_qualification || "N/A"} />
+                              <DetailRow icon={<User size={20}/>} label="Father's Name" value={selectedUser.father_name || "N/A"} />
+                              <DetailRow icon={<Phone size={20}/>} label="Contact" value={selectedUser.phone || "N/A"} />
+                          </div>
+                      </motion.div>
+                  </div>
+              )}
+          </AnimatePresence>
 
-                {/* 🔍 FLOATING SEARCH & FILTERS */}
-                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }} style={{ marginBottom: '35px', display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-                    <div style={{ position: 'relative', flex: 2, minWidth: '250px' }}>
-                        <div style={{position:'absolute', left:'25px', top:'50%', transform:'translateY(-50%)', color:'#6366f1', filter:'drop-shadow(0 0 8px rgba(99,102,241,0.3))'}}>
-                            <Search size={22} strokeWidth={2.5} />
-                        </div>
-                        <input 
-                            placeholder="Search by name or email..." 
-                            style={searchBar} 
-                            value={searchTerm} 
-                            onChange={(e) => setSearchTerm(e.target.value)} 
-                        />
-                    </div>
-                    
-                    <div className="filter-group">
-                        <div className="select-wrapper">
-                             <Filter size={16} className="select-icon" />
-                             <select style={filterSelect} value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
-                                 <option value="ALL">All Roles</option>
-                                 <option value="SUPER_ADMIN">Super Admin</option>
-                                 <option value="SCHOOL_ADMIN">School Admin</option>
-                                 <option value="STAFF">Staff</option>
-                                 <option value="TEACHER">Teacher</option>
-                             </select>
-                        </div>
-                        <div className="select-wrapper">
-                             <MapPin size={16} className="select-icon" />
-                             <select style={filterSelect} value={filterLocation} onChange={(e) => setFilterLocation(e.target.value)}>
-                                 <option value="ALL">All Locations</option>
-                                 <option value="Global">Global HQ</option>
-                                 <option value="Delhi Branch">Delhi Branch</option>
-                                 <option value="Mumbai Branch">Mumbai Branch</option>
-                             </select>
-                        </div>
-                    </div>
-                </motion.div>
+          {/* STATUS & DELETE MODALS SAME AS BEFORE */}
+          <AnimatePresence>{isStatusModalOpen && userToToggle && (<div style={overlay}><motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{...modal, width:'420px', textAlign:'center', borderTop: `6px solid ${statusAction === 'HIBERNATE' ? '#8b5cf6' : '#10b981'}`}}><h2 style={{fontSize:'1.6rem', fontWeight:'800', color:'#1e293b'}}>Confirm {statusAction === 'HIBERNATE' ? 'Hibernate' : 'Activate'}?</h2><div style={{display:'flex', gap:'15px', justifyContent:'center', marginTop:'20px'}}><motion.button onClick={() => setIsStatusModalOpen(false)} style={secondaryBtn}>Cancel</motion.button><motion.button onClick={confirmStatusToggle} style={{...deleteBtnStyle, background: statusAction === 'HIBERNATE' ? '#8b5cf6' : '#10b981'}}>Confirm</motion.button></div></motion.div></div>)}</AnimatePresence>
+          <AnimatePresence>{isDeleteModalOpen && (<div style={overlay}><motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{...modal, width:'400px', textAlign:'center', borderTop:'6px solid #ef4444'}}><div style={{width:'70px', height:'70px', background:'#fee2e2', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', color:'#ef4444'}}><AlertTriangle size={32} /></div><h2 style={{fontSize:'1.6rem', fontWeight:'800'}}>Delete User?</h2><div style={{display:'flex', gap:'15px', justifyContent:'center', marginTop:'20px'}}><motion.button onClick={() => setIsDeleteModalOpen(false)} style={secondaryBtn}>Cancel</motion.button><motion.button onClick={confirmDelete} style={deleteBtnStyle}>Yes, Delete</motion.button></div></motion.div></div>)}</AnimatePresence>
 
-                {/* 📋 TABULAR DATA AREA */}
-                <div className="table-responsive-wrapper hide-scrollbar" style={{ flex: 1 }}>
-                    <table className="modern-table">
-                        <thead>
-                            <tr>
-                                <th style={{width: '30%'}}>
-                                    <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
-                                        <input type="checkbox" onChange={handleSelectAll} checked={currentUsers.length > 0 && selectedUserIds.length === currentUsers.length} style={checkboxStyle}/> 
-                                        User Profile
-                                    </div>
-                                </th>
-                                <th style={{width: '15%'}}>Role</th>
-                                <th style={{width: '25%'}}>Contact Info</th>
-                                <th style={{width: '15%'}}>Status</th>
-                                <th style={{width: '15%', textAlign: 'right', paddingRight: '30px'}}>Actions</th>
-                            </tr>
-                        </thead>
-                        <AnimatePresence>
-                            <motion.tbody variants={containerVariants} initial="hidden" animate="show">
-                                {loading ? <tr><td colSpan="5"><div style={emptyState}>Loading Data...</div></td></tr> : 
-                                 currentUsers.length === 0 ? <tr><td colSpan="5"><div style={emptyState}>No users found matching filters.</div></td></tr> :
-                                 currentUsers.map((user, i) => {
-                                    const theme = ROLE_THEMES[user.role] || ROLE_THEMES.STAFF;
-                                    const avatarBg = AVATAR_GRADIENTS[i % AVATAR_GRADIENTS.length];
-                                    
-                                    // Status Logic
-                                    let statusColor = '#10b981'; 
-                                    let statusBg = '#dcfce7';
-                                    let StatusIcon = CheckCircle;
-                                    let statusText = "Active";
-
-                                    if(user.account_status === 'HIBERNATE') {
-                                        statusColor = '#8b5cf6'; 
-                                        statusBg = '#f3e8ff';
-                                        StatusIcon = Moon;
-                                        statusText = "Hibernated";
-                                    } else if (!user.is_active || user.account_status === 'INACTIVE') {
-                                        statusColor = '#ef4444'; 
-                                        statusBg = '#fee2e2';
-                                        StatusIcon = XCircle;
-                                        statusText = "Inactive";
-                                    }
-
-                                    const isSelected = selectedUserIds.includes(user.id);
-
-                                    return (
-                                        <motion.tr 
-                                            key={user.id} 
-                                            variants={cardVariants}
-                                            whileHover={{ y: -4, scale: 1.005, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.1)' }}
-                                            className="table-row"
-                                        >
-                                            {/* Profile Cell */}
-                                            <td style={{ borderLeft: theme.border, background: isSelected ? '#f8fafc' : 'white' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                                    <input type="checkbox" checked={isSelected} onChange={() => handleSelectUser(user.id)} style={checkboxStyle}/>
-                                                    <div style={{ ...avatar, background: avatarBg, position:'relative' }}>
-                                                        {user.full_name?.charAt(0).toUpperCase()}
-                                                        {user.is_disguised && <div style={{position:'absolute', bottom:'-5px', right:'-5px', background:'#f59e0b', color:'white', borderRadius:'50%', padding:'2px'}} title="Disguised Account"><Sparkles size={12}/></div>}
-                                                    </div>
-                                                    <div>
-                                                        <div style={{ fontWeight: '800', color: '#1e293b', fontSize: '1.05rem', display:'flex', alignItems:'center', gap:'8px' }}>
-                                                            {user.full_name} 
-                                                        </div>
-                                                        <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600', marginTop:'2px', display:'flex', alignItems:'center', gap:'8px' }}>
-                                                            <Shield size={10} color={theme.color}/> ID: #{user.id.toString().padStart(4, '0')}
-                                                            <span style={{color:'#cbd5e1'}}>|</span>
-                                                            <MapPin size={10}/> {user.location || "Global"}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-
-                                            {/* Role Badge Cell */}
-                                            <td style={{ background: isSelected ? '#f8fafc' : 'white' }}>
-                                                <span style={{ 
-                                                    ...badge, 
-                                                    background: theme.badgeBg, 
-                                                    color: theme.badgeText, 
-                                                    border: `1px solid ${theme.color}30` 
-                                                }}>
-                                                    {user.role ? user.role.replace('_', ' ') : 'STAFF'}
-                                                </span>
-                                            </td>
-
-                                            {/* Contact Info Cell */}
-                                            <td style={{ background: isSelected ? '#f8fafc' : 'white' }}>
-                                                <div style={{display:'flex', flexDirection:'column', gap:'4px'}}>
-                                                    <div style={{ color: '#475569', fontWeight: '600', fontSize: '0.9rem', display:'flex', alignItems:'center', gap:'10px' }}>
-                                                        <Mail size={14} color="#64748b"/> {user.email}
-                                                    </div>
-                                                    {user.phone && (
-                                                        <div style={{ color: '#64748b', fontSize: '0.85rem', display:'flex', alignItems:'center', gap:'10px' }}>
-                                                            <Smartphone size={14} color="#94a3b8"/> {user.phone}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </td>
-
-                                            {/* Status Badge Cell */}
-                                            <td style={{ background: isSelected ? '#f8fafc' : 'white' }}>
-                                                <span style={{...statusBadge, color: statusColor, background: statusBg}}>
-                                                    <StatusIcon size={14}/> {statusText}
-                                                </span>
-                                            </td>
-
-                                            {/* Actions Cell */}
-                                            <td style={{ background: isSelected ? '#f8fafc' : 'white', textAlign: 'right', paddingRight: '30px' }}>
-                                                <div className="user-actions-wrap" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                                                    <motion.button whileHover={{ scale: 1.15 }} onClick={() => handleStatusToggleClick(user)} style={{...actionBtn, color: user.account_status === 'HIBERNATE' ? '#10b981' : '#8b5cf6', background:'#f3f4f6'}} title={user.account_status === 'HIBERNATE' ? "Activate" : "Hibernate"}>
-                                                        <Power size={18} />
-                                                    </motion.button>
-                                                    <motion.button whileHover={{ scale: 1.15 }} onClick={() => openView(user)} style={{...actionBtn, color: '#3b82f6', background:'#eff6ff'}} title="View">
-                                                        <Eye size={18} />
-                                                    </motion.button>
-                                                    <motion.button whileHover={{ scale: 1.15 }} onClick={() => openForm(user)} style={{...actionBtn, color: '#f59e0b', background:'#fffbeb'}} title="Edit">
-                                                        <Edit3 size={18} />
-                                                    </motion.button>
-                                                    <motion.button whileHover={{ scale: 1.15 }} onClick={() => initiateDelete(user.id)} style={{...actionBtn, color: '#ef4444', background:'#fef2f2'}} title="Delete">
-                                                        <Trash2 size={18} />
-                                                    </motion.button>
-                                                </div>
-                                            </td>
-                                        </motion.tr>
-                                    );
-                                })}
-                            </motion.tbody>
-                        </AnimatePresence>
-                    </table>
-                </div>
-
-                {/* PAGINATION */}
-                {filteredUsers.length > itemsPerPage && (
-                    <div style={{ paddingTop: '20px', display: 'flex', justifyContent: 'center', gap: '15px' }}>
-                        <motion.button whileHover={{scale:1.1}} disabled={currentPage===1} onClick={()=>paginate(currentPage-1)} style={pageBtn}><ChevronLeft size={20}/></motion.button>
-                        <span style={{padding:'10px 24px', background:'white', borderRadius:'14px', fontWeight:'800', color:'#0f172a', boxShadow:'0 4px 10px rgba(0,0,0,0.05)', display:'flex', alignItems:'center'}}>{currentPage} <span style={{color:'#cbd5e1', margin:'0 8px'}}>/</span> {totalPages}</span>
-                        <motion.button whileHover={{scale:1.1}} disabled={currentPage===totalPages} onClick={()=>paginate(currentPage+1)} style={pageBtn}><ChevronRight size={20}/></motion.button>
-                    </div>
-                )}
-            </div>
-
-            {/* 🛠️ GLASS MODAL - FORM */}
-            <AnimatePresence>
-                {isFormOpen && (
-                    <div style={overlay}>
-                        <motion.div 
-                            initial={{ scale: 0.9, opacity: 0, y: 30 }} 
-                            animate={{ scale: 1, opacity: 1, y: 0 }} 
-                            exit={{ scale: 0.9, opacity: 0, y: 30 }} 
-                            transition={{type:'spring', duration:0.5}}
-                            style={modal}
-                            className="responsive-modal"
-                        >
-                            <div style={modalHeader}>
-                                <div>
-                                    <h2 style={{fontSize:'1.8rem', fontWeight:'900', color:'#0f172a', margin:0, letterSpacing:'-0.5px'}}>{editMode ? 'Edit User' : 'New User'}</h2>
-                                    <p style={{fontSize:'0.95rem', color:'#64748b', marginTop:'5px'}}>Enter account details below.</p>
-                                </div>
-                                <motion.button whileHover={{ rotate: 90, background:'#e2e8f0' }} onClick={closeForm} style={closeBtn}><X size={22} /></motion.button>
-                            </div>
-                            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxHeight:'65vh', overflowY:'auto', paddingRight:'5px' }} className="hide-scrollbar">
-                                <div style={inputGroup}>
-                                    <label style={labelStyle}>Full Name</label>
-                                    <input required placeholder="e.g. John Doe" value={formData.full_name} onChange={e => setFormData({ ...formData, full_name: e.target.value })} style={input} />
-                                </div>
-                                <div className="user-form-split">
-                                    <div style={inputGroup}>
-                                        <label style={labelStyle}>Email Address</label>
-                                        <input required type="email" placeholder="john@example.com" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} style={input} />
-                                    </div>
-                                    <div style={inputGroup}>
-                                        <label style={labelStyle}>Phone Number</label>
-                                        <input type="text" placeholder="+91 98765..." value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} style={input} />
-                                    </div>
-                                </div>
-                                
-                                <div className="user-form-split-flex">
-                                    <div style={{flex:1}}>
-                                        <label style={labelStyle}>Role Assignment</label>
-                                        <div style={{position:'relative'}}>
-                                            <select value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} style={{...input, appearance:'none'}}>
-                                                <option value="SUPER_ADMIN">Super Admin</option>
-                                                <option value="SCHOOL_ADMIN">School Admin</option>
-                                                <option value="STAFF">Staff</option>
-                                                <option value="AGENT">Agent</option>
-                                                <option value="TEACHER">Teacher</option>
-                                            </select>
-                                            <ChevronLeft size={16} style={{position:'absolute', right:'15px', top:'50%', transform:'translateY(-50%) rotate(-90deg)', pointerEvents:'none', color:'#64748b'}}/>
-                                        </div>
-                                    </div>
-                                    <div style={{flex:1}}>
-                                        <label style={labelStyle}>Account Status</label>
-                                        <div style={{position:'relative'}}>
-                                            <select value={formData.account_status} onChange={e => setFormData({ ...formData, account_status: e.target.value })} style={{...input, appearance:'none'}}>
-                                                <option value="ACTIVE">Active</option>
-                                                <option value="INACTIVE">Inactive</option>
-                                                <option value="HIBERNATE">Hibernate</option>
-                                            </select>
-                                            <ChevronLeft size={16} style={{position:'absolute', right:'15px', top:'50%', transform:'translateY(-50%) rotate(-90deg)', pointerEvents:'none', color:'#64748b'}}/>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="user-form-split-flex">
-                                     <div style={{flex:1}}>
-                                        <label style={labelStyle}>Location/Branch</label>
-                                        <div style={{position:'relative'}}>
-                                            <select value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} style={{...input, appearance:'none'}}>
-                                                <option value="Global">Global HQ</option>
-                                                <option value="Delhi Branch">Delhi Branch</option>
-                                                <option value="Mumbai Branch">Mumbai Branch</option>
-                                            </select>
-                                            <ChevronLeft size={16} style={{position:'absolute', right:'15px', top:'50%', transform:'translateY(-50%) rotate(-90deg)', pointerEvents:'none', color:'#64748b'}}/>
-                                        </div>
-                                    </div>
-                                    <div style={{flex:1}}>
-                                        <label style={labelStyle}>Validity (Days)</label>
-                                        <input type="number" min="1" value={formData.validity_days} onChange={e => setFormData({ ...formData, validity_days: parseInt(e.target.value) })} style={input} />
-                                    </div>
-                                </div>
-
-                                <div style={{display:'flex', alignItems:'center', gap:'10px', background:'#f8fafc', padding:'15px', borderRadius:'16px', border:'1px solid #e2e8f0'}}>
-                                    <input type="checkbox" id="disguised" checked={formData.is_disguised} onChange={e => setFormData({...formData, is_disguised: e.target.checked})} style={{width:'18px', height:'18px', cursor:'pointer'}}/>
-                                    <label htmlFor="disguised" style={{fontSize:'0.95rem', color:'#334155', fontWeight:'600', cursor:'pointer', flex:1}}>Make this a Disguised ID / Sub-ID</label>
-                                    <Sparkles size={18} color="#f59e0b"/>
-                                </div>
-
-                                {!editMode && (
-                                    <div style={inputGroup}>
-                                        <label style={labelStyle}>Secure Password</label>
-                                        <input required type="password" placeholder="••••••••" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} style={input} />
-                                    </div>
-                                )}
-
-                                <motion.button whileHover={{ scale: 1.02, boxShadow:'0 15px 30px -10px rgba(79, 70, 229, 0.6)' }} whileTap={{ scale: 0.98 }} type="submit" style={submitBtn}>
-                                    {editMode ? 'Save Changes' : 'Create Account'}
-                                </motion.button>
-                            </form>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            {/* 👁️ GLASS MODAL - VIEW */}
-            <AnimatePresence>
-                {isViewOpen && selectedUser && (
-                    <div style={overlay}>
-                        <motion.div 
-                            initial={{ y: 50, opacity: 0, scale:0.9 }} animate={{ y: 0, opacity: 1, scale:1 }} exit={{ y: 50, opacity: 0, scale:0.9 }} 
-                            style={{...modal, width:'450px', padding:'0', overflow:'hidden', border:'none'}}
-                            className="responsive-modal"
-                        >
-                            <div style={{background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)', padding:'40px 30px', textAlign:'center', color:'white', position:'relative'}}>
-                                <motion.button 
-                                    whileHover={{ rotate: 90, scale: 1.1, background: 'rgba(255,255,255,0.4)' }} 
-                                    whileTap={{ scale: 0.9 }} 
-                                    onClick={closeView} 
-                                    style={{
-                                        position:'absolute', top:'15px', right:'15px', 
-                                        background:'rgba(255,255,255,0.2)', border:'1px solid rgba(255,255,255,0.3)',
-                                        color:'white', borderRadius:'50%', width:'36px', height:'36px', 
-                                        cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center',
-                                        backdropFilter:'blur(4px)', zIndex:10
-                                    }}
-                                >
-                                    <X size={20} strokeWidth={2.5}/>
-                                </motion.button>
-
-                                <div style={{ width: '90px', height: '90px', borderRadius: '24px', background: 'rgba(255,255,255,0.25)', margin: '0 auto 15px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: '800', backdropFilter:'blur(10px)', border:'1px solid rgba(255,255,255,0.4)', boxShadow:'0 15px 30px rgba(0,0,0,0.2)', position:'relative' }}>
-                                    {selectedUser.full_name?.charAt(0).toUpperCase()}
-                                    {selectedUser.is_disguised && <div style={{position:'absolute', bottom:'-5px', right:'-5px', background:'#f59e0b', borderRadius:'50%', padding:'5px', boxShadow:'0 4px 10px rgba(0,0,0,0.2)'}}><Sparkles size={16}/></div>}
-                                </div>
-                                <h2 style={{fontSize:'1.8rem', margin:0, fontWeight:'800'}}>{selectedUser.full_name}</h2>
-                                <p style={{fontSize:'1rem', opacity:0.9, marginTop:'5px', fontWeight:'500'}}>{selectedUser.email}</p>
-                            </div>
-
-                            <div style={{padding:'35px', maxHeight:'50vh', overflowY:'auto'}} className="hide-scrollbar">
-                                <DetailRow icon={<Shield size={20}/>} label="Assigned Role" value={selectedUser.role.replace('_', ' ')} />
-                                <DetailRow icon={<User size={20}/>} label="System ID" value={`#${selectedUser.id}`} />
-                                <DetailRow icon={<MapPin size={20}/>} label="Location" value={selectedUser.location || "Global"} />
-                                <DetailRow icon={<Smartphone size={20}/>} label="Phone" value={selectedUser.phone || "N/A"} />
-                                <DetailRow icon={<CalendarClock size={20}/>} label="Validity" value={`${selectedUser.validity_days || 365} Days`} />
-                                <DetailRow icon={<Calendar size={20}/>} label="Date Joined" value={new Date(selectedUser.date_joined).toLocaleDateString()} />
-                                <DetailRow 
-                                    icon={selectedUser.account_status === 'ACTIVE' ? <CheckCircle size={20} color="#10b981"/> : <Moon size={20} color="#8b5cf6"/>} 
-                                    label="Current Status" 
-                                    value={selectedUser.account_status} 
-                                    color={selectedUser.account_status === 'ACTIVE' ? "#10b981" : "#8b5cf6"}
-                                />
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            {/* 🚀 CUSTOM STATUS TOGGLE CONFIRMATION MODAL */}
-            <AnimatePresence>
-                {isStatusModalOpen && userToToggle && (
-                    <div style={overlay}>
-                        <motion.div 
-                            initial={{ scale: 0.9, opacity: 0 }} 
-                            animate={{ scale: 1, opacity: 1 }} 
-                            exit={{ scale: 0.9, opacity: 0 }} 
-                            style={{
-                                ...modal, width:'420px', textAlign:'center', 
-                                borderTop: `6px solid ${statusAction === 'HIBERNATE' ? '#8b5cf6' : '#10b981'}`, 
-                                borderRadius:'24px'
-                            }}
-                            className="responsive-modal"
-                        >
-                            <div style={{
-                                width:'70px', height:'70px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', 
-                                background: statusAction === 'HIBERNATE' ? '#f3e8ff' : '#dcfce7',
-                                color: statusAction === 'HIBERNATE' ? '#8b5cf6' : '#10b981'
-                            }}>
-                                <Power size={32} />
-                            </div>
-                            <h2 style={{fontSize:'1.6rem', fontWeight:'800', color:'#1e293b', marginBottom:'10px'}}>
-                                {statusAction === 'HIBERNATE' ? 'Hibernate User?' : 'Activate User?'}
-                            </h2>
-                            <p style={{color:'#64748b', fontSize:'0.95rem', marginBottom:'30px', lineHeight:'1.5'}}>
-                                {statusAction === 'HIBERNATE' 
-                                    ? `Are you sure you want to hibernate ${userToToggle.full_name}? If this is your own account, you will be logged out instantly.`
-                                    : `Are you sure you want to activate ${userToToggle.full_name}'s account? They will regain access to the system.`}
-                            </p>
-                            <div style={{display:'flex', gap:'15px', justifyContent:'center'}}>
-                                <motion.button whileHover={{scale:1.05}} onClick={() => setIsStatusModalOpen(false)} style={{...secondaryBtn, flex:1}}>
-                                    Cancel
-                                </motion.button>
-                                <motion.button 
-                                    whileHover={{scale:1.05}} 
-                                    onClick={confirmStatusToggle} 
-                                    style={{
-                                        ...deleteBtnStyle, flex:1, 
-                                        background: statusAction === 'HIBERNATE' ? 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                        boxShadow: statusAction === 'HIBERNATE' ? '0 10px 20px -5px rgba(139, 92, 246, 0.4)' : '0 10px 20px -5px rgba(16, 185, 129, 0.4)'
-                                    }}
-                                >
-                                    Yes, {statusAction === 'HIBERNATE' ? 'Hibernate' : 'Activate'}
-                                </motion.button>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            {/* 🗑️ SINGLE DELETE CONFIRMATION MODAL */}
-            <AnimatePresence>
-                {isDeleteModalOpen && (
-                    <div style={overlay}>
-                        <motion.div 
-                            initial={{ scale: 0.9, opacity: 0 }} 
-                            animate={{ scale: 1, opacity: 1 }} 
-                            exit={{ scale: 0.9, opacity: 0 }} 
-                            style={{...modal, width:'400px', textAlign:'center', borderTop:'6px solid #ef4444', borderRadius:'24px'}}
-                            className="responsive-modal"
-                        >
-                            <div style={{width:'70px', height:'70px', background:'#fee2e2', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', color:'#ef4444'}}>
-                                <AlertTriangle size={32} />
-                            </div>
-                            <h2 style={{fontSize:'1.6rem', fontWeight:'800', color:'#1e293b', marginBottom:'10px'}}>Delete User?</h2>
-                            <p style={{color:'#64748b', fontSize:'0.95rem', marginBottom:'30px', lineHeight:'1.5'}}>
-                                This action cannot be undone. All data associated with this user will be permanently removed.
-                            </p>
-                            <div style={{display:'flex', gap:'15px', justifyContent:'center'}}>
-                                <motion.button whileHover={{scale:1.05}} onClick={() => setIsDeleteModalOpen(false)} style={{...secondaryBtn, flex:1}}>
-                                    Cancel
-                                </motion.button>
-                                <motion.button whileHover={{scale:1.05}} onClick={confirmDelete} style={{...deleteBtnStyle, flex:1}}>
-                                    Yes, Delete
-                                </motion.button>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            {/* 🗑️ BULK DELETE CONFIRMATION MODAL */}
-            <AnimatePresence>
-                {isBulkDeleteOpen && (
-                    <div style={overlay}>
-                        <motion.div 
-                            initial={{ scale: 0.9, opacity: 0 }} 
-                            animate={{ scale: 1, opacity: 1 }} 
-                            exit={{ scale: 0.9, opacity: 0 }} 
-                            style={{...modal, width:'450px', textAlign:'center', borderTop:'6px solid #ef4444', borderRadius:'24px'}}
-                            className="responsive-modal"
-                        >
-                            <div style={{width:'70px', height:'70px', background:'#fee2e2', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', color:'#ef4444'}}>
-                                <Users size={32} />
-                            </div>
-                            <h2 style={{fontSize:'1.6rem', fontWeight:'800', color:'#1e293b', marginBottom:'10px'}}>Bulk Delete Users?</h2>
-                            <p style={{color:'#64748b', fontSize:'0.95rem', marginBottom:'30px', lineHeight:'1.5'}}>
-                                You are about to permanently delete <strong>{selectedUserIds.length}</strong> users. This action cannot be undone.
-                            </p>
-                            <div style={{display:'flex', gap:'15px', justifyContent:'center'}}>
-                                <motion.button whileHover={{scale:1.05}} onClick={() => setIsBulkDeleteOpen(false)} style={{...secondaryBtn, flex:1}}>
-                                    Cancel
-                                </motion.button>
-                                <motion.button whileHover={{scale:1.05}} onClick={handleBulkDelete} style={{...deleteBtnStyle, flex:1}}>
-                                    Delete {selectedUserIds.length} Users
-                                </motion.button>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            {/* 🔥 CSS FOR RESPONSIVENESS AND ANIMATIONS */}
-            <style>{`
-                .hide-scrollbar::-webkit-scrollbar { display: none; }
-                @keyframes ping {
-                    75%, 100% { transform: scale(2); opacity: 0; }
-                }
-
-                /* 💻 DESKTOP CLASSES */
-                .user-main-view { flex: 1; margin-left: 280px; padding: 40px; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; box-sizing: border-box; transition: all 0.3s ease; }
-                .user-header-wrap { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 20px;}
-                .responsive-title { font-size: 3rem; }
-                
-                .user-form-split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-                .user-form-split-flex { display: flex; gap: 20px; }
-                .filter-group { display: flex; gap: 10px; flex-wrap: wrap; flex: 1;}
-                .select-wrapper { position: relative; flex: 1; min-width: 150px; }
-                .select-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none;}
-
-                /* ✅ TRUE TABULAR TABLE STYLES (NO UI CHANGE) */
-                .table-responsive-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-                .modern-table { width: 100%; border-collapse: separate; border-spacing: 0 15px; min-width: 1000px; margin-top: -15px; }
-                .modern-table th { padding: 0 30px; text-align: left; color: #94a3b8; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; border: none; white-space: nowrap; }
-                .modern-table td { padding: 22px 30px; vertical-align: middle; background: inherit; border-top: 1px solid transparent; border-bottom: 1px solid transparent; }
-                
-                /* Fake Border Radius for Table Rows to match exact card UI */
-                .table-row { transition: all 0.3s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); background: white; cursor: default; }
-                .table-row td:first-child { border-top-left-radius: 24px; border-bottom-left-radius: 24px; }
-                .table-row td:last-child { border-top-right-radius: 24px; border-bottom-right-radius: 24px; }
-                
-
-                /* 📱 MOBILE RESPONSIVE STYLES */
-                @media (max-width: 850px) {
-                    .user-main-view {
-                        margin-left: 0 !important;
-                        padding: 15px !important;
-                        padding-top: 90px !important;
-                        width: 100% !important;
-                    }
-                    .user-header-wrap { flex-direction: column; align-items: flex-start; gap: 15px; }
-                    .user-header-wrap > div:last-child { width: 100%; display: grid; grid-template-columns: 1fr; gap:10px; }
-                    .user-header-wrap button { width: 100%; justify-content: center; }
-                    .responsive-title { font-size: 2.2rem !important; }
-                    
-                    /* Form stacking */
-                    .user-form-split { grid-template-columns: 1fr !important; }
-                    .user-form-split-flex { flex-direction: column !important; gap: 20px; }
-                    
-                    /* Modals fitting screen */
-                    .responsive-modal { width: 95% !important; padding: 25px !important; }
-                    
-                    .filter-group { flex-direction: column; width: 100%; }
-                }
-            `}</style>
-        </div>
-    );
+          <style>{`
+              .hide-scrollbar::-webkit-scrollbar { display: none; }
+              .user-main-view { flex: 1; margin-left: 280px; padding: 40px; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; }
+              .user-header-wrap { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 20px;}
+              .responsive-title { font-size: 3rem; }
+              .user-form-split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+              .user-form-split-flex { display: flex; gap: 20px; }
+              .filter-group { display: flex; gap: 10px; flex-wrap: wrap; flex: 1;}
+              .select-wrapper { position: relative; flex: 1; min-width: 150px; }
+              .select-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none;}
+              .table-responsive-wrapper { width: 100%; overflow-x: auto; }
+              .modern-table { width: 100%; border-collapse: separate; border-spacing: 0 15px; min-width: 1000px; margin-top: -15px; }
+              .modern-table th { padding: 0 30px; text-align: left; color: #94a3b8; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; border: none; }
+              .modern-table td { padding: 22px 30px; vertical-align: middle; background: inherit; }
+              .table-row { transition: all 0.3s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); background: white; cursor: default; }
+              .table-row td:first-child { border-top-left-radius: 24px; border-bottom-left-radius: 24px; }
+              .table-row td:last-child { border-top-right-radius: 24px; border-bottom-right-radius: 24px; }
+              @media (max-width: 850px) {
+                  .user-main-view { margin-left: 0 !important; padding: 15px !important; padding-top: 90px !important; width: 100% !important; }
+                  .user-header-wrap { flex-direction: column; align-items: flex-start; gap: 15px; }
+                  .user-form-split { grid-template-columns: 1fr !important; }
+                  .responsive-modal { width: 95% !important; padding: 25px !important; }
+              }
+          `}</style>
+      </div>
+  );
 }
 
 // ✨ ULTRA PREMIUM STYLES
 const DetailRow = ({ icon, label, value, color }) => (
-    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'16px 0', borderBottom:'1px dashed #e2e8f0'}}>
-        <div style={{display:'flex', alignItems:'center', gap:'14px', color:'#64748b', fontSize:'1rem', fontWeight:'600'}}>
-            <div style={{background:'#f8fafc', padding:'8px', borderRadius:'10px', color:'#94a3b8'}}>{icon}</div>
-            {label}
-        </div>
-        <div style={{fontWeight:'800', color: color || '#1e293b', fontSize:'1rem'}}>{value}</div>
-    </div>
+  <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'16px 0', borderBottom:'1px dashed #e2e8f0'}}>
+      <div style={{display:'flex', alignItems:'center', gap:'14px', color:'#64748b', fontSize:'1rem', fontWeight:'600'}}>
+          <div style={{background:'#f8fafc', padding:'8px', borderRadius:'10px', color:'#94a3b8'}}>{icon}</div>
+          {label}
+      </div>
+      <div style={{fontWeight:'800', color: color || '#1e293b', fontSize:'1rem'}}>{value}</div>
+  </div>
 );
 
 const overlay = { position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(12px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' };
-const modal = { background: 'white', padding: '40px', borderRadius: '32px', width: '550px', maxWidth: '90%', boxShadow: '0 40px 80px -20px rgba(0,0,0,0.3)', position:'relative', border:'1px solid white' };
+const modal = { background: 'white', padding: '40px', borderRadius: '32px', width: '600px', maxWidth: '90%', boxShadow: '0 40px 80px -20px rgba(0,0,0,0.3)', position:'relative', border:'1px solid white' };
 const modalHeader = { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '30px' };
+const sectionTitle = { color: '#6366f1', fontSize: '0.9rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '15px', marginTop: '25px', borderBottom: '1px dashed #cbd5e1', paddingBottom: '5px' };
 const primaryBtn = { background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', color: 'white', border: 'none', padding: '12px 28px', borderRadius: '18px', cursor: 'pointer', fontWeight: '700', fontSize: '1rem', display:'flex', gap:'12px', alignItems:'center', boxShadow:'0 10px 25px -10px rgba(79, 70, 229, 0.5)', transition: 'all 0.3s' };
 const secondaryBtn = { background: '#f1f5f9', color: '#475569', border: 'none', padding: '12px 20px', borderRadius: '14px', cursor: 'pointer', fontWeight: '700', fontSize: '1rem', display:'flex', alignItems:'center', gap:'8px', transition:'all 0.3s' };
 const deleteBtnStyle = { background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: 'white', border: 'none', padding: '14px 20px', borderRadius: '14px', cursor: 'pointer', fontWeight: '700', fontSize: '1rem', boxShadow: '0 10px 20px -5px rgba(239, 68, 68, 0.4)' };

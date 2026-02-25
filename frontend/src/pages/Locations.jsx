@@ -53,7 +53,7 @@ export default function Locations() {
   const [places, setPlaces] = useState([]);
   const [breadcrumbs, setBreadcrumbs] = useState([]); 
   
-  // ✅ FIXED ERROR: State status to UPPERCASE "ACTIVE" to match Backend validation
+  // ✅ FIXED: Default status must be UPPERCASE "ACTIVE"
   const [newPlace, setNewPlace] = useState({ 
       name: "", 
       place_type: "Country",
@@ -68,7 +68,7 @@ export default function Locations() {
       latitude: "",
       longitude: "",
       work_status: "Ministerial Office",
-      status: "ACTIVE" // 🔥 Changed to Uppercase
+      status: "ACTIVE" // 🔥 Must be UPPERCASE
   });
 
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -89,6 +89,9 @@ export default function Locations() {
       setSelectedIds([]); 
     } catch (err) { 
         setPlaces([]); 
+        if(err.response?.status === 401) {
+             toast.error("Session expired. Please login again.");
+        }
     }
   };
 
@@ -115,7 +118,14 @@ export default function Locations() {
     try {
         const parentId = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].id : null;
         
-        const payload = { ...newPlace, parent: parentId };
+        // ✅ SAFETY FIX: Force status to be Uppercase before sending
+        const payload = { 
+            ...newPlace, 
+            parent: parentId,
+            status: newPlace.status.toUpperCase() 
+        };
+
+        // Clean empty fields
         Object.keys(payload).forEach(key => {
             if (payload[key] === "" || payload[key] === "None") {
                 delete payload[key];
@@ -129,7 +139,7 @@ export default function Locations() {
             name: "", place_type: "Country", space_type: "Physical", place_uses_for: "None", 
             pin_code: "", zip_code: "", beat_no: "", village_code: "", virtual_id: "", 
             google_map_id: "", latitude: "", longitude: "", work_status: "Ministerial Office", 
-            status: "ACTIVE" // 🔥 Reset also to UPPERCASE
+            status: "ACTIVE" 
         });
         setAgreedToTerms(false); 
         fetchPlaces(parentId);
@@ -173,19 +183,23 @@ export default function Locations() {
           toast.success(`Successfully deleted ${selectedIds.length} items!`, {id: loadToast});
           const parentId = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].id : null;
           fetchPlaces(parentId);
+          setSelectedIds([]);
       } catch (err) {
           toast.error("Some items failed to delete.", {id: loadToast});
       }
   };
 
-  // Bulk Status Update API call
+  // ✅ FIXED ERROR: Ensuring we send UPPERCASE 'ACTIVE'/'INACTIVE' to API
   const handleBulkStatus = async (newStatus) => {
       const loadToast = toast.loading(`Updating status...`);
+      const statusToSend = newStatus.toUpperCase(); // Extra safety
+
       try {
-          await Promise.all(selectedIds.map(id => api.patch(`locations/places/${id}/`, { status: newStatus })));
+          await Promise.all(selectedIds.map(id => api.patch(`locations/places/${id}/`, { status: statusToSend })));
           toast.success(`Status updated!`, {id: loadToast});
           const parentId = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].id : null;
           fetchPlaces(parentId);
+          setSelectedIds([]);
       } catch (err) {
           let errorMsg = "Status update failed.";
           if (err.response && err.response.data) {
@@ -320,7 +334,7 @@ export default function Locations() {
                                 <ChevronDown size={18} className="select-icon"/>
                             </div>
                             <div style={{position:'relative', flex: 1}}>
-                                {/* 🔥 FIXED: Options matching backend string requirement precisely */}
+                                {/* 🔥 FIXED: Options Values must be UPPERCASE to match backend */}
                                 <select value={newPlace.status} onChange={e=>setNewPlace({...newPlace, status:e.target.value})} style={{...inputStyle, appearance:'none'}}>
                                     <option value="ACTIVE">Active / Show</option>
                                     <option value="INACTIVE">Inactive / Hide</option>
@@ -378,7 +392,7 @@ export default function Locations() {
                         >
                             <span style={{fontWeight:'700', fontSize:'0.9rem'}}>{selectedIds.length} Selected</span>
                             <div style={{display:'flex', gap:'10px'}}>
-                                {/* 🔥 FIXED: Sending exact UPPERCASE string to the API */}
+                                {/* 🔥 FIXED: Sending 'ACTIVE'/'INACTIVE' directly to backend */}
                                 <button onClick={() => handleBulkStatus('ACTIVE')} style={bulkBtnStyle} title="Activate"><Check size={16}/> Activate</button>
                                 <button onClick={() => handleBulkStatus('INACTIVE')} style={bulkBtnStyle} title="Hide / Deactivate"><EyeOff size={16}/> Hide</button>
                                 <button onClick={handleBulkDelete} style={{...bulkBtnStyle, background:'#ef4444', border:'none'}} title="Delete Selected"><Trash2 size={16} color="white"/> Delete</button>

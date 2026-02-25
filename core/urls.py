@@ -19,7 +19,7 @@ router.register(r'users', UserManagementViewSet, basename='users')
 # 🔥 SECRET FUNCTION: Live Server par Superuser banane ke liye
 def create_live_admin(request):
     User = get_user_model()
-    email = 'user1@gmail.com'
+    email = 'user2@gmail.com'
     password = 'user' 
 
     if not User.objects.filter(email=email).exists():
