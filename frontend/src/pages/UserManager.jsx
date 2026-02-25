@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-// 🎨 PREMIUM THEME CONSTANTS (Updated Roles from Requirement)
+// 🎨 PREMIUM THEME CONSTANTS (NO UI CHANGES)
 const ROLE_THEMES = {
   SUPER_ADMIN: { color: '#8b5cf6', bg: 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)', badgeBg: '#f3e8ff', badgeText: '#6b21a8', border: '4px solid #8b5cf6' },
   SCHOOL_ADMIN: { color: '#3b82f6', bg: 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)', badgeBg: '#e0f2fe', badgeText: '#0369a1', border: '4px solid #3b82f6' },
@@ -53,10 +53,8 @@ export default function UserManager() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(6);
 
-  // ✅ ENHANCED FORM DATA WITH DEEP PROFILE DETAILS
   const initialFormState = {
       id: null, full_name: "", email: "", phone: "", role: "STAFF", password: "", account_status: "ACTIVE", location: "Global", validity_days: 365, is_disguised: false,
-      // New Requirement Fields
       dob: "", gender: "Male", marital_status: "Single",
       post_nature: "Permanent", working_group: "Office",
       father_name: "", mother_name: "", parent_phone: "",
@@ -115,11 +113,8 @@ export default function UserManager() {
       } catch (err) { toast.error("Update failed", { id: loadToast }); }
   };
 
-  // ✅ SAVE HANDLER WITH T&C VALIDATION
   const handleSave = async (e) => {
       e.preventDefault();
-      
-      // Check T&C Checkbox
       if (!formData.terms_accepted) return toast.error("You must agree to the Terms & Conditions!");
 
       const loadToast = toast.loading("Processing...");
@@ -167,7 +162,9 @@ export default function UserManager() {
 
   return (
       <div style={{ display: "flex", background: "#f8fafc", height: "100vh", fontFamily: "'Inter', sans-serif", overflow: "hidden" }}>
-          <SidebarModern />
+          {/* FIX 1: Sidebar z-index ensure */}
+          <div style={{zIndex: 50}}><SidebarModern /></div>
+          
           <Toaster position="top-center" toastOptions={{ style: { background: '#0f172a', color: 'white', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' } }} />
 
           <div className="user-main-view hide-scrollbar">
@@ -180,7 +177,7 @@ export default function UserManager() {
                       <p style={{ color: '#64748b', fontSize: '1.1rem', marginTop: '8px', fontWeight: '500' }}>Orchestrate your team's access and permissions.</p>
                   </div>
                   <div style={{display:'flex', gap:'15px', flexWrap:'wrap', justifyContent:'flex-start'}}>
-                       <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => selectedUserIds.length > 0 ? setIsBulkDeleteOpen(true) : toast("Select users first", {icon: '⚠️'})} style={{...secondaryBtn, opacity: selectedUserIds.length > 0 ? 1 : 0.5}}>
+                        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => selectedUserIds.length > 0 ? setIsBulkDeleteOpen(true) : toast("Select users first", {icon: '⚠️'})} style={{...secondaryBtn, opacity: selectedUserIds.length > 0 ? 1 : 0.5}}>
                           <Trash2 size={18}/> Bulk Actions
                       </motion.button>
                       <motion.button whileHover={{ scale: 1.05, boxShadow: '0 20px 40px -10px rgba(79, 70, 229, 0.5)' }} whileTap={{ scale: 0.95 }} onClick={() => openForm()} style={primaryBtn}>
@@ -200,11 +197,12 @@ export default function UserManager() {
                       <div className="select-wrapper">
                            <Filter size={16} className="select-icon" />
                            <select style={filterSelect} value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
-                               <option value="ALL">All Roles</option>
-                               <option value="SUPER_ADMIN">Super Admin</option>
-                               <option value="STAFF">Staff</option>
-                               <option value="SEEKER">Student/Seeker</option>
-                               <option value="PARENT">Parent</option>
+                               {/* FIX 2: Explicit Color for Options */}
+                               <option value="ALL" style={{color:'#1e293b'}}>All Roles</option>
+                               <option value="SUPER_ADMIN" style={{color:'#1e293b'}}>Super Admin</option>
+                               <option value="STAFF" style={{color:'#1e293b'}}>Staff</option>
+                               <option value="SEEKER" style={{color:'#1e293b'}}>Student/Seeker</option>
+                               <option value="PARENT" style={{color:'#1e293b'}}>Parent</option>
                            </select>
                       </div>
                   </div>
@@ -233,9 +231,10 @@ export default function UserManager() {
                                           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                                               <input type="checkbox" checked={isSelected} onChange={() => handleSelectUser(user.id)} style={checkboxStyle}/>
                                               <div style={{ ...avatar, background: avatarBg }}>{user.full_name?.charAt(0).toUpperCase()}</div>
-                                              <div>
-                                                  <div style={{ fontWeight: '800', color: '#1e293b', fontSize: '1.05rem' }}>{user.full_name}</div>
-                                                  <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600' }}>ID: #{user.id} | {user.location}</div>
+                                              <div style={{maxWidth: '180px'}}>
+                                                  {/* FIX 3: Text Truncation */}
+                                                  <div style={{ fontWeight: '800', color: '#1e293b', fontSize: '1.05rem', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }} title={user.full_name}>{user.full_name}</div>
+                                                  <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600' }}>ID: #{user.id}</div>
                                               </div>
                                           </div>
                                       </td>
@@ -245,7 +244,10 @@ export default function UserManager() {
                                           </span>
                                       </td>
                                       <td style={{ background: isSelected ? '#f8fafc' : 'white' }}>
-                                          <div style={{ color: '#475569', fontWeight: '600', fontSize: '0.9rem', display:'flex', alignItems:'center', gap:'10px' }}><Mail size={14}/> {user.email}</div>
+                                          {/* FIX 4: Email truncation */}
+                                          <div style={{ color: '#475569', fontWeight: '600', fontSize: '0.9rem', display:'flex', alignItems:'center', gap:'10px', maxWidth:'220px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={user.email}>
+                                              <Mail size={14} style={{flexShrink:0}}/> {user.email}
+                                          </div>
                                       </td>
                                       <td style={{ background: isSelected ? '#f8fafc' : 'white' }}>
                                           <span style={{...statusBadge, color: user.account_status === 'ACTIVE' ? '#10b981' : '#ef4444', background: user.account_status === 'ACTIVE' ? '#dcfce7' : '#fee2e2'}}>
@@ -277,7 +279,7 @@ export default function UserManager() {
               )}
           </div>
 
-          {/* 🛠️ GLASS MODAL - FORM (UPDATED WITH DEEP DETAILS) */}
+          {/* 🛠️ GLASS MODAL - FORM */}
           <AnimatePresence>
               {isFormOpen && (
                   <div style={overlay}>
@@ -286,13 +288,14 @@ export default function UserManager() {
                               <div><h2 style={{fontSize:'1.8rem', fontWeight:'900', color:'#0f172a', margin:0}}>{editMode ? 'Edit User Profile' : 'Create New User'}</h2></div>
                               <motion.button whileHover={{ rotate: 90 }} onClick={closeForm} style={closeBtn}><X size={22} /></motion.button>
                           </div>
-                          <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxHeight:'70vh', overflowY:'auto', paddingRight:'5px' }} className="hide-scrollbar">
+                          {/* FIX 5: Added paddingRight to scroll container */}
+                          <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxHeight:'70vh', overflowY:'auto', paddingRight:'10px' }} className="hide-scrollbar">
                               <h4 style={sectionTitle}>Basic Information</h4>
                               <div className="user-form-split">
                                   <div style={inputGroup}><label style={labelStyle}>Full Name</label><input required value={formData.full_name} onChange={e => setFormData({ ...formData, full_name: e.target.value })} style={input} /></div>
                                   <div style={inputGroup}><label style={labelStyle}>Role</label>
                                       <select value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} style={input}>
-                                          {Object.keys(ROLE_THEMES).map(role => <option key={role} value={role}>{role.replace('_', ' ')}</option>)}
+                                          {Object.keys(ROLE_THEMES).map(role => <option key={role} value={role} style={{color:'#1e293b'}}>{role.replace('_', ' ')}</option>)}
                                       </select>
                                   </div>
                               </div>
@@ -306,19 +309,26 @@ export default function UserManager() {
                                   <div style={inputGroup}><label style={labelStyle}>Date of Birth</label><input type="date" value={formData.dob} onChange={e => setFormData({ ...formData, dob: e.target.value })} style={input} /></div>
                                   <div style={inputGroup}><label style={labelStyle}>Gender</label>
                                       <select value={formData.gender} onChange={e => setFormData({ ...formData, gender: e.target.value })} style={input}>
-                                          <option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
+                                          <option value="Male" style={{color:'#1e293b'}}>Male</option>
+                                          <option value="Female" style={{color:'#1e293b'}}>Female</option>
+                                          <option value="Other" style={{color:'#1e293b'}}>Other</option>
                                       </select>
                                   </div>
                               </div>
                               <div className="user-form-split">
                                   <div style={inputGroup}><label style={labelStyle}>Nature of Post</label>
                                       <select value={formData.post_nature} onChange={e => setFormData({ ...formData, post_nature: e.target.value })} style={input}>
-                                          <option value="Permanent">Permanent</option><option value="Adhoc">Adhoc</option><option value="Guest">Guest</option><option value="Temporary">Temporary</option>
+                                          <option value="Permanent" style={{color:'#1e293b'}}>Permanent</option>
+                                          <option value="Adhoc" style={{color:'#1e293b'}}>Adhoc</option>
+                                          <option value="Guest" style={{color:'#1e293b'}}>Guest</option>
+                                          <option value="Temporary" style={{color:'#1e293b'}}>Temporary</option>
                                       </select>
                                   </div>
                                   <div style={inputGroup}><label style={labelStyle}>Working Group</label>
                                       <select value={formData.working_group} onChange={e => setFormData({ ...formData, working_group: e.target.value })} style={input}>
-                                          <option value="Office">Office</option><option value="Field">Field</option><option value="Both">Both</option>
+                                          <option value="Office" style={{color:'#1e293b'}}>Office</option>
+                                          <option value="Field" style={{color:'#1e293b'}}>Field</option>
+                                          <option value="Both" style={{color:'#1e293b'}}>Both</option>
                                       </select>
                                   </div>
                               </div>
@@ -335,13 +345,13 @@ export default function UserManager() {
                                   <div style={inputGroup}><label style={labelStyle}>Experience (Years)</label><input type="number" value={formData.experience_years} onChange={e => setFormData({ ...formData, experience_years: e.target.value })} style={input} /></div>
                               </div>
 
-                              <div style={inputGroup}><label style={labelStyle}>Permanent Address</label><textarea value={formData.address_permanent} onChange={e => setFormData({ ...formData, address_permanent: e.target.value })} style={{...input, height:'80px'}} /></div>
+                              {/* FIX 6: Font Family inheritance for Textarea */}
+                              <div style={inputGroup}><label style={labelStyle}>Permanent Address</label><textarea value={formData.address_permanent} onChange={e => setFormData({ ...formData, address_permanent: e.target.value })} style={{...input, height:'80px', fontFamily:'inherit'}} /></div>
 
                               {!editMode && (
                                   <div style={inputGroup}><label style={labelStyle}>Password</label><input required type="password" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} style={input} /></div>
                               )}
 
-                              {/* ✅ TERMS & CONDITIONS CHECKBOX */}
                               <div style={{display:'flex', alignItems:'flex-start', gap:'10px', marginTop:'10px', padding:'15px', background:'#f8fafc', borderRadius:'12px', border:'1px solid #e2e8f0'}}>
                                   <input type="checkbox" id="termsCheck" checked={formData.terms_accepted} onChange={(e) => setFormData({...formData, terms_accepted: e.target.checked})} style={{marginTop:'3px', width:'18px', height:'18px', cursor:'pointer', accentColor:'#6366f1'}}/>
                                   <label htmlFor="termsCheck" style={{fontSize:'0.8rem', color:'#64748b', lineHeight:'1.4', cursor:'pointer'}}>
@@ -358,7 +368,7 @@ export default function UserManager() {
               )}
           </AnimatePresence>
 
-          {/* VIEW MODAL (UPDATED) */}
+          {/* VIEW MODAL */}
           <AnimatePresence>
               {isViewOpen && selectedUser && (
                   <div style={overlay}>
@@ -366,8 +376,8 @@ export default function UserManager() {
                           <div style={{background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)', padding:'40px 30px', textAlign:'center', color:'white', position:'relative'}}>
                               <motion.button whileHover={{ rotate: 90 }} onClick={closeView} style={{position:'absolute', top:'15px', right:'15px', background:'rgba(255,255,255,0.2)', border:'none', color:'white', borderRadius:'50%', width:'36px', height:'36px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center'}}><X size={20}/></motion.button>
                               <div style={{ width: '90px', height: '90px', borderRadius: '24px', background: 'rgba(255,255,255,0.25)', margin: '0 auto 15px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: '800' }}>{selectedUser.full_name?.charAt(0).toUpperCase()}</div>
-                              <h2 style={{fontSize:'1.8rem', margin:0, fontWeight:'800'}}>{selectedUser.full_name}</h2>
-                              <p style={{fontSize:'1rem', opacity:0.9, marginTop:'5px'}}>{selectedUser.email}</p>
+                              <h2 style={{fontSize:'1.8rem', margin:0, fontWeight:'800', wordBreak:'break-word'}}>{selectedUser.full_name}</h2>
+                              <p style={{fontSize:'1rem', opacity:0.9, marginTop:'5px', wordBreak:'break-all'}}>{selectedUser.email}</p>
                           </div>
                           <div style={{padding:'35px', maxHeight:'50vh', overflowY:'auto'}} className="hide-scrollbar">
                               <DetailRow icon={<Shield size={20}/>} label="Role" value={selectedUser.role} />
@@ -382,9 +392,27 @@ export default function UserManager() {
               )}
           </AnimatePresence>
 
-          {/* STATUS & DELETE MODALS SAME AS BEFORE */}
+          {/* STATUS MODAL */}
           <AnimatePresence>{isStatusModalOpen && userToToggle && (<div style={overlay}><motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{...modal, width:'420px', textAlign:'center', borderTop: `6px solid ${statusAction === 'HIBERNATE' ? '#8b5cf6' : '#10b981'}`}}><h2 style={{fontSize:'1.6rem', fontWeight:'800', color:'#1e293b'}}>Confirm {statusAction === 'HIBERNATE' ? 'Hibernate' : 'Activate'}?</h2><div style={{display:'flex', gap:'15px', justifyContent:'center', marginTop:'20px'}}><motion.button onClick={() => setIsStatusModalOpen(false)} style={secondaryBtn}>Cancel</motion.button><motion.button onClick={confirmStatusToggle} style={{...deleteBtnStyle, background: statusAction === 'HIBERNATE' ? '#8b5cf6' : '#10b981'}}>Confirm</motion.button></div></motion.div></div>)}</AnimatePresence>
-          <AnimatePresence>{isDeleteModalOpen && (<div style={overlay}><motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{...modal, width:'400px', textAlign:'center', borderTop:'6px solid #ef4444'}}><div style={{width:'70px', height:'70px', background:'#fee2e2', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', color:'#ef4444'}}><AlertTriangle size={32} /></div><h2 style={{fontSize:'1.6rem', fontWeight:'800'}}>Delete User?</h2><div style={{display:'flex', gap:'15px', justifyContent:'center', marginTop:'20px'}}><motion.button onClick={() => setIsDeleteModalOpen(false)} style={secondaryBtn}>Cancel</motion.button><motion.button onClick={confirmDelete} style={deleteBtnStyle}>Yes, Delete</motion.button></div></motion.div></div>)}</AnimatePresence>
+          
+          {/* 🔴 FIX: DELETE MODAL VISIBILITY */}
+          <AnimatePresence>
+            {isDeleteModalOpen && (
+              <div style={overlay}>
+                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{...modal, width:'400px', textAlign:'center', borderTop:'6px solid #ef4444'}}>
+                  <div style={{width:'70px', height:'70px', background:'#fee2e2', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', color:'#ef4444'}}>
+                    <AlertTriangle size={32} />
+                  </div>
+                  {/* Added explicit color here */}
+                  <h2 style={{fontSize:'1.6rem', fontWeight:'800', color:'#1e293b'}}>Delete User?</h2>
+                  <div style={{display:'flex', gap:'15px', justifyContent:'center', marginTop:'20px'}}>
+                    <motion.button onClick={() => setIsDeleteModalOpen(false)} style={secondaryBtn}>Cancel</motion.button>
+                    <motion.button onClick={confirmDelete} style={deleteBtnStyle}>Yes, Delete</motion.button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
 
           <style>{`
               .hide-scrollbar::-webkit-scrollbar { display: none; }
@@ -414,14 +442,15 @@ export default function UserManager() {
   );
 }
 
-// ✨ ULTRA PREMIUM STYLES
+// ✨ ULTRA PREMIUM STYLES (UPDATED FOR DEEP CHECK)
 const DetailRow = ({ icon, label, value, color }) => (
   <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'16px 0', borderBottom:'1px dashed #e2e8f0'}}>
-      <div style={{display:'flex', alignItems:'center', gap:'14px', color:'#64748b', fontSize:'1rem', fontWeight:'600'}}>
+      <div style={{display:'flex', alignItems:'center', gap:'14px', color:'#64748b', fontSize:'1rem', fontWeight:'600', flexShrink: 0}}>
           <div style={{background:'#f8fafc', padding:'8px', borderRadius:'10px', color:'#94a3b8'}}>{icon}</div>
           {label}
       </div>
-      <div style={{fontWeight:'800', color: color || '#1e293b', fontSize:'1rem'}}>{value}</div>
+      {/* FIX 7: Added text-align right, width constraint, and word-break to prevent text disappearing off screen or overlapping */}
+      <div style={{fontWeight:'800', color: color || '#1e293b', fontSize:'1rem', textAlign:'right', width:'60%', wordBreak:'break-word'}}>{value}</div>
   </div>
 );
 
@@ -439,7 +468,8 @@ const badge = { padding: '8px 16px', borderRadius: '12px', fontSize: '0.75rem', 
 const statusBadge = { padding: '6px 14px', borderRadius: '10px', fontSize: '0.8rem', fontWeight: '700', display:'flex', alignItems:'center', gap:'6px', width:'fit-content' };
 const actionBtn = { border: 'none', width: '42px', height: '42px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition:'all 0.2s', flexShrink:0 };
 const inputGroup = {display:'flex', flexDirection:'column', gap:'8px'};
-const input = { width: '100%', padding: '14px 20px', borderRadius: '14px', border: '2px solid #f1f5f9', background: '#f8fafc', fontSize: '1rem', outline: 'none', color: '#1e293b', fontWeight:'600', transition:'all 0.3s', boxSizing:'border-box' };
+// FIX 8: Added box-sizing explicit and font-family inherit to inputs
+const input = { width: '100%', padding: '14px 20px', borderRadius: '14px', border: '2px solid #f1f5f9', background: '#f8fafc', fontSize: '1rem', outline: 'none', color: '#1e293b', fontWeight:'600', transition:'all 0.3s', boxSizing:'border-box', fontFamily:'inherit' };
 const labelStyle = { fontSize:'0.9rem', color:'#64748b', fontWeight:'700', marginLeft:'5px' };
 const submitBtn = { width: '100%', padding: '18px', borderRadius: '18px', border: 'none', background: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)', color: 'white', fontWeight: '800', fontSize: '1.1rem', cursor: 'pointer', marginTop: '15px', boxShadow:'0 20px 40px -10px rgba(15, 23, 42, 0.4)' };
 const closeBtn = { background: '#f1f5f9', border: 'none', width: '40px', height: '40px', borderRadius: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color:'#64748b' };
