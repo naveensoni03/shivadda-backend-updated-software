@@ -1,20 +1,21 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
+// 👉 Bilkul simple import, jaise UserManager me hai
 import SidebarModern from "../components/SidebarModern";
 import {
     Video, Mic, MicOff, VideoOff, UploadCloud, FileText, Share2,
     PhoneOff, Monitor, Download, ScreenShare, StopCircle, Search,
     Cloud, MapPin, User, Lock, Clock, CheckCircle, Mail,
-    Users, Briefcase, Map, Shield, HardDrive, Server, PieChart, Menu, Square, Play, X
+    Users, Briefcase, Map, Shield, HardDrive, Server, PieChart, Square, Play, X
 } from "lucide-react";
 import Webcam from "react-webcam";
 import toast, { Toaster } from 'react-hot-toast';
 import { motion, AnimatePresence } from "framer-motion";
 
 // --- HELPER: Duration Calculator ---
-const calculateDuration = (startDate) => {
-    const now = new Date();
-    const start = new Date(startDate);
-    const diff = now - start;
+const calculateDuration = (startDate, stopDate) => {
+    if (!startDate) return "00:00:00.000";
+    const now = stopDate || new Date();
+    const diff = now - startDate;
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
@@ -26,25 +27,27 @@ export default function VirtualSpace() {
     // --- GLOBAL STATE ---
     const [activeTab, setActiveTab] = useState("live");
     const [currentTime, setCurrentTime] = useState(new Date());
-    const [sessionStart] = useState(new Date());
-    const [durationStr, setDurationStr] = useState("");
-    const [isSidebarOpen, setSidebarOpen] = useState(false);
 
     // --- MODAL STATE FOR SERVICES ---
     const [selectedService, setSelectedService] = useState(null);
 
+    // --- SESSION/TIMER STATE ---
+    const [sessionStart, setSessionStart] = useState(null);
+    const [sessionEnd, setSessionEnd] = useState(null);
+    const [durationStr, setDurationStr] = useState("00:00:00.000");
+
     // --- LIVE STUDIO STATE ---
     const [isLive, setIsLive] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
-    const [camActive, setCamActive] = useState(true);
-    const [micActive, setMicActive] = useState(true);
+    const [camActive, setCamActive] = useState(false);
+    const [micActive, setMicActive] = useState(false);
 
-    // --- STORAGE STATE (Super Admin Feature) ---
+    // --- STORAGE STATE ---
     const [totalStorageGB, setTotalStorageGB] = useState(100);
     const [storageDistribution, setStorageDistribution] = useState({ principal: 0, staff: 0, students: 0 });
 
     // --- EXAM STATE ---
-    const [examTimer, setExamTimer] = useState(10800); // 3 Hours
+    const [examTimer, setExamTimer] = useState(10800);
     const [userAnswers, setUserAnswers] = useState({});
     const [examSubmitted, setExamSubmitted] = useState(false);
 
@@ -54,7 +57,7 @@ export default function VirtualSpace() {
     const screenVideoRef = useRef(null);
     const fileInputRef = useRef(null);
 
-    // --- DATA LISTS ---
+    // --- MOCK DATA ---
     const [resources, setResources] = useState([
         { id: 1, name: "Physics_Chapter1_Notes.pdf", size: "2.4 MB", type: 'pdf', file: null },
         { id: 2, name: "Assignment_04_Gravitation.docx", size: "850 KB", type: 'doc', file: null },
@@ -95,11 +98,15 @@ export default function VirtualSpace() {
     useEffect(() => {
         const timer = setInterval(() => {
             setCurrentTime(new Date());
-            setDurationStr(calculateDuration(sessionStart));
+            if (sessionStart && !sessionEnd && (camActive || isLive)) {
+                setDurationStr(calculateDuration(sessionStart, null));
+            } else if (sessionStart && sessionEnd) {
+                setDurationStr(calculateDuration(sessionStart, sessionEnd));
+            }
             if (activeTab === 'exam' && !examSubmitted && examTimer > 0) setExamTimer(t => t - 1);
         }, 100);
         return () => clearInterval(timer);
-    }, [sessionStart, activeTab, examTimer, examSubmitted]);
+    }, [sessionStart, sessionEnd, camActive, isLive, activeTab, examTimer, examSubmitted]);
 
     useEffect(() => {
         const principal = (totalStorageGB * 0.10).toFixed(2);
@@ -114,6 +121,7 @@ export default function VirtualSpace() {
             const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
             setStream(displayStream);
             setIsLive(true);
+            if (!sessionStart) { setSessionStart(new Date()); setSessionEnd(null); }
             if (screenVideoRef.current) screenVideoRef.current.srcObject = displayStream;
             displayStream.getVideoTracks()[0].onended = () => stopScreenShare();
             toast.success("You are presenting your screen! 🔴");
@@ -124,12 +132,27 @@ export default function VirtualSpace() {
         if (stream) stream.getTracks().forEach(track => track.stop());
         setStream(null);
         setIsLive(false);
+        if (!camActive) setSessionEnd(new Date());
         toast.success("Stopped Presenting");
     };
 
     const toggleLive = () => isLive ? stopScreenShare() : startScreenShare();
 
+    const handleCameraToggle = () => {
+        if (!camActive) {
+            setCamActive(true);
+            setMicActive(true);
+            if (!sessionStart) { setSessionStart(new Date()); setSessionEnd(null); }
+            else if (sessionEnd) { setSessionEnd(null); }
+        } else {
+            setCamActive(false);
+            setMicActive(false);
+            if (!isLive) setSessionEnd(new Date());
+        }
+    };
+
     const handleStartRecording = useCallback(() => {
+        if (!camActive && !isLive) { toast.error("Please turn on Camera or Share Screen to record."); return; }
         setIsRecording(true);
         setRecordedChunks([]);
         let recorderStream;
@@ -147,7 +170,7 @@ export default function VirtualSpace() {
             toast.error("No video source to record!");
             setIsRecording(false);
         }
-    }, [webcamRef, isLive, stream]);
+    }, [webcamRef, isLive, stream, camActive]);
 
     const handleStopRecording = useCallback(() => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
@@ -176,6 +199,7 @@ export default function VirtualSpace() {
         if (isLive) stopScreenShare();
         setCamActive(false);
         setMicActive(false);
+        if (sessionStart && !sessionEnd) setSessionEnd(new Date());
         toast.error("Session Ended");
     };
 
@@ -189,12 +213,15 @@ export default function VirtualSpace() {
     };
     const handleLocationChange = (level, value) => { setLocationSelections(prev => ({ ...prev, [level]: value })); };
 
+    const switchTab = (tabId) => { setActiveTab(tabId); };
+
     return (
         <div className="virtual-space-container">
-            <div className={`mobile-overlay ${isSidebarOpen ? 'active' : ''}`} onClick={() => setSidebarOpen(false)}>
-                <div className="mobile-sidebar" onClick={e => e.stopPropagation()}><SidebarModern /></div>
+
+            {/* 👉 1. Direct Import of SidebarModern just like UserManager */}
+            <div style={{ zIndex: 50 }}>
+                <SidebarModern />
             </div>
-            <div className="desktop-sidebar-wrapper"><SidebarModern /></div>
 
             <div className="vs-main-content">
                 <Toaster position="top-center" />
@@ -204,7 +231,7 @@ export default function VirtualSpace() {
                 <header className="master-head">
                     <div className="top-row">
                         <div className="left-cluster">
-                            <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}><Menu size={20} className="text-dark" /></button>
+                            {/* 👉 2. Menu button yahan se HATA DIYA gaya hai. Ab Sidebar apna button khud layega */}
                             <div className="search-pill">
                                 <Search size={16} className="text-gray-500" />
                                 <input type="text" placeholder="Search AI / Google..." />
@@ -238,6 +265,7 @@ export default function VirtualSpace() {
                         </div>
                     </div>
 
+                    {/* TABS */}
                     <div className="nav-tabs-row">
                         {[
                             { id: 'live', label: 'LIVE STUDIO' }, { id: 'places', label: 'PLACES' },
@@ -246,8 +274,13 @@ export default function VirtualSpace() {
                             { id: 'profile', label: 'PROFILE' },
                             { id: 'mail', label: 'INBOX' },
                         ].map(tab => (
-                            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`tab-item ${activeTab === tab.id ? 'active' : ''}`}>
-                                {tab.label} {activeTab === tab.id && <motion.div layoutId="tab-indicator" className="tab-line" />}
+                            <button
+                                key={tab.id}
+                                onClick={() => switchTab(tab.id)}
+                                className={`tab-item ${activeTab === tab.id ? 'active' : ''}`}
+                            >
+                                {tab.label}
+                                {activeTab === tab.id && <div className="tab-line-static"></div>}
                             </button>
                         ))}
                     </div>
@@ -255,325 +288,235 @@ export default function VirtualSpace() {
 
                 {/* MAIN CONTENT GRID */}
                 <div className="content-area">
-                    <AnimatePresence mode="wait">
-                        {/* 0. LIVE STUDIO TAB */}
-                        {activeTab === 'live' && (
-                            <motion.div key="live" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="vs-grid-layout">
-                                {/* VIDEO AREA */}
-                                <div className="video-card shadow-lg">
-                                    <div className="video-frame">
-                                        {isLive ? (
-                                            <video ref={screenVideoRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#222' }} />
+                    {activeTab === 'live' && (
+                        <div className="vs-grid-layout">
+                            <div className="video-card shadow-lg">
+                                <div className="video-frame">
+                                    {isLive ? (
+                                        <video ref={screenVideoRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#222' }} />
+                                    ) : (
+                                        camActive ? (
+                                            <Webcam
+                                                audio={micActive}
+                                                muted={true}
+                                                ref={webcamRef}
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                mirrored={true}
+                                                onUserMediaError={(err) => {
+                                                    console.error("Camera Error:", err);
+                                                    toast.error("Camera Access Denied or Not Found!");
+                                                    setCamActive(false);
+                                                    setSessionEnd(new Date());
+                                                }}
+                                            />
                                         ) : (
-                                            camActive ? (
-                                                <Webcam
-                                                    audio={micActive}
-                                                    muted={true}
-                                                    ref={webcamRef}
-                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                    mirrored={true}
-                                                    onUserMediaError={(err) => {
-                                                        console.error("Camera Error:", err);
-                                                        toast.error("Camera Access Denied or Not Found!");
-                                                        setCamActive(false); // Automatically turn off if error occurs
-                                                    }}
-                                                />
-                                            ) : <div className="camera-off-placeholder">Camera Off</div>
-                                        )}
-                                        <div className="status-tags">
-                                            {isLive && <span className="tag live">ON AIR (SCREEN)</span>}
-                                            {isRecording && <span className="tag rec">REC</span>}
-                                        </div>
-                                        <div className="control-overlay">
-                                            <div className="control-bar glass-effect">
-                                                <button onClick={() => setMicActive(!micActive)} className={`ctrl-btn ${!micActive ? 'off' : ''}`}>{micActive ? <Mic size={20} /> : <MicOff size={20} />}</button>
-                                                <button onClick={() => setCamActive(!camActive)} className={`ctrl-btn ${!camActive ? 'off' : ''}`}>{camActive ? <Video size={20} /> : <VideoOff size={20} />}</button>
-                                                <div className="divider"></div>
-                                                <button onClick={toggleLive} className={`ctrl-btn ${isLive ? 'off' : ''}`}>{isLive ? <StopCircle size={20} /> : <ScreenShare size={20} />}</button>
-                                                <button onClick={isRecording ? handleStopRecording : handleStartRecording} className={`ctrl-btn ${isRecording ? 'off' : ''}`}>{isRecording ? <Square size={20} /> : <Play size={20} />}</button>
-                                                <button onClick={handleHangup} className="ctrl-btn btn-hangup"><PhoneOff size={20} /></button>
+                                            <div className="camera-off-placeholder">
+                                                <VideoOff size={48} style={{ opacity: 0.5, marginBottom: '10px' }} />
+                                                <span style={{ color: '#ffffff' }}>Camera is Off</span>
+                                                <button onClick={handleCameraToggle} style={{ marginTop: '15px', padding: '10px 20px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+                                                    Turn On Camera
+                                                </button>
                                             </div>
+                                        )
+                                    )}
+                                    <div className="status-tags">
+                                        {isLive && <span className="tag live">ON AIR (SCREEN)</span>}
+                                        {isRecording && <span className="tag rec">REC</span>}
+                                    </div>
+                                    <div className="control-overlay">
+                                        <div className="control-bar glass-effect">
+                                            <button onClick={() => setMicActive(!micActive)} className={`ctrl-btn ${!micActive ? 'off' : ''}`}>{micActive ? <Mic size={20} /> : <MicOff size={20} />}</button>
+                                            <button onClick={handleCameraToggle} className={`ctrl-btn ${!camActive ? 'off' : ''}`}>{camActive ? <Video size={20} /> : <VideoOff size={20} />}</button>
+                                            <div className="divider"></div>
+                                            <button onClick={toggleLive} className={`ctrl-btn ${isLive ? 'off' : ''}`}>{isLive ? <StopCircle size={20} /> : <ScreenShare size={20} />}</button>
+                                            <button onClick={isRecording ? handleStopRecording : handleStartRecording} className={`ctrl-btn ${isRecording ? 'off' : ''}`}>{isRecording ? <Square size={20} /> : <Play size={20} />}</button>
+                                            <button onClick={handleHangup} className="ctrl-btn btn-hangup"><PhoneOff size={20} /></button>
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* SIDEBAR PANELS */}
-                                <div className="sidebar-panels">
-                                    <div className="info-card broadcast-card shadow-sm">
-                                        <div className="card-header"><Share2 size={16} color="#000000" /><h3 style={{ color: '#000000' }}>Broadcast</h3></div>
-                                        <div className="card-body">
-                                            <div onClick={() => window.open('https://meet.google.com')} className="list-item clickable"><div className="icon-box green"><Video size={16} color="#ffffff" /></div> <span className="text-dark-label" style={{ color: '#000000' }}>Google Meet</span></div>
-                                            <div onClick={() => window.open('https://zoom.us')} className="list-item clickable"><div className="icon-box blue"><Monitor size={16} color="#ffffff" /></div> <span className="text-dark-label" style={{ color: '#000000' }}>Zoom</span></div>
-                                        </div>
-                                    </div>
-                                    <div className="info-card resources-card shadow-sm">
-                                        <div className="card-header"><FileText size={16} color="#000000" /><h3 style={{ color: '#000000' }}>Resources</h3></div>
-                                        <div className="card-body scrollable-list">
-                                            {resources.map((res) => (
-                                                <div key={res.id} className="resource-item">
-                                                    <div className="res-icon"><FileText size={18} color="#000000" /></div>
-                                                    <div className="res-info"><span className="res-name" style={{ color: '#000000' }}>{res.name}</span><span className="res-meta" style={{ color: '#000000' }}>{res.size}</span></div>
-                                                    <button className="btn-download"><Download size={14} color="#000000" /></button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="card-footer">
-                                            <button onClick={handleUploadClick} className="btn-upload" style={{ color: '#000000', borderColor: '#000000' }}><UploadCloud size={16} color="#000000" /> Upload Resource</button>
-                                        </div>
+                            </div>
+                            <div className="sidebar-panels">
+                                <div className="info-card broadcast-card shadow-sm">
+                                    <div className="card-header"><Share2 size={16} color="#000000" /><h3 style={{ color: '#000000' }}>Broadcast</h3></div>
+                                    <div className="card-body">
+                                        <div onClick={() => window.open('https://meet.google.com')} className="list-item clickable"><div className="icon-box green"><Video size={16} color="#ffffff" /></div> <span className="text-dark-label" style={{ color: '#000000' }}>Google Meet</span></div>
+                                        <div onClick={() => window.open('https://zoom.us')} className="list-item clickable"><div className="icon-box blue"><Monitor size={16} color="#ffffff" /></div> <span className="text-dark-label" style={{ color: '#000000' }}>Zoom</span></div>
                                     </div>
                                 </div>
-                            </motion.div>
-                        )}
-
-                        {/* 1. PLACES TAB */}
-                        {activeTab === 'places' && (
-                            <motion.div key="places" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="tab-view">
-                                <div className="info-card shadow-lg" style={{ maxWidth: '800px', margin: '0 auto', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-                                    <div className="card-header" style={{ padding: '20px 25px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                                        <Map size={24} color="#333333" />
-                                        <h2 style={{ fontSize: '1.2rem', color: '#0f172a', fontWeight: '700' }}>Registered Places</h2>
-                                    </div>
-                                    <div className="card-body scrollable-list" style={{ padding: '20px 25px' }}>
-                                        {placesList.map((place, index) => (
-                                            <motion.div
-                                                key={place.id}
-                                                initial={{ opacity: 0, x: -20 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                transition={{ delay: index * 0.1, type: "spring", stiffness: 120 }}
-                                                whileHover={{ scale: 1.015, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)', backgroundColor: '#ffffff', borderColor: '#cbd5e1' }}
-                                                className="resource-item"
-                                                style={{ padding: '15px 20px', background: '#fcfcfc', border: '1px solid #f1f5f9', borderRadius: '12px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '15px', transition: 'none' }}
-                                            >
-                                                <div className="icon-box" style={{ background: '#333333', width: '42px', height: '42px', borderRadius: '10px', flexShrink: 0 }}><MapPin size={20} color="white" /></div>
-                                                <div className="res-info">
-                                                    <h3 style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: '700', margin: '0 0 5px 0' }}>{place.name}</h3>
-                                                    <span className="res-meta" style={{ color: '#64748b', fontSize: '0.85rem' }}>{place.type} <span style={{ color: '#cbd5e1', margin: '0 4px' }}>•</span> {place.vid}</span>
-                                                </div>
-                                                <motion.button
-                                                    onClick={() => {
-                                                        toast.success(`Opening Map for ${place.name}...`);
-                                                        window.open(`http://googleusercontent.com/maps.google.com/?q=${encodeURIComponent(place.name)}`, '_blank');
-                                                    }}
-                                                    whileHover={{ backgroundColor: '#eff6ff', borderColor: '#3b82f6' }}
-                                                    whileTap={{ scale: 0.95 }}
-                                                    style={{ padding: '8px 16px', background: 'white', color: '#3b82f6', border: '1px solid #cbd5e1', borderRadius: '8px', fontWeight: '600', fontSize: '0.85rem', cursor: 'pointer', outline: 'none' }}
-                                                >
-                                                    View Map
-                                                </motion.button>
-                                            </motion.div>
+                                <div className="info-card resources-card shadow-sm">
+                                    <div className="card-header"><FileText size={16} color="#000000" /><h3 style={{ color: '#000000' }}>Resources</h3></div>
+                                    <div className="card-body scrollable-list">
+                                        {resources.map((res) => (
+                                            <div key={res.id} className="resource-item">
+                                                <div className="res-icon"><FileText size={18} color="#000000" /></div>
+                                                <div className="res-info"><span className="res-name" style={{ color: '#000000' }}>{res.name}</span><span className="res-meta" style={{ color: '#000000' }}>{res.size}</span></div>
+                                                <button className="btn-download"><Download size={14} color="#000000" /></button>
+                                            </div>
                                         ))}
                                     </div>
+                                    <div className="card-footer">
+                                        <button onClick={handleUploadClick} className="btn-upload" style={{ color: '#000000', borderColor: '#000000' }}><UploadCloud size={16} color="#000000" /> Upload Resource</button>
+                                    </div>
                                 </div>
-                            </motion.div>
-                        )}
+                            </div>
+                        </div>
+                    )}
 
-                        {/* 2. SERVICES TAB */}
-                        {activeTab === 'services' && (
-                            <motion.div key="services" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="tab-view">
-                                <div className="vs-grid-layout" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))' }}>
-                                    {servicesList.map(service => (
-                                        <div key={service.id} className="info-card shadow-sm" style={{ padding: '20px', alignItems: 'center', textAlign: 'center' }}>
-                                            <div className="icon-box blue" style={{ width: '50px', height: '50px', marginBottom: '10px' }}>{service.icon}</div>
-                                            <h3 style={{ margin: '0 0 5px 0', color: '#1e293b' }}>{service.title}</h3>
-                                            <p style={{ color: '#64748b', fontSize: '0.8rem' }}>{service.desc}</p>
-                                            <motion.button
-                                                onClick={() => setSelectedService(service)}
-                                                whileHover={{ scale: 1.02, backgroundColor: '#eff6ff' }}
-                                                whileTap={{ scale: 0.95 }}
-                                                className="btn-upload"
-                                                style={{ marginTop: '15px' }}
-                                            >
-                                                Manage
-                                            </motion.button>
+                    {activeTab === 'places' && (
+                        <div className="tab-view">
+                            <div className="info-card shadow-lg" style={{ maxWidth: '800px', margin: '0 auto', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                                <div className="card-header" style={{ padding: '20px 25px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                                    <Map size={24} color="#333333" />
+                                    <h2 style={{ fontSize: '1.2rem', color: '#0f172a', fontWeight: '700' }}>Registered Places</h2>
+                                </div>
+                                <div className="card-body scrollable-list" style={{ padding: '20px 25px' }}>
+                                    {placesList.map((place) => (
+                                        <div key={place.id} className="resource-item" style={{ padding: '15px 20px', background: '#fcfcfc', border: '1px solid #f1f5f9', borderRadius: '12px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                            <div className="icon-box" style={{ background: '#333333', width: '42px', height: '42px', borderRadius: '10px', flexShrink: 0 }}><MapPin size={20} color="white" /></div>
+                                            <div className="res-info">
+                                                <h3 style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: '700', margin: '0 0 5px 0' }}>{place.name}</h3>
+                                                <span className="res-meta" style={{ color: '#64748b', fontSize: '0.85rem' }}>{place.type} <span style={{ color: '#cbd5e1', margin: '0 4px' }}>•</span> {place.vid}</span>
+                                            </div>
+                                            <button onClick={() => { toast.success(`Opening Map for ${place.name}...`); window.open(`http://googleusercontent.com/maps.google.com/?q=${encodeURIComponent(place.name)}`, '_blank'); }} className="btn-upload" style={{ width: 'auto', padding: '8px 16px', background: 'white', color: '#3b82f6', border: '1px solid #cbd5e1', borderRadius: '8px', fontWeight: '600', fontSize: '0.85rem', cursor: 'pointer' }}>View Map</button>
                                         </div>
                                     ))}
                                 </div>
-                            </motion.div>
-                        )}
+                            </div>
+                        </div>
+                    )}
 
-                        {/* 3. USERS TAB */}
-                        {activeTab === 'users' && (
-                            <motion.div key="users" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="tab-view">
-                                <div className="info-card shadow-sm" style={{ maxWidth: '800px', margin: '0 auto' }}>
-                                    <div className="card-header"><Users size={24} className="text-blue" /> <h2>User Directory</h2></div>
-                                    <div className="card-body scrollable-list">
-                                        {usersList.map(user => (
-                                            <div key={user.id} className="resource-item">
-                                                <div className="icon-box green"><User size={20} /></div>
-                                                <div className="res-info"><h3 style={{ color: '#000000' }}>{user.name}</h3><span className="res-meta">{user.role}</span></div>
-                                                <span className={`tag ${user.status === 'Active' ? 'rec' : 'live'}`} style={{ background: user.status === 'Active' ? '#10b981' : '#cbd5e1', color: user.status === 'Active' ? 'white' : '#475569' }}>{user.status}</span>
-                                            </div>
-                                        ))}
+                    {activeTab === 'services' && (
+                        <div className="tab-view">
+                            <div className="vs-grid-layout" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))' }}>
+                                {servicesList.map(service => (
+                                    <div key={service.id} className="info-card shadow-sm" style={{ padding: '20px', alignItems: 'center', textAlign: 'center' }}>
+                                        <div className="icon-box blue" style={{ width: '50px', height: '50px', marginBottom: '10px' }}>{service.icon}</div>
+                                        <h3 style={{ margin: '0 0 5px 0', color: '#1e293b' }}>{service.title}</h3>
+                                        <p style={{ color: '#64748b', fontSize: '0.8rem' }}>{service.desc}</p>
+                                        <button onClick={() => setSelectedService(service)} className="btn-upload" style={{ marginTop: '15px' }}>Manage</button>
                                     </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'users' && (
+                        <div className="tab-view">
+                            <div className="info-card shadow-sm" style={{ maxWidth: '800px', margin: '0 auto' }}>
+                                <div className="card-header"><Users size={24} className="text-blue" /> <h2 style={{ color: '#000000' }}>User Directory</h2></div>
+                                <div className="card-body scrollable-list">
+                                    {usersList.map(user => (
+                                        <div key={user.id} className="resource-item">
+                                            <div className="icon-box green"><User size={20} /></div>
+                                            <div className="res-info"><h3 style={{ color: '#000000' }}>{user.name}</h3><span className="res-meta" style={{ color: '#000000' }}>{user.role}</span></div>
+                                            <span className={`tag ${user.status === 'Active' ? 'rec' : 'live'}`} style={{ background: user.status === 'Active' ? '#10b981' : '#cbd5e1', color: user.status === 'Active' ? 'white' : '#475569' }}>{user.status}</span>
+                                        </div>
+                                    ))}
                                 </div>
-                            </motion.div>
-                        )}
+                            </div>
+                        </div>
+                    )}
 
-                        {/* 4. EXAM PORTAL */}
-                        {activeTab === 'exam' && (
-                            <motion.div key="exam" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="tab-view">
-                                <div className="info-card shadow-sm" style={{ maxWidth: '800px', margin: '0 auto', height: 'auto' }}>
-                                    <div className="card-header" style={{ justifyContent: 'space-between' }}>
-                                        <h2>Physics Mid-Term Exam <span className="pro-badge">Set A</span></h2>
-                                        <div className="tag rec" style={{ fontSize: '1rem', background: '#ef4444', color: 'white' }}><Clock size={16} /> {new Date(examTimer * 1000).toISOString().substr(11, 8)}</div>
-                                    </div>
-                                    <div className="card-body" style={{ padding: '20px' }}>
-                                        {!examSubmitted ? (
-                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-                                                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(q => (
-                                                    <div key={q} style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '10px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                                                        <span style={{ fontWeight: '700', color: '#475569' }}>Q{q}</span>
-                                                        <div style={{ display: 'flex', gap: '10px' }}>
-                                                            {['A', 'B', 'C', 'D'].map(opt => (
-                                                                <label key={opt} style={{ width: '30px', height: '30px', borderRadius: '50%', border: userAnswers[q] === opt ? '2px solid #3b82f6' : '2px solid #cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: userAnswers[q] === opt ? '#3b82f6' : 'white', color: userAnswers[q] === opt ? 'white' : '#64748b', fontWeight: '600' }}>
-                                                                    {opt} <input type="radio" name={`q${q}`} onChange={() => setUserAnswers({ ...userAnswers, [q]: opt })} hidden />
-                                                                </label>
-                                                            ))}
-                                                        </div>
+                    {activeTab === 'exam' && (
+                        <div className="tab-view">
+                            <div className="info-card shadow-sm" style={{ maxWidth: '800px', margin: '0 auto', height: 'auto' }}>
+                                <div className="card-header" style={{ justifyContent: 'space-between' }}>
+                                    <h2 style={{ color: '#000000' }}>Physics Mid-Term Exam <span className="pro-badge">Set A</span></h2>
+                                    <div className="tag rec" style={{ fontSize: '1rem', background: '#ef4444', color: 'white' }}><Clock size={16} /> {new Date(examTimer * 1000).toISOString().substr(11, 8)}</div>
+                                </div>
+                                <div className="card-body" style={{ padding: '20px' }}>
+                                    {!examSubmitted ? (
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(q => (
+                                                <div key={q} style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '10px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                                                    <span style={{ fontWeight: '700', color: '#000000' }}>Q{q}</span>
+                                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                                        {['A', 'B', 'C', 'D'].map(opt => (
+                                                            <label key={opt} style={{ width: '30px', height: '30px', borderRadius: '50%', border: userAnswers[q] === opt ? '2px solid #3b82f6' : '2px solid #cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: userAnswers[q] === opt ? '#3b82f6' : 'white', color: userAnswers[q] === opt ? 'white' : '#000000', fontWeight: '600' }}>
+                                                                {opt} <input type="radio" name={`q${q}`} onChange={() => setUserAnswers({ ...userAnswers, [q]: opt })} hidden />
+                                                            </label>
+                                                        ))}
                                                     </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <div style={{ textAlign: 'center', padding: '40px' }}>
-                                                <CheckCircle size={64} style={{ margin: '0 auto', color: '#10b981' }} />
-                                                <h2 style={{ color: '#1e293b' }}>Exam Submitted!</h2>
-                                                <button className="btn-upload" onClick={() => setExamSubmitted(false)}>Review Answers</button>
-                                            </div>
-                                        )}
-                                    </div>
-                                    {!examSubmitted && <div className="card-footer"><button className="btn-action btn-primary" style={{ width: '100%' }} onClick={() => setExamSubmitted(true)}>Submit Exam</button></div>}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div style={{ textAlign: 'center', padding: '40px' }}>
+                                            <CheckCircle size={64} style={{ margin: '0 auto', color: '#10b981' }} />
+                                            <h2 style={{ color: '#000000' }}>Exam Submitted!</h2>
+                                            <button className="btn-upload" onClick={() => setExamSubmitted(false)} style={{ color: '#000000', borderColor: '#000000' }}>Review Answers</button>
+                                        </div>
+                                    )}
                                 </div>
-                            </motion.div>
-                        )}
+                                {!examSubmitted && <div className="card-footer"><button className="btn-action btn-primary" style={{ width: '100%' }} onClick={() => setExamSubmitted(true)}>Submit Exam</button></div>}
+                            </div>
+                        </div>
+                    )}
 
-                        {/* 5. VIRTUAL CLOUD */}
-                        {activeTab === 'storage' && (
-                            <motion.div key="storage" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="tab-view">
-                                <div className="info-card shadow-sm" style={{ maxWidth: '900px', margin: '0 auto', overflow: 'visible' }}>
-                                    <div className="card-header"><HardDrive size={24} className="text-primary" /> <h2>Virtual Space Management</h2></div>
-                                    <div className="card-body" style={{ padding: '20px' }}>
-                                        {/* Control Panel */}
-                                        <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', marginBottom: '20px', border: '1px solid #e2e8f0' }}>
-                                            <label style={{ fontWeight: '700', color: '#475569', display: 'block', marginBottom: '10px' }}>Total School Allocation (GB)</label>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                                <input type="range" min="10" max="1000" step="10" value={totalStorageGB} onChange={(e) => setTotalStorageGB(e.target.value)} style={{ flex: 1, cursor: 'pointer' }} />
-                                                <span className="tag rec" style={{ background: '#0f172a', fontSize: '14px', color: 'white' }}>{totalStorageGB} GB</span>
-                                            </div>
+                    {activeTab === 'storage' && (
+                        <div className="tab-view">
+                            <div className="info-card shadow-sm" style={{ maxWidth: '900px', margin: '0 auto', overflow: 'visible' }}>
+                                <div className="card-header"><HardDrive size={24} color="#000000" /> <h2 style={{ color: '#000000' }}>Virtual Space Management</h2></div>
+                                <div className="card-body" style={{ padding: '20px' }}>
+                                    <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', marginBottom: '20px', border: '1px solid #e2e8f0' }}>
+                                        <label style={{ fontWeight: '700', color: '#000000', display: 'block', marginBottom: '10px' }}>Total School Allocation (GB)</label>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                            <input type="range" min="10" max="1000" step="10" value={totalStorageGB} onChange={(e) => setTotalStorageGB(e.target.value)} style={{ flex: 1, cursor: 'pointer' }} />
+                                            <span className="tag rec" style={{ background: '#0f172a', fontSize: '14px', color: 'white' }}>{totalStorageGB} GB</span>
                                         </div>
-
-                                        {/* Distribution Visuals */}
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-                                            <div style={{ padding: '20px', border: '1px solid #e2e8f0', borderRadius: '12px', textAlign: 'center', borderTop: '4px solid #ef4444', background: 'white' }}>
-                                                <Lock size={20} style={{ color: '#ef4444', margin: '0 auto 10px' }} />
-                                                <h3 style={{ color: '#1e293b' }}>Principal</h3>
-                                                <div style={{ fontSize: '24px', fontWeight: '800', color: '#0f172a' }}>{storageDistribution.principal} <span style={{ fontSize: '12px', color: '#64748b' }}>GB</span></div>
-                                                <div style={{ fontSize: '10px', color: '#94a3b8' }}>Fixed 10% Quota</div>
-                                            </div>
-                                            <div style={{ padding: '20px', border: '1px solid #e2e8f0', borderRadius: '12px', textAlign: 'center', borderTop: '4px solid #3b82f6', background: 'white' }}>
-                                                <Briefcase size={20} style={{ color: '#3b82f6', margin: '0 auto 10px' }} />
-                                                <h3 style={{ color: '#1e293b' }}>Staff</h3>
-                                                <div style={{ fontSize: '24px', fontWeight: '800', color: '#0f172a' }}>{storageDistribution.staff} <span style={{ fontSize: '12px', color: '#64748b' }}>GB</span></div>
-                                                <div style={{ fontSize: '10px', color: '#94a3b8' }}>Fixed 50% Quota</div>
-                                            </div>
-                                            <div style={{ padding: '20px', border: '1px solid #e2e8f0', borderRadius: '12px', textAlign: 'center', borderTop: '4px solid #10b981', background: 'white' }}>
-                                                <Users size={20} style={{ color: '#10b981', margin: '0 auto 10px' }} />
-                                                <h3 style={{ color: '#1e293b' }}>Students</h3>
-                                                <div style={{ fontSize: '24px', fontWeight: '800', color: '#0f172a' }}>{storageDistribution.students} <span style={{ fontSize: '12px', color: '#64748b' }}>GB</span></div>
-                                                <div style={{ fontSize: '10px', color: '#94a3b8' }}>Remaining Balance</div>
-                                            </div>
-                                        </div>
-
-                                        {/* Details Table */}
-                                        <div className="list-container" style={{ marginTop: '20px' }}>
-                                            <div className="list-item"><div className="icon-box blue"><Server size={20} /></div> <span className="text-dark-label">Total Cloud Space</span> <span className="tag" style={{ marginLeft: 'auto', background: '#10b981', color: 'white' }}>{totalStorageGB} GB</span></div>
-                                            <div className="list-item"><div className="icon-box green"><PieChart size={20} /></div> <span className="text-dark-label">Used Space</span> <span className="tag" style={{ marginLeft: 'auto', background: '#e2e8f0', color: '#475569' }}>12.5 GB</span></div>
-                                        </div>
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+                                        <div style={{ padding: '20px', border: '1px solid #e2e8f0', borderRadius: '12px', textAlign: 'center', borderTop: '4px solid #ef4444', background: 'white' }}><Lock size={20} style={{ color: '#ef4444', margin: '0 auto 10px' }} /><h3 style={{ color: '#000000' }}>Principal</h3><div style={{ fontSize: '24px', fontWeight: '800', color: '#000000' }}>{storageDistribution.principal} <span style={{ fontSize: '12px', color: '#000000' }}>GB</span></div><div style={{ fontSize: '10px', color: '#000000' }}>Fixed 10% Quota</div></div>
+                                        <div style={{ padding: '20px', border: '1px solid #e2e8f0', borderRadius: '12px', textAlign: 'center', borderTop: '4px solid #3b82f6', background: 'white' }}><Briefcase size={20} style={{ color: '#3b82f6', margin: '0 auto 10px' }} /><h3 style={{ color: '#000000' }}>Staff</h3><div style={{ fontSize: '24px', fontWeight: '800', color: '#000000' }}>{storageDistribution.staff} <span style={{ fontSize: '12px', color: '#000000' }}>GB</span></div><div style={{ fontSize: '10px', color: '#000000' }}>Fixed 50% Quota</div></div>
+                                        <div style={{ padding: '20px', border: '1px solid #e2e8f0', borderRadius: '12px', textAlign: 'center', borderTop: '4px solid #10b981', background: 'white' }}><Users size={20} style={{ color: '#10b981', margin: '0 auto 10px' }} /><h3 style={{ color: '#000000' }}>Students</h3><div style={{ fontSize: '24px', fontWeight: '800', color: '#000000' }}>{storageDistribution.students} <span style={{ fontSize: '12px', color: '#000000' }}>GB</span></div><div style={{ fontSize: '10px', color: '#000000' }}>Remaining Balance</div></div>
+                                    </div>
+                                    <div className="list-container" style={{ marginTop: '20px' }}>
+                                        <div className="list-item"><div className="icon-box blue"><Server size={20} color="#ffffff" /></div> <span className="text-dark-label" style={{ color: '#000000' }}>Total Cloud Space</span> <span className="tag" style={{ marginLeft: 'auto', background: '#10b981', color: 'white' }}>{totalStorageGB} GB</span></div>
+                                        <div className="list-item"><div className="icon-box green"><PieChart size={20} color="#ffffff" /></div> <span className="text-dark-label" style={{ color: '#000000' }}>Used Space</span> <span className="tag" style={{ marginLeft: 'auto', background: '#e2e8f0', color: '#475569' }}>12.5 GB</span></div>
                                     </div>
                                 </div>
-                            </motion.div>
-                        )}
+                            </div>
+                        </div>
+                    )}
 
-                        {/* 6. PROFILE TAB */}
-                        {activeTab === 'profile' && (
-                            <motion.div
-                                key="profile"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.4, ease: "easeOut" }}
-                                className="tab-view"
-                                style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
-                            >
-                                <motion.div
-                                    className="info-card shadow-lg profile-card-modern"
-                                    whileHover={{ y: -5, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
-                                    transition={{ duration: 0.2 }}
-                                    style={{ width: '400px', textAlign: 'center', padding: '40px 30px', borderRadius: '24px', background: '#ffffff', border: '1px solid #f1f5f9' }}
-                                >
-                                    <motion.div
-                                        initial={{ scale: 0.8, opacity: 0 }}
-                                        animate={{ scale: 1, opacity: 1 }}
-                                        transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                                        className="icon-box blue"
-                                        style={{ width: '90px', height: '90px', margin: '0 auto 20px', borderRadius: '50%', fontSize: '40px', background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)' }}
-                                    >
-                                        <User size={45} />
-                                    </motion.div>
-
-                                    <h2 style={{ color: '#0f172a', fontSize: '1.5rem', fontWeight: '800', margin: '0 0 5px 0' }}>Super Admin</h2>
-                                    <p style={{ color: '#64748b', fontSize: '0.9rem', fontWeight: '500', marginBottom: '25px' }}>ID: #SA-9901</p>
-
-                                    <div style={{ display: 'flex', justifyContent: 'space-around', margin: '25px 0', borderTop: '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9', padding: '20px 0', background: '#f8fafc', borderRadius: '12px' }}>
-                                        <div style={{ flex: 1, borderRight: '1px solid #e2e8f0' }}>
-                                            <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '600' }}>Login Time</span><br />
-                                            <strong style={{ color: '#1e293b', fontSize: '1.1rem', marginTop: '5px', display: 'inline-block' }}>{sessionStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</strong>
-                                        </div>
-                                        <div style={{ flex: 1 }}>
-                                            <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '600' }}>Access Level</span><br />
-                                            <strong style={{ color: '#1e293b', fontSize: '1.1rem', marginTop: '5px', display: 'inline-block' }}>Level 5</strong>
-                                        </div>
-                                    </div>
-
-                                    <motion.button
-                                        whileHover={{ scale: 1.03 }}
-                                        whileTap={{ scale: 0.97 }}
-                                        className="btn-action btn-danger"
-                                        style={{ width: '100%', justifyContent: 'center', padding: '14px', borderRadius: '12px', fontSize: '1rem', fontWeight: '700', marginTop: '10px', background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', boxShadow: '0 4px 6px -1px rgba(239, 68, 68, 0.2)' }}
-                                    >
-                                        Secure Logout
-                                    </motion.button>
-                                </motion.div>
-                            </motion.div>
-                        )}
-
-                        {/* 7. INBOX TAB */}
-                        {activeTab === 'mail' && (
-                            <motion.div key="mail" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="tab-view">
-                                <div className="info-card shadow-lg" style={{ maxWidth: '800px', margin: '0 auto', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-                                    <div className="card-header" style={{ padding: '20px 25px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                                        <Mail size={24} color="#333333" />
-                                        <h2 style={{ fontSize: '1.2rem', color: '#0f172a', fontWeight: '700' }}>Inbox</h2>
-                                    </div>
-                                    <div className="card-body" style={{ padding: '60px 20px', textAlign: 'center', background: '#ffffff' }}>
-                                        <motion.div
-                                            initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
-                                            className="icon-box" style={{ background: '#f1f5f9', width: '90px', height: '90px', borderRadius: '50%', margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <Mail size={40} color="#94a3b8" />
-                                        </motion.div>
-                                        <h3 style={{ color: '#1e293b', fontSize: '1.4rem', fontWeight: '700', marginBottom: '10px' }}>No New Messages</h3>
-                                        <p style={{ color: '#64748b', fontSize: '0.95rem', maxWidth: '350px', margin: '0 auto 25px' }}>Your inbox is currently empty. We'll notify you when new updates or alerts arrive.</p>
-                                        <motion.button
-                                            whileHover={{ background: '#f8fafc' }} whileTap={{ scale: 0.95 }}
-                                            style={{ padding: '10px 20px', border: '1px solid #cbd5e1', borderRadius: '8px', background: 'white', color: '#475569', fontWeight: '600', cursor: 'pointer' }}>
-                                            Refresh Inbox
-                                        </motion.button>
-                                    </div>
+                    {activeTab === 'profile' && (
+                        <div className="tab-view" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                            <div className="info-card shadow-sm" style={{ width: '350px', textAlign: 'center', padding: '30px' }}>
+                                <div className="icon-box blue" style={{ width: '80px', height: '80px', margin: '0 auto 15px', borderRadius: '50%', fontSize: '30px' }}><User size={40} color="#ffffff" /></div>
+                                <h2 style={{ color: '#1e293b' }}>Super Admin</h2>
+                                <p style={{ color: '#64748b' }}>ID: #SA-9901</p>
+                                <div style={{ display: 'flex', justifyContent: 'space-around', margin: '20px 0', borderTop: '1px solid #f1f5f9', paddingTop: '15px' }}>
+                                    <div><span style={{ fontSize: '12px', color: '#000000' }}>Session Start</span><br /><strong style={{ color: '#000000' }}>{sessionStart ? sessionStart.toLocaleTimeString() : "--:--"}</strong></div>
+                                    <div><span style={{ fontSize: '12px', color: '#000000' }}>Access Level</span><br /><strong style={{ color: '#000000' }}>Level 5</strong></div>
                                 </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                                <button className="btn-action btn-danger" style={{ width: '100%', justifyContent: 'center' }}>Logout</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'mail' && (
+                        <div className="tab-view">
+                            <div className="info-card shadow-lg" style={{ maxWidth: '800px', margin: '0 auto', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                                <div className="card-header" style={{ padding: '20px 25px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                                    <Mail size={24} color="#333333" />
+                                    <h2 style={{ fontSize: '1.2rem', color: '#0f172a', fontWeight: '700' }}>Inbox</h2>
+                                </div>
+                                <div className="card-body" style={{ padding: '60px 20px', textAlign: 'center', background: '#ffffff' }}>
+                                    <div className="icon-box" style={{ background: '#f1f5f9', width: '90px', height: '90px', borderRadius: '50%', margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Mail size={40} color="#94a3b8" />
+                                    </div>
+                                    <h3 style={{ color: '#1e293b', fontSize: '1.4rem', fontWeight: '700', marginBottom: '10px' }}>No New Messages</h3>
+                                    <p style={{ color: '#64748b', fontSize: '0.95rem', maxWidth: '350px', margin: '0 auto 25px' }}>Your inbox is currently empty. We'll notify you when new updates or alerts arrive.</p>
+                                    <button style={{ padding: '10px 20px', border: '1px solid #cbd5e1', borderRadius: '8px', background: 'white', color: '#475569', fontWeight: '600', cursor: 'pointer' }}>
+                                        Refresh Inbox
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                {/* --- SERVICES MODAL (NEW ADDITION) --- */}
+                {/* --- SERVICES MODAL --- */}
                 <AnimatePresence>
                     {selectedService && (
                         <div className="modal-overlay" onClick={() => setSelectedService(null)}>
@@ -604,18 +547,16 @@ export default function VirtualSpace() {
                                     <div style={{ background: '#f1f5f9', padding: '20px', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
                                         <p style={{ color: '#475569', margin: 0 }}>Management controls for {selectedService.title} will be available here based on your administrative access level.</p>
                                     </div>
-                                    <motion.button
+                                    <button
                                         onClick={() => {
                                             toast.success(`Settings for ${selectedService.title} saved!`);
                                             setSelectedService(null);
                                         }}
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.95 }}
                                         className="btn-action btn-primary"
                                         style={{ marginTop: '20px', width: '100%', padding: '12px' }}
                                     >
                                         Save Configuration
-                                    </motion.button>
+                                    </button>
                                 </div>
                             </motion.div>
                         </div>
@@ -624,15 +565,14 @@ export default function VirtualSpace() {
 
             </div>
 
-            {/* 🚀 CSS WITH 100% BULLETPROOF SCROLL FIX & LAYOUT FIXES */}
             <style>{`
             :root { --bg-body: #f8fafc; --text-main: #1e293b; --text-muted: #64748b; --primary: #3b82f6; --danger: #ef4444; --border-light: #e2e8f0; }
             
             /* Desktop Layout */
             .virtual-space-container { display: flex; height: 100vh; background: var(--bg-body); font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }
-            .vs-main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; height: 100vh; min-width: 0; position: relative; }
-            .desktop-sidebar-wrapper { width: 260px; flex-shrink: 0; height: 100vh; background: #fff; border-right: 1px solid var(--border-light); z-index: 50; }
-            .mobile-overlay { display: none; }
+            
+            /* 👉 3. CSS CHANGE: Margin-left set to 280px just like UserManager */
+            .vs-main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; height: 100vh; position: relative; margin-left: 280px; }
             
             /* Header */
             .master-head { background: #ffffff; border-bottom: 1px solid var(--border-light); flex-shrink: 0; }
@@ -640,7 +580,6 @@ export default function VirtualSpace() {
             /* --- FIXED HEADER LAYOUT TO STOP JITTER --- */
             .top-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 12px 24px; gap: 15px; }
             .left-cluster { display: flex; align-items: center; gap: 15px; justify-content: flex-start; min-width: 0; }
-            .mobile-menu-btn { display: none; border: none; background: none; cursor: pointer; color: var(--text-main); }
             
             .search-pill { display: flex; align-items: center; background: #f1f5f9; padding: 8px 16px; border-radius: 12px; width: 100%; max-width: 320px; border: 1px solid transparent; }
             .search-pill input { border: none; background: transparent; outline: none; margin-left: 10px; width: 100%; font-size: 14px; color: #1e293b; min-width: 0; }
@@ -677,12 +616,17 @@ export default function VirtualSpace() {
             .tab-item { background: none; border: none; padding: 16px 0; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; position: relative; transition: 0.3s; white-space: nowrap; }
             .tab-item:hover { color: var(--text-main); }
             .tab-item.active { color: var(--primary); font-weight: 700; }
-            .tab-line { position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: var(--primary); }
+            .tab-line-static { position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: var(--primary); }
 
             /* Content & Grid */
             .content-area { flex: 1; padding: 20px; overflow-y: auto; background: var(--bg-body); }
             .vs-grid-layout { display: grid; grid-template-columns: 1fr 280px; gap: 20px; height: 100%; min-height: 500px; }
-            .tab-view { height: 100%; }
+            .tab-view { height: 100%; animation: fadeIn 0.2s ease-in; }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
             
             /* Sidebar Panels */
             .sidebar-panels { display: flex; flex-direction: column; gap: 15px; height: 100%; overflow: hidden; } 
@@ -700,8 +644,8 @@ export default function VirtualSpace() {
 
             /* Video Card */
             .video-card { background: black; border-radius: 16px; overflow: hidden; position: relative; border: 1px solid #334155; height: 100%; display: flex; flex-direction: column; }
-            .video-frame { width: 100%; height: 100%; position: relative; display: flex; justify-content: center; align-items: center; flex: 1; }
-            .camera-off-placeholder { color: white; font-size: 1.2rem; opacity: 0.7; }
+            .video-frame { width: 100%; height: 100%; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1; }
+            .camera-off-placeholder { display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; }
             .control-overlay { position: absolute; bottom: 20px; width: 100%; display: flex; justify-content: center; z-index: 10; }
             .control-bar { display: flex; gap: 10px; background: rgba(0,0,0,0.6); padding: 8px 20px; border-radius: 40px; backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1); }
             .ctrl-btn { color: white; background: rgba(255,255,255,0.1); border: none; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
@@ -733,17 +677,16 @@ export default function VirtualSpace() {
             .btn-action { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 700; font-size: 0.85rem; }
             .btn-danger { background: var(--danger); color: white; } .btn-primary { background: var(--primary); color: white; }
 
-            /* Modal CSS */
             .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 1000; }
             .modal-content { width: 90%; max-width: 500px; }
 
             /* ==============================================================
-               📱 MOBILE RESPONSIVE FIXES (SEARCH BAR STACKING)
+               📱 MOBILE RESPONSIVE FIXES
                ============================================================== */
             @media (max-width: 850px) {
-                .desktop-sidebar-wrapper { display: none; } .mobile-menu-btn { display: block; }
+                /* 👉 4. Mobile Layout Fixes: Margin 0 kar diya taaki full screen le aur content daba-daba na lage */
+                .vs-main-content { margin-left: 0; padding-top: 70px; width: 100%; } 
                 
-                /* FIX FOR SEARCH BAR STACKING & HEADER */
                 .top-row { display: flex; flex-direction: column; align-items: flex-start; gap: 15px; }
                 .left-cluster { width: 100%; max-width: 100%; } 
                 .search-pill { width: 100%; max-width: 100%; box-sizing: border-box; }
@@ -754,13 +697,10 @@ export default function VirtualSpace() {
                 .btm-row { display: none; }
                 .vs-grid-layout { display: flex; flex-direction: column; height: auto; }
                 .video-card { aspect-ratio: 4/3; width: 100%; height: auto; }
-                .mobile-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: none; }
-                .mobile-overlay.active { display: block; }
-                .mobile-sidebar { width: 260px; height: 100%; background: white; }
                 .sidebar-panels { height: auto; }
                 .info-card { height: auto; }
             }
             `}</style>
-        </div>
+        </div >
     );
 }
