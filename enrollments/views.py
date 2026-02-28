@@ -15,7 +15,7 @@ class EnrollmentListCreate(APIView):
         
         for e in enrollments:
             # ✅ SAFETY CHECK: Student ka naam dhoondne ka "Foolproof" tareeka
-            display_name = "Student " + str(e.student.id) 
+            display_name = f"Student {e.student.id}" 
             
             try:
                 if hasattr(e.student, 'first_name') and e.student.first_name:
@@ -34,7 +34,7 @@ class EnrollmentListCreate(APIView):
                 "student": e.student.id,
                 "student_name": display_name, 
                 "course": e.course.id,
-                "course_name": e.course.name, 
+                "course_name": getattr(e.course, 'name', f"Course {e.course.id}"), # ✅ Safety for missing course name
                 "class_name": getattr(e, 'class_name', None), # ✅ NEW: Table me class dikhane ke liye
                 "enrolled_at": e.enrolled_at,
             })
@@ -63,7 +63,13 @@ class EnrollmentListCreate(APIView):
 class EnrollmentDetail(APIView):
     permission_classes = [AllowAny]
 
-    # ✅ NEW: PUT method (Edit button ke liye 405 Method Not Allowed error fix karega)
+    # ✅ NEW: Single record GET karne ke liye (Agar frontend me specific detail dekhni ho)
+    def get(self, request, pk):
+        enrollment = get_object_or_404(Enrollment, pk=pk)
+        serializer = EnrollmentSerializer(enrollment)
+        return Response(serializer.data)
+
+    # ✅ PUT method (Edit button ke liye 405 Method Not Allowed error fix karega)
     def put(self, request, pk):
         enrollment = get_object_or_404(Enrollment, pk=pk)
         data = request.data.copy()
@@ -82,7 +88,7 @@ class EnrollmentDetail(APIView):
         print("❌ PUT ERROR:", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-    # ✅ NEW: PATCH method (Kuch browsers/frontends PATCH bhejte hain edit ke liye)
+    # ✅ PATCH method (Kuch browsers/frontends PATCH bhejte hain edit ke liye)
     def patch(self, request, pk):
         return self.put(request, pk)
 
