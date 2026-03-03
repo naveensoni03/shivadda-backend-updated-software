@@ -60,7 +60,9 @@ export default function UserManager() {
         father_name: "", mother_name: "", parent_phone: "",
         highest_qualification: "", qualification_type: "Academic", experience_years: 0,
         address_permanent: "",
-        terms_accepted: false
+        terms_accepted: false,
+        profile_photo: null, // ✨ NEW ADDED
+        national_identity: "" // ✨ NEW ADDED
     };
     const [formData, setFormData] = useState(initialFormState);
 
@@ -304,6 +306,19 @@ export default function UserManager() {
                                     <div style={inputGroup}><label style={labelStyle}>Phone</label><input value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} style={input} /></div>
                                 </div>
 
+                                {/* ✨ NEW ADDED: Identity & Photo Section */}
+                                <h4 style={sectionTitle}>Identity & Photo</h4>
+                                <div className="user-form-split">
+                                    <div style={inputGroup}>
+                                        <label style={labelStyle}>Profile Photo</label>
+                                        <input type="file" accept="image/*" onChange={e => setFormData({ ...formData, profile_photo: e.target.files[0] })} style={{ ...input, padding: '10px', cursor: 'pointer' }} />
+                                    </div>
+                                    <div style={inputGroup}>
+                                        <label style={labelStyle}>National Identity (ID Number)</label>
+                                        <input placeholder="Aadhar/PAN/Passport" value={formData.national_identity} onChange={e => setFormData({ ...formData, national_identity: e.target.value })} style={input} />
+                                    </div>
+                                </div>
+
                                 <h4 style={sectionTitle}>Profile Details (Deep)</h4>
                                 <div className="user-form-split">
                                     <div style={inputGroup}><label style={labelStyle}>Date of Birth</label><input type="date" value={formData.dob} onChange={e => setFormData({ ...formData, dob: e.target.value })} style={input} /></div>
@@ -380,6 +395,9 @@ export default function UserManager() {
                                 <p style={{ fontSize: '1rem', opacity: 0.9, marginTop: '5px', wordBreak: 'break-all' }}>{selectedUser.email}</p>
                             </div>
                             <div style={{ padding: '35px', maxHeight: '50vh', overflowY: 'auto' }} className="hide-scrollbar">
+                                {/* ✨ NEW ADDED: Identity Display */}
+                                <DetailRow icon={<Shield size={20} />} label="National Identity" value={selectedUser.national_identity || "N/A"} color="#6366f1" />
+
                                 <DetailRow icon={<Shield size={20} />} label="Role" value={selectedUser.role} />
                                 <DetailRow icon={<Briefcase size={20} />} label="Post Type" value={selectedUser.post_nature || "N/A"} />
                                 <DetailRow icon={<Home size={20} />} label="Work Group" value={selectedUser.working_group || "N/A"} />
@@ -408,6 +426,28 @@ export default function UserManager() {
                             <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '20px' }}>
                                 <motion.button onClick={() => setIsDeleteModalOpen(false)} style={secondaryBtn}>Cancel</motion.button>
                                 <motion.button onClick={confirmDelete} style={deleteBtnStyle}>Yes, Delete</motion.button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+
+            {/* ✨ NEW: BULK DELETE MODAL */}
+            <AnimatePresence>
+                {isBulkDeleteOpen && (
+                    <div style={overlay}>
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ ...modal, width: '400px', textAlign: 'center', borderTop: '6px solid #ef4444' }}>
+                            <div style={{ width: '70px', height: '70px', background: '#fee2e2', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#ef4444' }}>
+                                <AlertTriangle size={32} />
+                            </div>
+                            <h2 style={{ fontSize: '1.6rem', fontWeight: '800', color: '#1e293b' }}>
+                                Delete {selectedUserIds.length} Users?
+                            </h2>
+                            <p style={{ color: '#64748b', marginTop: '10px' }}>This action cannot be undone.</p>
+                            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '20px' }}>
+                                <motion.button onClick={() => setIsBulkDeleteOpen(false)} style={secondaryBtn}>Cancel</motion.button>
+                                <motion.button onClick={handleBulkDelete} style={deleteBtnStyle}>Yes, Delete All</motion.button>
                             </div>
                         </motion.div>
                     </div>

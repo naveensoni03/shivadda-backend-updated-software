@@ -14,7 +14,8 @@ class UserManagementSerializer(serializers.ModelSerializer):
             'id', 'email', 'full_name', 'phone', 'role', 
             'account_status', 'is_active', 'date_joined', 
             'last_login', 'password', 'storage_limit_mb', 'storage_used_mb',
-            'created_by'
+            'created_by',
+            'profile_photo', 'national_identity' # ✨ NEW ADDED
         ]
         read_only_fields = ['id', 'date_joined', 'last_login', 'is_active', 'created_by']
 

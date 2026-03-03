@@ -65,6 +65,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     storage_limit_mb = models.IntegerField(default=500, help_text="Total Allocated Space in MB")
     storage_used_mb = models.FloatField(default=0.0, help_text="Space Used in MB")
 
+    # ✨ NEW ADDED: Deep Profile Features (Photo & Identity)
+    profile_photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True)
+    national_identity = models.CharField(max_length=100, blank=True, null=True, help_text="Aadhar/PAN/Passport Number")
+
     groups = models.ManyToManyField("auth.Group", related_name="accounts_users", blank=True)
     user_permissions = models.ManyToManyField("auth.Permission", related_name="accounts_users_permissions", blank=True)
 

@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateAPIView
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser # ✨ NEW ADDED
 
 from django.contrib.auth import get_user_model
 from .models import Agent
@@ -27,6 +28,9 @@ class UserManagementViewSet(viewsets.ModelViewSet):
     serializer_class = UserManagementSerializer
     permission_classes = [AllowAny] # Testing ke liye Open, Production me IsAdminUser karein
     
+    # ✨ NEW ADDED: Allow file uploads (multipart/form-data)
+    parser_classes = [MultiPartParser, FormParser] 
+    
     # ✅ Search & Filter
     filter_backends = [filters.SearchFilter]
     search_fields = ['email', 'full_name', 'phone']
@@ -38,8 +42,6 @@ class UserManagementViewSet(viewsets.ModelViewSet):
         else:
             serializer.save()
 
-    # ✅ NEW: Hibernate/Activate Status Toggle
-    @action(detail=True, methods=['patch'])
     # ✅ NEW: Hibernate/Activate Status Toggle
     @action(detail=True, methods=['patch'])
     def update_status(self, request, pk=None):
