@@ -25,12 +25,14 @@ export default function Visitors() {
     const today = new Date().toISOString().split('T')[0];
     const [visitors, setVisitors] = useState([]);
 
-    // ✅ ADVANCED FORM DATA (Requirement 1, 3, 5, 7)
+    // ✅ ADVANCED FORM DATA (Requirement 1, 3, 5, 7) + ✨ NEW VISITOR FEATURES
     const [formData, setFormData] = useState({
         name: "", phone: "", purpose: "", person_to_meet: "",
         gender: "Male", id_proof: "", address: "",
         otp: "", captcha: "", terms_accepted: false, photo: null,
-        place_id: "IND-UP-JAUNPUR-01", virtual_id: "V-SEC-001", allocated_mb: 50
+        place_id: "IND-UP-JAUNPUR-01", virtual_id: "V-SEC-001", allocated_mb: 50,
+        // ✨ NEW ADDED: Identity File, Vehicle & Accompanying Persons
+        id_proof_file: null, vehicle_number: "", accompanying_persons: "0"
     });
 
     const [loading, setLoading] = useState(false);
@@ -89,11 +91,12 @@ export default function Visitors() {
 
             toast.success("Gate Pass Generated & Storage Allocated! 🎫");
 
-            // Reset Form
+            // Reset Form (✨ Updated with New Fields)
             setFormData({
                 name: "", phone: "", purpose: "", person_to_meet: "",
                 gender: "Male", id_proof: "", address: "", otp: "", captcha: "",
-                terms_accepted: false, photo: null, place_id: "IND-UP-JAUNPUR-01", virtual_id: "V-SEC-001", allocated_mb: 50
+                terms_accepted: false, photo: null, place_id: "IND-UP-JAUNPUR-01", virtual_id: "V-SEC-001", allocated_mb: 50,
+                id_proof_file: null, vehicle_number: "", accompanying_persons: "0" // ✨ NEW ADDED
             });
         } catch (error) { toast.error("Entry Failed"); }
         setLoading(false);
@@ -145,6 +148,10 @@ export default function Visitors() {
                         <div class="row"><span class="label">Name:</span> <span class="val">${selectedPass.name} (${selectedPass.gender})</span></div>
                         <div class="row"><span class="label">Phone:</span> <span class="val">${selectedPass.phone}</span></div>
                         <div class="row"><span class="label">ID Proof:</span> <span class="val">${selectedPass.id_proof || 'N/A'}</span></div>
+                        
+                        <div class="row"><span class="label">Vehicle:</span> <span class="val">${selectedPass.vehicle_number || 'N/A'}</span></div>
+                        <div class="row"><span class="label">Accompanying:</span> <span class="val">+${selectedPass.accompanying_persons || '0'} Person(s)</span></div>
+
                         <div class="row"><span class="label">To Meet:</span> <span class="val">${selectedPass.person_to_meet}</span></div>
                         <div class="row"><span class="label">Purpose:</span> <span class="val">${selectedPass.purpose}</span></div>
                         <div class="row"><span class="label">Check-In:</span> <span class="val">${new Date(selectedPass.check_in_time).toLocaleString()}</span></div>
@@ -172,6 +179,9 @@ export default function Visitors() {
 ========================================
 Visitor Name:  ${selectedPass.name}
 Phone Number:  ${selectedPass.phone}
+ID Proof No:   ${selectedPass.id_proof || 'N/A'}
+Vehicle No:    ${selectedPass.vehicle_number || 'N/A'}  // ✨ NEW ADDED
+Accompanying:  +${selectedPass.accompanying_persons || '0'} Persons // ✨ NEW ADDED
 To Meet:       ${selectedPass.person_to_meet}
 Purpose:       ${selectedPass.purpose}
 Time In:       ${new Date(selectedPass.check_in_time).toLocaleString()}
@@ -317,6 +327,24 @@ Status:        ${selectedPass.is_checked_out ? "Checked Out" : "Inside Campus"}
                                 </div>
                             </div>
 
+                            {/* ✨ NEW ADDED: ID File Upload & Extra Details Row */}
+                            <div className="form-split-row">
+                                <div className="form-input-wrapper">
+                                    <label style={labelStyle}>Upload ID Document (Image/PDF)</label>
+                                    <input type="file" accept=".pdf,image/*" onChange={e => setFormData({ ...formData, id_proof_file: e.target.files[0] })} style={{ ...cleanInputStyle, padding: '7px' }} />
+                                </div>
+                                <div className="form-input-wrapper">
+                                    <label style={labelStyle}>Accompanying Persons</label>
+                                    <input type="number" min="0" placeholder="0" value={formData.accompanying_persons} onChange={e => setFormData({ ...formData, accompanying_persons: e.target.value })} style={cleanInputStyle} />
+                                </div>
+                            </div>
+
+                            {/* ✨ NEW ADDED: Vehicle Input */}
+                            <div className="form-input-wrapper">
+                                <label style={labelStyle}>Vehicle Number (Optional)</label>
+                                <input placeholder="e.g. UP 62 AB 1234" value={formData.vehicle_number} onChange={e => setFormData({ ...formData, vehicle_number: e.target.value })} style={cleanInputStyle} />
+                            </div>
+
                             <div className="form-input-wrapper">
                                 <label style={labelStyle}>Full Address</label>
                                 <input placeholder="City, State" required value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} style={cleanInputStyle} />
@@ -440,6 +468,11 @@ Status:        ${selectedPass.is_checked_out ? "Checked Out" : "Inside Campus"}
 
                                 <div style={{ padding: '25px', overflowY: 'auto', flex: 1 }}>
                                     <div style={passRow}><span style={passLabel}>Phone</span><span style={passValue}>{selectedPass.phone}</span></div>
+
+                                    {/* ✨ NEW ADDED IN MODAL UI */}
+                                    <div style={passRow}><span style={passLabel}>Vehicle No.</span><span style={passValue}>{selectedPass.vehicle_number || 'N/A'}</span></div>
+                                    <div style={passRow}><span style={passLabel}>Accompanying</span><span style={passValue}>{selectedPass.accompanying_persons || '0'} Person(s)</span></div>
+
                                     <div style={passRow}><span style={passLabel}>Address</span><span style={passValue}>{selectedPass.address || 'N/A'}</span></div>
                                     <div style={passRow}><span style={passLabel}>To Meet</span><span style={passValue}>{selectedPass.person_to_meet}</span></div>
                                     <div style={passRow}><span style={passLabel}>Purpose</span><span style={passValue}>{selectedPass.purpose}</span></div>

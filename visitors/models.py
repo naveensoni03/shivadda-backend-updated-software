@@ -29,5 +29,10 @@ class Visitor(models.Model):
     virtual_id = models.CharField(max_length=50, default="V-SEC-001")
     allocated_mb = models.IntegerField(default=50)
 
+    # ✨ NEW ADDED: Identity File, Vehicle & Accompanying Persons
+    id_proof_file = models.FileField(upload_to='visitor_ids/', blank=True, null=True, help_text="Uploaded ID Document (Image/PDF)")
+    vehicle_number = models.CharField(max_length=30, blank=True, null=True, help_text="Optional Vehicle Number")
+    accompanying_persons = models.IntegerField(default=0, help_text="Number of people accompanying the visitor")
+
     def __str__(self):
         return f"{self.name} - {self.phone}"

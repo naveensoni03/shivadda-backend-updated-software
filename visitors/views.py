@@ -1,12 +1,16 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser # ✨ NEW ADDED
 from django.utils import timezone
 from .models import Visitor
 from .serializers import VisitorSerializer
 
 class VisitorViewSet(viewsets.ModelViewSet):
     serializer_class = VisitorSerializer
+    
+    # ✨ NEW ADDED: File uploads (id_proof_file) ko accept karne ke liye
+    parser_classes = [MultiPartParser, FormParser, JSONParser] 
 
     def get_queryset(self):
         queryset = Visitor.objects.all().order_by('-check_in_time')
