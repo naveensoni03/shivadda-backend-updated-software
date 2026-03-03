@@ -2,6 +2,7 @@ from django.db import models
 import uuid
 
 class Place(models.Model):
+    # --- CHOICES ALIGNED WITH REACT FRONTEND ---
     PLACE_TYPES = (
         ('Global', 'Global'),
         ('Continent', 'Continent'),
@@ -15,12 +16,42 @@ class Place(models.Model):
         ('School', 'School/Center'),
     )
 
+    SPACE_TYPES = (
+        ('Physical', 'Physical Space'),
+        ('Virtual', 'Virtual Space'),
+    )
+
+    PLACE_USES = (
+        ('None', '-- Uses For --'),
+        ('Foundation', 'Foundation'),
+        ('Preparatory', 'Preparatory'),
+        ('Middle', 'Middle'),
+        ('Secondary', 'Secondary'),
+        ('Higher Classes', 'Higher Classes'),
+        ('PHD Plus', 'PHD Plus'),
+        ('Professional', 'Professional'),
+        ('Technical', 'Technical'),
+        ('Vacational', 'Vacational'),
+        ('Academic Professional', 'Academic Professional'),
+        ('Academic and Technical', 'Academic & Technical'),
+        ('Academic Vacational', 'Academic Vacational'),
+        ('Others', 'Others'),
+    )
+
+    WORK_STATUS_CHOICES = (
+        ('Ministerial Office', 'Ministerial Office'),
+        ('Working Fields', 'Working Fields'),
+        ('Both', 'Both (Office + Field)'),
+        ('None', 'None'),
+    )
+
     # ✅ FIXED: Status choices ko React Frontend ke payload ('ACTIVE', 'INACTIVE') se match kiya gaya
     STATUS_CHOICES = (
         ('ACTIVE', 'Active / Show'),
         ('INACTIVE', 'Inactive / Hide'),
     )
 
+    # --- FIELDS ---
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     
@@ -36,8 +67,11 @@ class Place(models.Model):
     place_type = models.CharField(max_length=50, choices=PLACE_TYPES, default='Global')
     
     # --- SUPER ADMIN FIELDS (Geographical & Deep Config) ---
-    space_type = models.CharField(max_length=50, null=True, blank=True)
-    place_uses_for = models.CharField(max_length=100, null=True, blank=True)
+    # 🔥 UPDATE: Ab ye fields properly frontend choices se validate hongi
+    space_type = models.CharField(max_length=50, choices=SPACE_TYPES, null=True, blank=True)
+    place_uses_for = models.CharField(max_length=100, choices=PLACE_USES, null=True, blank=True)
+    work_status = models.CharField(max_length=50, choices=WORK_STATUS_CHOICES, null=True, blank=True)
+    
     pin_code = models.CharField(max_length=20, null=True, blank=True)
     zip_code = models.CharField(max_length=20, null=True, blank=True)
     beat_no = models.CharField(max_length=50, null=True, blank=True)
@@ -45,7 +79,6 @@ class Place(models.Model):
     google_map_id = models.CharField(max_length=255, null=True, blank=True)
     latitude = models.CharField(max_length=100, null=True, blank=True)
     longitude = models.CharField(max_length=100, null=True, blank=True)
-    work_status = models.CharField(max_length=50, null=True, blank=True)
     
     status = models.CharField(max_length=20, default='ACTIVE', choices=STATUS_CHOICES)
     
