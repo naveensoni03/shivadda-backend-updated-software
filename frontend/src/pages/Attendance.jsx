@@ -1,346 +1,346 @@
 import React, { useState, useEffect } from "react";
 import SidebarModern from "../components/SidebarModern";
 import { Toaster, toast } from 'react-hot-toast';
-import api from "../api/axios"; 
-import { 
-  Calendar, CheckCircle, XCircle, Clock, 
-  BarChart2, Users, Save, Bell, Filter, Search, MoreHorizontal,
-  Trophy, AlertTriangle, TrendingUp, Target, Zap
+import api from "../api/axios";
+import {
+    Calendar, CheckCircle, XCircle, Clock,
+    BarChart2, Users, Save, Bell, Filter, Search, MoreHorizontal,
+    Trophy, AlertTriangle, TrendingUp, Target, Zap
 } from "lucide-react";
 
 export default function Attendance() {
-  const [activeTab, setActiveTab] = useState('daily');
-  const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('daily');
+    const [loading, setLoading] = useState(true);
 
-  // --- DAILY ATTENDANCE STATES ---
-  const [students, setStudents] = useState([]);
-  const [selectedBatchId, setSelectedBatchId] = useState(1); 
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [notifyParents, setNotifyParents] = useState(true);
-  
-  // --- REPORT STATES ---
-  const [report, setReport] = useState([]);
+    // --- DAILY ATTENDANCE STATES ---
+    const [students, setStudents] = useState([]);
+    const [selectedBatchId, setSelectedBatchId] = useState(1);
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [notifyParents, setNotifyParents] = useState(true);
 
-  // --- INITIAL DATA LOAD (CONNECTED TO DB) ---
-  useEffect(() => {
-    fetchData();
-  }, [selectedBatchId, selectedDate, activeTab]);
+    // --- REPORT STATES ---
+    const [report, setReport] = useState([]);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-        if (activeTab === 'daily') {
-            const res = await api.get(`attendance/daily/?batch_id=${selectedBatchId}&date=${selectedDate}`);
-            setStudents(res.data);
-        } else {
-            const res = await api.get(`attendance/eligibility/${selectedBatchId}/`);
-            setReport(res.data);
+    // --- INITIAL DATA LOAD (CONNECTED TO DB) ---
+    useEffect(() => {
+        fetchData();
+    }, [selectedBatchId, selectedDate, activeTab]);
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            if (activeTab === 'daily') {
+                const res = await api.get(`attendance/daily/?batch_id=${selectedBatchId}&date=${selectedDate}`);
+                setStudents(res.data);
+            } else {
+                const res = await api.get(`attendance/eligibility/${selectedBatchId}/`);
+                setReport(res.data);
+            }
+        } catch (error) {
+            console.error("Error fetching attendance:", error);
+            toast.error("Failed to load data.");
+            // Fallback for visual testing if DB is down
+            if (activeTab === 'daily' && students.length === 0) {
+                setStudents([
+                    { id: 1, roll: 101, name: "Aarav Sharma", status: "Present", remarks: "", attendance_record: "95%", color: "#6366F1", img: "A" },
+                    { id: 2, roll: 102, name: "Isha Verma", status: "Absent", remarks: "", attendance_record: "80%", color: "#EC4899", img: "I" },
+                ]);
+            }
+        } finally {
+            setTimeout(() => setLoading(false), 500);
         }
-    } catch (error) {
-        console.error("Error fetching attendance:", error);
-        toast.error("Failed to load data.");
-        // Fallback for visual testing if DB is down
-        if(activeTab === 'daily' && students.length === 0){
-             setStudents([
-                { id: 1, roll: 101, name: "Aarav Sharma", status: "Present", remarks: "", attendance_record: "95%", color: "#6366F1", img: "A" },
-                { id: 2, roll: 102, name: "Isha Verma", status: "Absent", remarks: "", attendance_record: "80%", color: "#EC4899", img: "I" },
-             ]);
+    };
+
+    // --- HANDLERS ---
+    const handleStatusChange = (id, newStatus) => {
+        setStudents(prev => prev.map(s => s.id === id ? { ...s, status: newStatus } : s));
+    };
+
+    const handleRemarkChange = (id, text) => {
+        setStudents(prev => prev.map(s => s.id === id ? { ...s, remarks: text } : s));
+    };
+
+    const playSound = () => {
+        const audio = new Audio("https://actions.google.com/sounds/v1/cartoon/pop.ogg");
+        audio.volume = 0.5;
+        audio.play().catch(e => console.log("Audio error:", e));
+    };
+
+    const handleSave = async () => {
+        playSound();
+        const loadId = toast.loading("Saving to Database...");
+
+        try {
+            await api.post('attendance/daily/', {
+                batch_id: selectedBatchId,
+                date: selectedDate,
+                attendance_list: students
+            });
+
+            const absentCount = students.filter(s => s.status === 'Absent').length;
+
+            toast.dismiss(loadId);
+            toast.custom((t) => (
+                <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} glass-toast`}>
+                    <div className="icon-box">💾</div>
+                    <div className="content-box">
+                        <b>Attendance Saved!</b>
+                        <p>{notifyParents ? `SMS queued for ${absentCount} parents.` : "Updated in database."}</p>
+                    </div>
+                </div>
+            ), { duration: 3000 });
+
+        } catch (error) {
+            toast.dismiss(loadId);
+            toast.error("Failed to save attendance.");
         }
-    } finally {
-        setTimeout(() => setLoading(false), 500); 
-    }
-  };
+    };
 
-  // --- HANDLERS ---
-  const handleStatusChange = (id, newStatus) => {
-    setStudents(prev => prev.map(s => s.id === id ? { ...s, status: newStatus } : s));
-  };
+    // --- STATS CALCULATION ---
+    const total = students.length;
+    const present = students.filter(s => s.status === "Present").length;
+    const absent = students.filter(s => s.status === "Absent").length;
+    const late = students.filter(s => s.status === "Late").length;
 
-  const handleRemarkChange = (id, text) => {
-    setStudents(prev => prev.map(s => s.id === id ? { ...s, remarks: text } : s));
-  };
+    const getAvg = () => report.length > 0 ? Math.round(report.reduce((acc, curr) => acc + curr.percentage, 0) / report.length) : 0;
+    const getTopStudent = () => report.length > 0 ? report.reduce((prev, current) => (prev.percentage > current.percentage) ? prev : current) : { student: "None", percentage: 0 };
 
-  const playSound = () => {
-    const audio = new Audio("https://actions.google.com/sounds/v1/cartoon/pop.ogg");
-    audio.volume = 0.5;
-    audio.play().catch(e => console.log("Audio error:", e));
-  };
+    return (
+        <div className="app-container app-mobile-scroll">
+            <SidebarModern />
+            <Toaster position="bottom-right" reverseOrder={false} />
 
-  const handleSave = async () => {
-    playSound();
-    const loadId = toast.loading("Saving to Database...");
-    
-    try {
-        await api.post('attendance/daily/', {
-            batch_id: selectedBatchId,
-            date: selectedDate,
-            attendance_list: students
-        });
+            <div className="bg-shape shape-1"></div>
+            <div className="bg-shape shape-2"></div>
 
-        const absentCount = students.filter(s => s.status === 'Absent').length;
-        
-        toast.dismiss(loadId);
-        toast.custom((t) => (
-        <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} glass-toast`}>
-            <div className="icon-box">💾</div>
-            <div className="content-box">
-                <b>Attendance Saved!</b>
-                <p>{notifyParents ? `SMS queued for ${absentCount} parents.` : "Updated in database."}</p>
-            </div>
-        </div>
-        ), { duration: 3000 });
+            <div className="main-content hide-scrollbar">
 
-    } catch (error) {
-        toast.dismiss(loadId);
-        toast.error("Failed to save attendance.");
-    }
-  };
-
-  // --- STATS CALCULATION ---
-  const total = students.length;
-  const present = students.filter(s => s.status === "Present").length;
-  const absent = students.filter(s => s.status === "Absent").length;
-  const late = students.filter(s => s.status === "Late").length;
-
-  const getAvg = () => report.length > 0 ? Math.round(report.reduce((acc, curr) => acc + curr.percentage, 0) / report.length) : 0;
-  const getTopStudent = () => report.length > 0 ? report.reduce((prev, current) => (prev.percentage > current.percentage) ? prev : current) : {student: "None", percentage: 0};
-
-  return (
-    <div className="app-container app-mobile-scroll">
-      <SidebarModern />
-      <Toaster position="bottom-right" reverseOrder={false} />
-
-      <div className="bg-shape shape-1"></div>
-      <div className="bg-shape shape-2"></div>
-
-      <div className="main-content hide-scrollbar">
-        
-        <header className="glass-header slide-down">
-            <div className="header-left">
-                <h1>Attendance<span className="text-gradient">Hub</span></h1>
-                <p>{new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-            </div>
-            
-            <div className="header-actions">
-                 <div className="glass-tab-container">
-                    <button 
-                        onClick={() => setActiveTab('daily')}
-                        className={`tab-btn ${activeTab === 'daily' ? 'active' : ''}`}
-                    >
-                        <Calendar size={18} /> Daily Log
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('report')}
-                        className={`tab-btn ${activeTab === 'report' ? 'active' : ''}`}
-                    >
-                        <BarChart2 size={18} /> Analytics
-                    </button>
-                </div>
-                <div className="profile-bubble">
-                    <img src="https://i.pravatar.cc/150?img=12" alt="Admin" />
-                </div>
-            </div>
-        </header>
-
-        {loading ? (
-             <div className="loader-container">
-                <div className="loader"></div>
-             </div>
-        ) : (
-        <>
-            {/* ======================= VIEW 1: DAILY LOG ======================= */}
-            {activeTab === 'daily' && (
-                <div className="content-wrapper">
-                    
-                    <div className="controls-bar fade-in-up" style={{animationDelay: '0.1s'}}>
-                        <div className="control-group">
-                            <Users size={18} className="text-slate-400"/>
-                            <select className="ghost-select" value={selectedBatchId} onChange={(e) => setSelectedBatchId(e.target.value)}>
-                                <option value={1}>Class 10-A (Science)</option>
-                                <option value={2}>Class 12-B (Commerce)</option>
-                            </select>
-                        </div>
-                        <div className="control-group">
-                            <Calendar size={18} className="text-slate-400"/>
-                            <input type="date" className="ghost-input" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
-                        </div>
-                        
-                        <div className="spacer"></div>
-
-                        <div 
-                            className={`toggle-pill ${notifyParents ? 'on' : 'off'}`} 
-                            onClick={() => setNotifyParents(!notifyParents)}
-                        >
-                            <div className="toggle-circle">
-                                <Bell size={12} />
-                            </div>
-                            <span>Notify Parents</span>
-                        </div>
+                <header className="glass-header slide-down">
+                    <div className="header-left">
+                        <h1>Attendance<span className="text-gradient">Hub</span></h1>
+                        <p>{new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                     </div>
 
-                    <div className="stats-grid">
-                        <StatCard delay="0.1s" label="Total Students" value={total} icon={<Users size={24}/>} color="indigo" />
-                        <StatCard delay="0.2s" label="Present" value={present} icon={<CheckCircle size={24}/>} color="emerald" />
-                        <StatCard delay="0.3s" label="Absent" value={absent} icon={<XCircle size={24}/>} color="rose" />
-                        <StatCard delay="0.4s" label="Late Arrivals" value={late} icon={<Clock size={24}/>} color="amber" />
-                    </div>
-
-                    <div className="table-container fade-in-up" style={{animationDelay: '0.5s'}}>
-                        <table className="floating-table">
-                            <thead>
-                                <tr>
-                                    <th>Roll No</th>
-                                    <th>Student Details</th>
-                                    <th className="text-center">Mark Attendance</th>
-                                    <th>Remarks</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {students.length > 0 ? students.map((s, idx) => (
-                                    <tr key={s.id} className="table-row" style={{animationDelay: `${0.05 * idx}s`}}>
-                                        <td><span className="roll-pill">#{s.roll}</span></td>
-                                        <td>
-                                            <div className="student-info">
-                                                <div className="avatar" style={{background: s.color || '#6366F1'}}>{s.img || s.name[0]}</div>
-                                                <div className="info-text">
-                                                    <span className="name">{s.name}</span>
-                                                    <span className="sub-text">Record: {s.attendance_record || 'New'}</span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="text-center">
-                                            <div className="status-selector">
-                                                <button className={`st-btn present ${s.status === 'Present' ? 'active' : ''}`} onClick={() => handleStatusChange(s.id, 'Present')}>P</button>
-                                                <button className={`st-btn absent ${s.status === 'Absent' ? 'active' : ''}`} onClick={() => handleStatusChange(s.id, 'Absent')}>A</button>
-                                                <button className={`st-btn late ${s.status === 'Late' ? 'active' : ''}`} onClick={() => handleStatusChange(s.id, 'Late')}>L</button>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div className="input-group">
-                                                <input 
-                                                    className={`remark-input ${s.status === 'Absent' ? 'required' : ''}`} 
-                                                    placeholder={s.status === 'Absent' ? "Reason required..." : "Optional note"} 
-                                                    value={s.remarks || ''}
-                                                    onChange={(e) => handleRemarkChange(s.id, e.target.value)}
-                                                />
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )) : (
-                                    <tr><td colSpan="4" style={{textAlign:'center', padding:'30px', color: '#64748B'}}>No students found for this batch.</td></tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* 🚀 ACTION BAR IS NOW NATURALLY SCROLLING BELOW THE TABLE */}
-                    <div className="floating-action-bar slide-up-reveal">
-                         <div className="summary-text">
-                            <span>{present} Present</span> • <span>{absent} Absent</span>
-                         </div>
-                        <button className="save-btn-glowing" onClick={handleSave}>
-                            <Save size={20} /> Save Record
-                        </button>
-                    </div>
-
-                </div>
-            )}
-
-            {/* ======================= VIEW 2: ANALYTICS ======================= */}
-            {activeTab === 'report' && (
-                <div className="content-wrapper fade-in-up">
-                    
-                    <div className="insights-header">
-                        <div className="insight-card primary">
-                            <div className="ic-icon"><Target size={24}/></div>
-                            <div>
-                                <div className="ic-label">Class Average</div>
-                                <div className="ic-val">{getAvg()}%</div>
-                            </div>
-                            <div className="ic-bg-icon"><BarChart2 size={80}/></div>
+                    <div className="header-actions">
+                        <div className="glass-tab-container">
+                            <button
+                                onClick={() => setActiveTab('daily')}
+                                className={`tab-btn ${activeTab === 'daily' ? 'active' : ''}`}
+                            >
+                                <Calendar size={18} /> Daily Log
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('report')}
+                                className={`tab-btn ${activeTab === 'report' ? 'active' : ''}`}
+                            >
+                                <BarChart2 size={18} /> Analytics
+                            </button>
                         </div>
-
-                        <div className="insight-card gold">
-                            <div className="ic-icon"><Trophy size={24}/></div>
-                            <div>
-                                <div className="ic-label">Top Performer</div>
-                                <div className="ic-val">{getTopStudent().student}</div>
-                            </div>
-                            <div className="ic-bg-icon"><Trophy size={80}/></div>
-                        </div>
-
-                        <div className="insight-card danger">
-                            <div className="ic-icon"><AlertTriangle size={24}/></div>
-                            <div>
-                                <div className="ic-label">Risk Alert</div>
-                                <div className="ic-val">{report.filter(r => !r.eligible).length} Students</div>
-                            </div>
-                            <div className="ic-bg-icon"><AlertTriangle size={80}/></div>
+                        <div className="profile-bubble">
+                            <img src="https://i.pravatar.cc/150?img=12" alt="Admin" />
                         </div>
                     </div>
+                </header>
 
-                    <div className="analytics-card-pro">
-                        <div className="card-header-pro">
-                            <div>
-                                <h2>Performance Leaderboard</h2>
-                                <p className="subtitle">Real-time attendance tracking</p>
-                            </div>
-                            <button className="filter-btn-pro"><Filter size={16}/> Filter</button>
-                        </div>
-                        
-                        <div className="leaderboard-list">
-                             {report.sort((a,b) => b.percentage - a.percentage).map((r, idx) => (
-                                <div key={idx} className="leaderboard-row" style={{animationDelay: `${idx * 0.1}s`}}>
-                                    
-                                    <div className="lb-rank">
-                                        {idx === 0 ? <div className="rank-badge gold">1</div> : 
-                                         idx === 1 ? <div className="rank-badge silver">2</div> :
-                                         idx === 2 ? <div className="rank-badge bronze">3</div> :
-                                         <div className="rank-badge normal">#{idx+1}</div>}
+                {loading ? (
+                    <div className="loader-container">
+                        <div className="loader"></div>
+                    </div>
+                ) : (
+                    <>
+                        {/* ======================= VIEW 1: DAILY LOG ======================= */}
+                        {activeTab === 'daily' && (
+                            <div className="content-wrapper">
+
+                                <div className="controls-bar fade-in-up" style={{ animationDelay: '0.1s' }}>
+                                    <div className="control-group">
+                                        <Users size={18} className="text-slate-400" />
+                                        <select className="ghost-select" value={selectedBatchId} onChange={(e) => setSelectedBatchId(e.target.value)}>
+                                            <option value={1}>Class 10-A (Science)</option>
+                                            <option value={2}>Class 12-B (Commerce)</option>
+                                        </select>
+                                    </div>
+                                    <div className="control-group">
+                                        <Calendar size={18} className="text-slate-400" />
+                                        <input type="date" className="ghost-input" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
                                     </div>
 
-                                    <div className="lb-info">
-                                        <div className="lb-name">
-                                            {r.student}
-                                            {r.percentage >= 90 && <Zap size={14} className="icon-zap" fill="currentColor"/>}
-                                        </div>
-                                        <div className="lb-status">
-                                            {r.eligible ? 
-                                                <span className="badge-pill safe">Eligible</span> : 
-                                                <span className="badge-pill danger">At Risk</span>
-                                            }
-                                        </div>
-                                    </div>
+                                    <div className="spacer"></div>
 
-                                    <div className="lb-progress">
-                                        <div className="lb-bar-bg">
-                                            <div 
-                                                className={`lb-bar-fill ${r.percentage < 75 ? 'warn-fill' : 'safe-fill'}`}
-                                                style={{ width: `${r.percentage}%` }}
-                                            >
-                                                <div className="shimmer-effect"></div>
-                                            </div>
+                                    <div
+                                        className={`toggle-pill ${notifyParents ? 'on' : 'off'}`}
+                                        onClick={() => setNotifyParents(!notifyParents)}
+                                    >
+                                        <div className="toggle-circle">
+                                            <Bell size={12} />
                                         </div>
-                                    </div>
-
-                                    <div className="lb-score">
-                                        <span className="score-big">{r.percentage}%</span>
-                                        <span className="trend-icon">
-                                            <TrendingUp size={14} color={r.percentage > 75 ? "#10B981" : "#EF4444"}/>
-                                        </span>
+                                        <span>Notify Parents</span>
                                     </div>
                                 </div>
-                             ))}
-                        </div>
-                    </div>
-                </div>
-            )}
-        </>
-        )}
 
-      </div>
+                                <div className="stats-grid">
+                                    <StatCard delay="0.1s" label="Total Students" value={total} icon={<Users size={24} />} color="indigo" />
+                                    <StatCard delay="0.2s" label="Present" value={present} icon={<CheckCircle size={24} />} color="emerald" />
+                                    <StatCard delay="0.3s" label="Absent" value={absent} icon={<XCircle size={24} />} color="rose" />
+                                    <StatCard delay="0.4s" label="Late Arrivals" value={late} icon={<Clock size={24} />} color="amber" />
+                                </div>
 
-      <style>{`
+                                <div className="table-container fade-in-up" style={{ animationDelay: '0.5s' }}>
+                                    <table className="floating-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Roll No</th>
+                                                <th>Student Details</th>
+                                                <th className="text-center">Mark Attendance</th>
+                                                <th>Remarks</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {students.length > 0 ? students.map((s, idx) => (
+                                                <tr key={s.id} className="table-row" style={{ animationDelay: `${0.05 * idx}s` }}>
+                                                    <td><span className="roll-pill">#{s.roll}</span></td>
+                                                    <td>
+                                                        <div className="student-info">
+                                                            <div className="avatar" style={{ background: s.color || '#6366F1' }}>{s.img || s.name[0]}</div>
+                                                            <div className="info-text">
+                                                                <span className="name">{s.name}</span>
+                                                                <span className="sub-text">Record: {s.attendance_record || 'New'}</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="text-center">
+                                                        <div className="status-selector">
+                                                            <button className={`st-btn present ${s.status === 'Present' ? 'active' : ''}`} onClick={() => handleStatusChange(s.id, 'Present')}>P</button>
+                                                            <button className={`st-btn absent ${s.status === 'Absent' ? 'active' : ''}`} onClick={() => handleStatusChange(s.id, 'Absent')}>A</button>
+                                                            <button className={`st-btn late ${s.status === 'Late' ? 'active' : ''}`} onClick={() => handleStatusChange(s.id, 'Late')}>L</button>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div className="input-group">
+                                                            <input
+                                                                className={`remark-input ${s.status === 'Absent' ? 'required' : ''}`}
+                                                                placeholder={s.status === 'Absent' ? "Reason required..." : "Optional note"}
+                                                                value={s.remarks || ''}
+                                                                onChange={(e) => handleRemarkChange(s.id, e.target.value)}
+                                                            />
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )) : (
+                                                <tr><td colSpan="4" style={{ textAlign: 'center', padding: '30px', color: '#64748B' }}>No students found for this batch.</td></tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* 🚀 ACTION BAR IS NOW NATURALLY SCROLLING BELOW THE TABLE */}
+                                <div className="floating-action-bar slide-up-reveal">
+                                    <div className="summary-text">
+                                        <span>{present} Present</span> • <span>{absent} Absent</span>
+                                    </div>
+                                    <button className="save-btn-glowing" onClick={handleSave}>
+                                        <Save size={20} /> Save Record
+                                    </button>
+                                </div>
+
+                            </div>
+                        )}
+
+                        {/* ======================= VIEW 2: ANALYTICS ======================= */}
+                        {activeTab === 'report' && (
+                            <div className="content-wrapper fade-in-up">
+
+                                <div className="insights-header">
+                                    <div className="insight-card primary">
+                                        <div className="ic-icon"><Target size={24} /></div>
+                                        <div>
+                                            <div className="ic-label">Class Average</div>
+                                            <div className="ic-val">{getAvg()}%</div>
+                                        </div>
+                                        <div className="ic-bg-icon"><BarChart2 size={80} /></div>
+                                    </div>
+
+                                    <div className="insight-card gold">
+                                        <div className="ic-icon"><Trophy size={24} /></div>
+                                        <div>
+                                            <div className="ic-label">Top Performer</div>
+                                            <div className="ic-val">{getTopStudent().student}</div>
+                                        </div>
+                                        <div className="ic-bg-icon"><Trophy size={80} /></div>
+                                    </div>
+
+                                    <div className="insight-card danger">
+                                        <div className="ic-icon"><AlertTriangle size={24} /></div>
+                                        <div>
+                                            <div className="ic-label">Risk Alert</div>
+                                            <div className="ic-val">{report.filter(r => !r.eligible).length} Students</div>
+                                        </div>
+                                        <div className="ic-bg-icon"><AlertTriangle size={80} /></div>
+                                    </div>
+                                </div>
+
+                                <div className="analytics-card-pro">
+                                    <div className="card-header-pro">
+                                        <div>
+                                            <h2>Performance Leaderboard</h2>
+                                            <p className="subtitle">Real-time attendance tracking</p>
+                                        </div>
+                                        <button className="filter-btn-pro"><Filter size={16} /> Filter</button>
+                                    </div>
+
+                                    <div className="leaderboard-list">
+                                        {report.sort((a, b) => b.percentage - a.percentage).map((r, idx) => (
+                                            <div key={idx} className="leaderboard-row" style={{ animationDelay: `${idx * 0.1}s` }}>
+
+                                                <div className="lb-rank">
+                                                    {idx === 0 ? <div className="rank-badge gold">1</div> :
+                                                        idx === 1 ? <div className="rank-badge silver">2</div> :
+                                                            idx === 2 ? <div className="rank-badge bronze">3</div> :
+                                                                <div className="rank-badge normal">#{idx + 1}</div>}
+                                                </div>
+
+                                                <div className="lb-info">
+                                                    <div className="lb-name">
+                                                        {r.student}
+                                                        {r.percentage >= 90 && <Zap size={14} className="icon-zap" fill="currentColor" />}
+                                                    </div>
+                                                    <div className="lb-status">
+                                                        {r.eligible ?
+                                                            <span className="badge-pill safe">Eligible</span> :
+                                                            <span className="badge-pill danger">At Risk</span>
+                                                        }
+                                                    </div>
+                                                </div>
+
+                                                <div className="lb-progress">
+                                                    <div className="lb-bar-bg">
+                                                        <div
+                                                            className={`lb-bar-fill ${r.percentage < 75 ? 'warn-fill' : 'safe-fill'}`}
+                                                            style={{ width: `${r.percentage}%` }}
+                                                        >
+                                                            <div className="shimmer-effect"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="lb-score">
+                                                    <span className="score-big">{r.percentage}%</span>
+                                                    <span className="trend-icon">
+                                                        <TrendingUp size={14} color={r.percentage > 75 ? "#10B981" : "#EF4444"} />
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
+
+            </div>
+
+            <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
         
         :root {
@@ -624,8 +624,8 @@ export default function Attendance() {
             .control-group { width: 100% !important; flex: 0 0 100% !important;} 
         }
       `}</style>
-    </div>
-  );
+        </div>
+    );
 }
 
 // ✨ REUSABLE 3D STAT CARD
@@ -640,13 +640,13 @@ const StatCard = ({ label, value, icon, color, delay }) => {
 
     return (
         <div style={{ animation: `scaleIn 0.5s ${delay} backwards`, height: '100%' }}>
-            <div 
-                style={{ 
-                    background: theme.bg, 
-                    borderRadius: '20px', 
-                    padding: '24px', 
-                    color: 'white', 
-                    position: 'relative', 
+            <div
+                style={{
+                    background: theme.bg,
+                    borderRadius: '20px',
+                    padding: '24px',
+                    color: 'white',
+                    position: 'relative',
                     overflow: 'hidden',
                     boxShadow: `0 10px 25px -5px ${theme.shadow}`,
                     transition: 'transform 0.3s',
@@ -656,13 +656,13 @@ const StatCard = ({ label, value, icon, color, delay }) => {
                 onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-5px)"}
                 onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}
             >
-                <div style={{position:'absolute', top:'-20px', right:'-20px', width:'80px', height:'80px', background:'rgba(255,255,255,0.15)', borderRadius:'50%'}}></div>
-                <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+                <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '80px', height: '80px', background: 'rgba(255,255,255,0.15)', borderRadius: '50%' }}></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
-                        <p style={{margin:0, opacity:0.9, fontSize:'0.9rem', fontWeight:'600'}}>{label}</p>
-                        <h3 style={{margin:'5px 0 0', fontSize:'2.2rem', fontWeight:'800'}}>{value}</h3>
+                        <p style={{ margin: 0, opacity: 0.9, fontSize: '0.9rem', fontWeight: '600' }}>{label}</p>
+                        <h3 style={{ margin: '5px 0 0', fontSize: '2.2rem', fontWeight: '800' }}>{value}</h3>
                     </div>
-                    <div style={{background:'rgba(255,255,255,0.2)', padding:'10px', borderRadius:'12px', backdropFilter:'blur(5px)'}}>
+                    <div style={{ background: 'rgba(255,255,255,0.2)', padding: '10px', borderRadius: '12px', backdropFilter: 'blur(5px)' }}>
                         {icon}
                     </div>
                 </div>

@@ -36,6 +36,13 @@ class EnrollmentListCreate(APIView):
                 "course": e.course.id,
                 "course_name": getattr(e.course, 'name', f"Course {e.course.id}"), # ✅ Safety for missing course name
                 "class_name": getattr(e, 'class_name', None), # ✅ NEW: Table me class dikhane ke liye
+                
+                # ✨ NEW ADDED: Class Management fields taaki frontend table & modal mein dikhein
+                "subclass": getattr(e, 'subclass', None),
+                "subjects": getattr(e, 'subjects', None),
+                "sub_subjects": getattr(e, 'sub_subjects', None),
+                "mailbox_assigned": getattr(e, 'mailbox_assigned', False),
+                
                 "enrolled_at": e.enrolled_at,
             })
             

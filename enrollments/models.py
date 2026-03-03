@@ -13,6 +13,12 @@ class Enrollment(models.Model):
     # ✅ Form se class yahan save hogi
     class_name = models.CharField(max_length=100, null=True, blank=True)
     
+    # ✨ NEW ADDED: Class Management Extra Features (Category 2.6)
+    subclass = models.CharField(max_length=50, null=True, blank=True, help_text="e.g., Section A, Batch 1")
+    subjects = models.CharField(max_length=255, null=True, blank=True, help_text="e.g., Maths, Physics")
+    sub_subjects = models.CharField(max_length=255, null=True, blank=True, help_text="e.g., Algebra, Optics")
+    mailbox_assigned = models.BooleanField(default=False, help_text="Is digital mailbox assigned to this student?")
+    
     enrolled_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 

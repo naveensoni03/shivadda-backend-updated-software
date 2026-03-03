@@ -5,6 +5,9 @@ class EnrollmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Enrollment
         fields = '__all__'
+        
+        # ✨ NEW FIELDS (subclass, subjects, sub_subjects, mailbox_assigned) 
+        # are automatically supported here because of '__all__'.
 
     # 🚀 BONUS TIP: Duplicate Enrollment rokne ke liye validation
     def validate(self, data):

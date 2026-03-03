@@ -17,6 +17,12 @@ export default function Enrollments() {
     const [selectedLevel, setSelectedLevel] = useState("");
     const [className, setClassName] = useState("");
 
+    // ✨ NEW ADDED: Missing Class Management Features (Category 2.6)
+    const [subclass, setSubclass] = useState("");
+    const [subjects, setSubjects] = useState("");
+    const [subSubjects, setSubSubjects] = useState("");
+    const [mailboxAssigned, setMailboxAssigned] = useState(false);
+
     // ✅ New Super Admin States
     const [status, setStatus] = useState("Active");
     const [feeStatus, setFeeStatus] = useState("Pending");
@@ -84,7 +90,12 @@ export default function Enrollments() {
         if (exists) return toast.error("Student already enrolled in this course!");
 
         setLoading(true);
-        const payload = { student: studentId, course: courseId, class_name: className, status, fee_status: feeStatus };
+        // ✨ NEW ADDED: Included subclass, subjects, sub_subjects, mailbox_assigned in payload
+        const payload = {
+            student: studentId, course: courseId, class_name: className,
+            status, fee_status,
+            subclass, subjects, sub_subjects: subSubjects, mailbox_assigned: mailboxAssigned
+        };
 
         try {
             if (editModeId) {
@@ -117,6 +128,11 @@ export default function Enrollments() {
         setClassName("");
         setStatus("Active");
         setFeeStatus("Pending");
+        // ✨ NEW ADDED: Reset missing fields
+        setSubclass("");
+        setSubjects("");
+        setSubSubjects("");
+        setMailboxAssigned(false);
     };
 
     const handleEditClick = (enrollment) => {
@@ -137,6 +153,12 @@ export default function Enrollments() {
         setClassName(enrollment.class_name || "");
         setStatus(enrollment.status || "Active");
         setFeeStatus(enrollment.fee_status || "Pending");
+
+        // ✨ NEW ADDED: Set values for edit mode
+        setSubclass(enrollment.subclass || "");
+        setSubjects(enrollment.subjects || "");
+        setSubSubjects(enrollment.sub_subjects || "");
+        setMailboxAssigned(enrollment.mailbox_assigned || false);
 
         toast("Edit mode active. Update details on the left.", { icon: "✏️" });
     };
@@ -180,14 +202,18 @@ export default function Enrollments() {
     };
 
     const exportToCSV = () => {
-        const headers = ["ID", "Student Name", "Class", "Course", "Status", "Fee Status", "Enroll Date"];
+        // ✨ NEW ADDED: Added missing fields to CSV Export
+        const headers = ["ID", "Student Name", "Class", "Subclass", "Subjects", "Course", "Status", "Fee Status", "Mailbox", "Enroll Date"];
         const rows = filteredEnrollments.map(e => [
             e.id,
             e.student_name || `Student ${e.student}`,
             e.class_name || 'N/A',
+            e.subclass || 'N/A', // ✨ NEW
+            e.subjects || 'N/A', // ✨ NEW
             e.course_name,
             e.status || 'Active',
             e.fee_status || 'Pending',
+            e.mailbox_assigned ? 'Assigned' : 'Not Assigned', // ✨ NEW
             e.enrolled_at ? new Date(e.enrolled_at).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB')
         ]);
 
@@ -220,6 +246,8 @@ Student ID: ${enrollment.student}
 
 Course Details:
 Class/Level: ${enrollment.class_name || 'N/A'} 
+Subclass/Section: ${enrollment.subclass || 'N/A'} 
+Subjects: ${enrollment.subjects || 'N/A'}
 Course: ${enrollment.course_name}
 Enrollment Date: ${new Date(enrollment.enrolled_at || Date.now()).toDateString()}
 
@@ -396,6 +424,33 @@ Thank you for learning with us!
                             </div>
                         )}
 
+                        {/* ✨ NEW ADDED: Subclass & Subjects Form Fields */}
+                        <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
+                            <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
+                                <label>SUBCLASS / SECTION</label>
+                                <input className="modern-input" placeholder="e.g. Sec A" value={subclass} onChange={e => setSubclass(e.target.value)} />
+                            </div>
+                            <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
+                                <label>SUBJECTS</label>
+                                <input className="modern-input" placeholder="Maths, Physics" value={subjects} onChange={e => setSubjects(e.target.value)} />
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
+                            <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
+                                <label>SUB-SUBJECTS</label>
+                                <input className="modern-input" placeholder="Algebra, Optics" value={subSubjects} onChange={e => setSubSubjects(e.target.value)} />
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', padding: '12px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                            <input type="checkbox" id="mailboxCheck" checked={mailboxAssigned} onChange={e => setMailboxAssigned(e.target.checked)} style={{ cursor: 'pointer', width: '18px', height: '18px', accentColor: '#0f172a' }} />
+                            <label htmlFor="mailboxCheck" style={{ fontSize: '0.85rem', fontWeight: '700', color: '#1e293b', cursor: 'pointer', margin: 0 }}>
+                                Assign Account Mailbox
+                            </label>
+                        </div>
+                        {/* ✨ END NEW ADDED */}
+
                         <div className="input-group">
                             <label>TARGET COURSE</label>
                             <select className="modern-input" value={courseId} onChange={e => setCourseId(e.target.value)}>
@@ -470,7 +525,7 @@ Thank you for learning with us!
                                         )}
                                         <th style={{ width: '60px' }}>S.NO</th>
                                         <th>STUDENT INFO</th>
-                                        <th>CLASS</th>
+                                        <th>CLASS & SUBJECTS</th> {/* ✨ CHANGED HEADER */}
                                         <th>COURSE</th>
                                         <th>STATUS & FEE</th>
                                         <th>ACTIONS</th>
@@ -506,7 +561,11 @@ Thank you for learning with us!
                                                     </div>
                                                 </td>
 
-                                                <td style={{ fontWeight: '700', color: '#475569' }}>{e.class_name || 'N/A'}</td>
+                                                <td style={{ fontWeight: '700', color: '#475569' }}>
+                                                    {e.class_name || 'N/A'}
+                                                    {/* ✨ NEW ADDED: Show Subclass if available */}
+                                                    {e.subclass && <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Sec: {e.subclass}</div>}
+                                                </td>
 
                                                 <td><span className="badge-course">{e.course_name}</span></td>
 
@@ -575,6 +634,13 @@ Thank you for learning with us!
                                 </div>
                                 <div className="info-grid">
                                     <div className="info-item"><label>Class / Level</label><div className="info-val" style={{ color: '#0f172a' }}>{selectedEnrollment.class_name || 'N/A'}</div></div>
+
+                                    {/* ✨ NEW ADDED: Details shown in modal */}
+                                    <div className="info-item"><label>Subclass / Section</label><div className="info-val">{selectedEnrollment.subclass || 'N/A'}</div></div>
+                                    <div className="info-item"><label>Subjects</label><div className="info-val">{selectedEnrollment.subjects || 'N/A'}</div></div>
+                                    <div className="info-item"><label>Sub-Subjects</label><div className="info-val">{selectedEnrollment.sub_subjects || 'N/A'}</div></div>
+                                    <div className="info-item"><label>Account Mailbox</label><div className="info-val" style={{ color: selectedEnrollment.mailbox_assigned ? '#16a34a' : '#64748b' }}>{selectedEnrollment.mailbox_assigned ? '✅ Assigned' : '❌ Not Assigned'}</div></div>
+
                                     <div className="info-item"><label>Enrolled Course</label><div className="info-val highlight">{selectedEnrollment.course_name}</div></div>
                                     <div className="info-item"><label>Enrollment Date</label><div className="info-val">{selectedEnrollment.enrolled_at ? new Date(selectedEnrollment.enrolled_at).toDateString() : new Date().toDateString()}</div></div>
                                     <div className="info-item">
