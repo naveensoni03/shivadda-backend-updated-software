@@ -18,16 +18,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # --------------------------------------------------
 SECRET_KEY = 'django-insecure-r3o(a=*ksfv+bpb3f%7fr3y8^_x%cb@+l+#tm4h@5+ge8)v!)m'
 
-# ✅ FIXED: Development ke liye TRUE rakho taaki Static files dikhein
 DEBUG = True 
-
 ALLOWED_HOSTS = ['*']
 
 # --------------------------------------------------
 # APPLICATIONS
 # --------------------------------------------------
 INSTALLED_APPS = [
-    # Django default
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -35,42 +32,19 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
-    # Third-party
     'rest_framework',
     'corsheaders',
     'django_filters',
     'django_cleanup.apps.CleanupConfig',
-    'rest_framework_simplejwt', # ✅ ADDED JWT APP HERE
+    'rest_framework_simplejwt',
 
-    # Project apps
-    'api',
-    'accounts',
-    'dashboard',     
-    'chatbot',       
-    'centers',       
-    'locations',
-    'visitors',
-    'logs',
-    'students',
-    'teachers',
-    'institutions',
-    'courses',
-    'batches',
-    'enrollments',
-    'attendance',
-    'fees',
-    'exams',
-    'lms',
-    'library',
-    'inventory',
-    'hostel',
-    'transport',
-    'payroll',
-    'services',
-    'classifieds',
-    'payments',
-    'profiles',
-    'agents',
+    'api', 'accounts', 'dashboard', 'chatbot', 'centers', 
+    'locations', 'visitors', 'logs', 'students', 'teachers',
+    'institutions', 'courses', 'batches', 'enrollments',
+    'attendance', 'fees', 'exams', 'lms', 'library',
+    'inventory', 'hostel', 'transport', 'payroll',
+    'services', 'classifieds', 'payments', 'profiles',
+    'agents', 'timetable',
 ]
 
 # --------------------------------------------------
@@ -88,9 +62,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# --------------------------------------------------
-# URL CONFIG
-# --------------------------------------------------
 ROOT_URLCONF = 'core.urls'  
 
 TEMPLATES = [
@@ -109,14 +80,8 @@ TEMPLATES = [
     },
 ]
 
-# --------------------------------------------------
-# WSGI
-# --------------------------------------------------
 WSGI_APPLICATION = 'core.wsgi.application' 
 
-# --------------------------------------------------
-# DATABASE
-# --------------------------------------------------
 DATABASES = {
     'default': dj_database_url.config(
         default='sqlite:///db.sqlite3',
@@ -124,9 +89,6 @@ DATABASES = {
     )
 }
 
-# --------------------------------------------------
-# PASSWORD VALIDATION
-# --------------------------------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -134,20 +96,13 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# --------------------------------------------------
-# INTERNATIONALIZATION
-# --------------------------------------------------
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
 USE_TZ = True
 
-# --------------------------------------------------
-# STATIC FILES (CSS, JS, IMAGES)
-# --------------------------------------------------
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
@@ -157,7 +112,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'accounts.User'
 
 # --------------------------------------------------
-# DRF + JWT SETTINGS
+# DRF + JWT SETTINGS (🔥 PAGINATION FIXED HERE)
 # --------------------------------------------------
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -167,15 +122,17 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny', 
     ],
+    # 🚀 DRF KO FORCE KIYA HAI KI KOI DATA NA KAATE
+    'DEFAULT_PAGINATION_CLASS': None,
+    'PAGE_SIZE': None,
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1), # ✅ CHANGED: 30 minutes bahut kam tha, testing me dikkat aati
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1), 
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# TWILIO SETTINGS
 TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
 TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER')

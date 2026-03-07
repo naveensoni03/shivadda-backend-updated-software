@@ -31,6 +31,11 @@ const SidebarModern = ({ forceOpen }) => {
     fontWeight: isActive ? "700" : "500",
     transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
     boxShadow: isActive ? "0 10px 20px -5px rgba(79, 70, 229, 0.15), inset 0 0 0 1px rgba(79, 70, 229, 0.1)" : "none",
+
+    // ✅ YAHAN FIX KIYA HAI: Taaki clicks dusre link par leak na hon
+    position: "relative",
+    zIndex: 10,
+    cursor: "pointer",
   });
 
   const handleLogout = () => {

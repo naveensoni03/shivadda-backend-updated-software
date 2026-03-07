@@ -52,7 +52,7 @@ export default function Enrollments() {
         try {
             const [s, c, e] = await Promise.all([
                 api.get("students/list/"),
-                api.get("courses/courses/"),
+                api.get("courses/"),
                 api.get("enrollments/")
             ]);
             setStudents(Array.isArray(s.data) ? s.data : s.data.results || []);
@@ -525,7 +525,7 @@ Thank you for learning with us!
                                         )}
                                         <th style={{ width: '60px' }}>S.NO</th>
                                         <th>STUDENT INFO</th>
-                                        <th>CLASS & SUBJECTS</th> {/* ✨ CHANGED HEADER */}
+                                        <th>CLASS & SUBJECTS</th>
                                         <th>COURSE</th>
                                         <th>STATUS & FEE</th>
                                         <th>ACTIONS</th>

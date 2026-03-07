@@ -88,3 +88,21 @@ class VirtualClass(models.Model):
 
     def __str__(self):
         return f"Live: {self.title} ({self.scheduled_at.strftime('%Y-%m-%d %H:%M')})"
+    
+    
+    
+    
+    
+    # courses/models.py ke sabse end mein ye add karo
+
+class LessonProgress(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='lesson_progress')
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='progress_records')
+    is_completed = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'lesson') # Ek user ek lesson ko ek hi baar complete karega
+
+    def __str__(self):
+        return f"{self.user.username} - {self.lesson.title} - {'Done' if self.is_completed else 'Pending'}"

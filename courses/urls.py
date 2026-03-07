@@ -6,7 +6,7 @@ from .views import (
 )
 
 router = DefaultRouter()
-router.register(r'courses', CourseViewSet, basename='courses')
+router.register(r'list', CourseViewSet, basename='courses')
 router.register(r'batches', BatchViewSet, basename='batches')
 router.register(r'subjects', SubjectViewSet, basename='subjects')
 router.register(r'lessons', LessonViewSet, basename='lessons')

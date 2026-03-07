@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, Loader2, ArrowRight, ShieldCheck } from "lucide-react";
 import api from "../api/axios";
 import toast, { Toaster } from "react-hot-toast";
-import "./login.css"; 
+import "./login.css";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -17,20 +17,31 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-    
+
     try {
       // ✅ FIX: Path is 'auth/login/' which appends to baseURL '/api/' automatically.
       const res = await api.post("auth/login/", { email, password });
-      
+
       if (res.data && res.data.access) {
+        // 1. Save Tokens
         localStorage.setItem("access_token", res.data.access);
         localStorage.setItem("refresh_token", res.data.refresh);
-        
+
+        // 🚀 2. THE MASTER FIX: Save User Details (Role, Name, Email)
+        // Ensure that your Django backend is sending 'role', 'name', 'email' in the response.
+        // If it sends 'user_role' instead of 'role', adjust accordingly.
+        if (res.data.role) localStorage.setItem("user_role", res.data.role);
+        else if (res.data.user_role) localStorage.setItem("user_role", res.data.user_role);
+        else localStorage.setItem("user_role", "Admin"); // Failsafe if backend doesn't send role
+
+        if (res.data.name) localStorage.setItem("user_name", res.data.name);
+        if (res.data.email) localStorage.setItem("user_email", res.data.email);
+
         toast.success("Welcome Back! 🚀");
 
         setTimeout(() => {
-            navigate("/dashboard");
-            window.location.reload();
+          navigate("/dashboard");
+          window.location.reload();
         }, 500);
       } else {
         setError("Invalid server response");
@@ -39,9 +50,9 @@ export default function Login() {
     } catch (err) {
       console.error("Login Error:", err);
       if (err.response?.status === 401) {
-          setError("Incorrect email or password");
+        setError("Incorrect email or password");
       } else {
-          setError("Server Error. Please try again.");
+        setError("Server Error. Please try again.");
       }
     } finally {
       setIsLoading(false);
@@ -51,11 +62,11 @@ export default function Login() {
   return (
     <div className="login-bg" style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', position: 'relative', overflow: 'hidden' }}>
       <Toaster position="top-right" />
-      
+
       <div style={{ position: 'absolute', width: '300px', height: '300px', background: '#6366f1', filter: 'blur(100px)', opacity: 0.2, top: '10%', left: '10%' }}></div>
       <div style={{ position: 'absolute', width: '300px', height: '300px', background: '#a855f7', filter: 'blur(100px)', opacity: 0.2, bottom: '10%', right: '10%' }}></div>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
@@ -63,21 +74,21 @@ export default function Login() {
         style={{ background: 'rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(10px)', padding: '40px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)', width: '100%', maxWidth: '400px', color: 'white' }}
       >
         <div style={{ textAlign: 'center' }}>
-            <motion.div 
-              initial={{ y: -10 }}
-              animate={{ y: 0 }}
-              transition={{ repeat: Infinity, duration: 2, repeatType: "reverse" }}
-              style={{ display: 'inline-block', marginBottom: '1rem' }}
-            >
-               <ShieldCheck size={48} color="#6366f1" />
-            </motion.div>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '5px' }}>Welcome Back</h2>
-            <p className="subtitle" style={{ color: '#94a3b8', marginBottom: '25px' }}>Secure access to Shivadda CRM</p>
+          <motion.div
+            initial={{ y: -10 }}
+            animate={{ y: 0 }}
+            transition={{ repeat: Infinity, duration: 2, repeatType: "reverse" }}
+            style={{ display: 'inline-block', marginBottom: '1rem' }}
+          >
+            <ShieldCheck size={48} color="#6366f1" />
+          </motion.div>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '5px' }}>Welcome Back</h2>
+          <p className="subtitle" style={{ color: '#94a3b8', marginBottom: '25px' }}>Secure access to Shivadda CRM</p>
         </div>
 
         <AnimatePresence mode="wait">
           {error && (
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
@@ -92,26 +103,26 @@ export default function Login() {
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <div className="input-container" style={{ position: 'relative' }}>
             <Mail className="input-icon" size={20} style={{ position: 'absolute', left: '12px', top: '12px', color: '#94a3b8' }} />
-            <input 
+            <input
               type="email"
-              placeholder="Email Address" 
+              placeholder="Email Address"
               required
               autoComplete="email"
               value={email}
-              onChange={e => setEmail(e.target.value)} 
+              onChange={e => setEmail(e.target.value)}
               style={{ width: '100%', padding: '12px 12px 12px 40px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.2)', color: 'white', outline: 'none' }}
             />
           </div>
 
           <div className="input-container" style={{ position: 'relative' }}>
             <Lock className="input-icon" size={20} style={{ position: 'absolute', left: '12px', top: '12px', color: '#94a3b8' }} />
-            <input 
-              type="password" 
-              placeholder="Password" 
+            <input
+              type="password"
+              placeholder="Password"
               required
               autoComplete="current-password"
               value={password}
-              onChange={e => setPassword(e.target.value)} 
+              onChange={e => setPassword(e.target.value)}
               style={{ width: '100%', padding: '12px 12px 12px 40px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.2)', color: 'white', outline: 'none' }}
             />
           </div>
@@ -126,11 +137,11 @@ export default function Login() {
             )}
           </button>
         </form>
-        
+
         <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-            <a href="#" style={{ color: '#818cf8', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600 }}>
-              Forgot Password?
-            </a>
+          <a href="#" style={{ color: '#818cf8', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600 }}>
+            Forgot Password?
+          </a>
         </div>
       </motion.div>
     </div>

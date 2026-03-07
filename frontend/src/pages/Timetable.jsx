@@ -1,356 +1,408 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import SidebarModern from "../components/SidebarModern";
+import api from "../api/axios"; // ✅ FIX: Path corrected to ../api/axios
 import toast, { Toaster } from 'react-hot-toast';
-import { 
-  Calendar, Clock, User, Sparkles, RefreshCw, 
-  ChevronDown, MapPin, MoreHorizontal, Filter, 
-  Download, Zap, Coffee, Edit3, Plus, X, Trash2, CheckCircle
+import {
+    Calendar, Clock, User, Sparkles, RefreshCw,
+    ChevronDown, MapPin, MoreHorizontal, Filter,
+    Download, Coffee, Edit3, Plus, X, CheckCircle
 } from "lucide-react";
 
 export default function Timetable() {
-  const [loading, setLoading] = useState(false);
-  const [selectedClass, setSelectedClass] = useState("Class 10-A");
-  const [hoveredSlot, setHoveredSlot] = useState(null);
-  const [currentTimePos, setCurrentTimePos] = useState(35); 
+    const [loading, setLoading] = useState(false);
+    const [dataLoading, setDataLoading] = useState(true);
+    const [selectedClass, setSelectedClass] = useState("Class 10-A");
+    const [hoveredSlot, setHoveredSlot] = useState(null);
+    const [currentTimePos, setCurrentTimePos] = useState(35);
 
-  // --- UI STATES ---
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [showFilterMenu, setShowFilterMenu] = useState(false); 
-  const [activeDayIndex, setActiveDayIndex] = useState(null);
-  const [selectedFilter, setSelectedFilter] = useState("All Classes"); 
+    // --- UI STATES ---
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [showFilterMenu, setShowFilterMenu] = useState(false);
+    const [activeDayCode, setActiveDayCode] = useState(null);
+    const [selectedFilter, setSelectedFilter] = useState("All Classes");
 
-  const [newSlot, setNewSlot] = useState({
-      subject: "", teacher: "", room: "", time: "", color: "blue", icon: "📚"
-  });
+    const [newSlot, setNewSlot] = useState({
+        subject: "", teacher: "", room: "", start_time: "", end_time: "", color: "blue", is_break: false
+    });
 
-  // --- MOCK DATA ---
-  const [routine, setRoutine] = useState([
-    { day: "Mon", fullDay: "Monday", slots: [
-        { subject: "Maths", teacher: "Amit Sir", room: "101", color: "blue", time: "09:00 - 10:00", icon: "📐" },
-        { subject: "Physics", teacher: "Naveen Sir", room: "Lab 1", color: "purple", time: "10:00 - 11:00", icon: "⚛️" },
-        { isBreak: true, time: "11:00 - 11:30" },
-        { subject: "Chem", teacher: "Priya Mam", room: "101", color: "pink", time: "11:30 - 12:30", icon: "🧪" },
-        { subject: "History", teacher: "Rajesh Sir", room: "102", color: "orange", time: "12:30 - 01:30", icon: "📜" },
-    ]},
-    { day: "Tue", fullDay: "Tuesday", slots: [
-        { subject: "Physics", teacher: "Naveen Sir", room: "Lab 1", color: "purple", time: "09:00 - 10:00", icon: "⚛️" },
-        { subject: "English", teacher: "Sonia Mam", room: "101", color: "green", time: "10:00 - 11:00", icon: "📝" },
-        { isBreak: true, time: "11:00 - 11:30" },
-        { subject: "Maths", teacher: "Amit Sir", room: "101", color: "blue", time: "11:30 - 12:30", icon: "📐" },
-        { subject: "Comp", teacher: "Rahul Sir", room: "Lab 2", color: "indigo", time: "12:30 - 01:30", icon: "💻" },
-    ]},
-    { day: "Wed", fullDay: "Wednesday", slots: [
-        { subject: "Bio", teacher: "Sneha Mam", room: "Bio Lab", color: "red", time: "09:00 - 10:00", icon: "🧬" },
-        { subject: "Maths", teacher: "Amit Sir", room: "101", color: "blue", time: "10:00 - 11:00", icon: "📐" },
-        { isBreak: true, time: "11:00 - 11:30" },
-        { subject: "Library", teacher: "Staff", room: "Lib", color: "teal", time: "11:30 - 12:30", icon: "📚" },
-        { subject: "Physics", teacher: "Naveen Sir", room: "101", color: "purple", time: "12:30 - 01:30", icon: "⚛️" },
-    ]},
-    { day: "Thu", fullDay: "Thursday", slots: [
-        { subject: "History", teacher: "Rajesh Sir", room: "102", color: "orange", time: "09:00 - 10:00", icon: "📜" },
-        { subject: "English", teacher: "Sonia Mam", room: "101", color: "green", time: "10:00 - 11:00", icon: "📝" },
-        { isBreak: true, time: "11:00 - 11:30" },
-        { subject: "Sports", teacher: "Coach", room: "Ground", color: "emerald", time: "11:30 - 12:30", icon: "⚽" },
-        { subject: "Maths", teacher: "Amit Sir", room: "101", color: "blue", time: "12:30 - 01:30", icon: "📐" },
-    ]},
-  ]);
+    // ✅ DEFAULT EMPTY STRUCTURE (Agar Database Khali ho toh ye dikhega)
+    const defaultRoutine = [
+        { day: "Mon", fullDay: "Monday", slots: [] },
+        { day: "Tue", fullDay: "Tuesday", slots: [] },
+        { day: "Wed", fullDay: "Wednesday", slots: [] },
+        { day: "Thu", fullDay: "Thursday", slots: [] },
+        { day: "Fri", fullDay: "Friday", slots: [] },
+        { day: "Sat", fullDay: "Saturday", slots: [] }
+    ];
 
-  // --- ACTIONS ---
-  const handleAutoSchedule = () => {
-    setLoading(true);
-    setTimeout(() => {
-        setLoading(false);
-        toast.success(
-            <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-                <Sparkles size={18} fill="#FFD700" color="#FFD700"/> 
-                <span>AI Magic Applied! Routine Optimized.</span>
-            </div>, 
-            { style: { borderRadius: '16px', background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)', border: '1px solid white', color: '#1e293b' } }
-        );
-    }, 2000);
-  };
+    const [routine, setRoutine] = useState([]);
 
-  const handleFilterClick = () => {
-      setShowFilterMenu(!showFilterMenu);
-  };
+    // ✅ FETCH TIMETABLE FROM DJANGO ON LOAD
+    useEffect(() => {
+        fetchTimetable();
+    }, []);
 
-  const handleSelectFilter = (filter) => {
-      setSelectedFilter(filter);
-      setShowFilterMenu(false);
-      toast.success(`Filter Applied: ${filter}`, { icon: '🔍' });
-  };
+    const fetchTimetable = async () => {
+        setDataLoading(true);
+        try {
+            const response = await api.get('timetable/list/');
+            // Agar backend se data aaya hai toh wo set karo, warna default empty days set karo
+            if (response.data && response.data.length > 0) {
+                setRoutine(response.data);
+            } else {
+                setRoutine(defaultRoutine);
+            }
+        } catch (error) {
+            console.error("Error fetching timetable:", error);
+            toast.error("Failed to load timetable from server.");
+            setRoutine(defaultRoutine); // Error aane par bhi khali din dikhaye
+        } finally {
+            setDataLoading(false);
+        }
+    };
 
-  const handleDownload = () => {
-      let csvContent = "data:text/csv;charset=utf-8,";
-      csvContent += "Day,Time,Subject,Teacher,Room\n";
+    // --- ACTIONS ---
+    const handleAutoSchedule = () => {
+        setLoading(true);
+        setTimeout(() => {
+            setLoading(false);
+            toast.success(
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Sparkles size={18} fill="#FFD700" color="#FFD700" />
+                    <span>AI Magic Applied! Routine Optimized.</span>
+                </div>,
+                { style: { borderRadius: '16px', background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)', border: '1px solid white', color: '#1e293b' } }
+            );
+        }, 2000);
+    };
 
-      routine.forEach(day => {
-          day.slots.forEach(slot => {
-              if(!slot.isBreak) {
-                  csvContent += `${day.fullDay},${slot.time},${slot.subject},${slot.teacher},${slot.room}\n`;
-              }
-          });
-      });
+    const handleFilterClick = () => {
+        setShowFilterMenu(!showFilterMenu);
+    };
 
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", "timetable_2025.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    const handleSelectFilter = (filter) => {
+        setSelectedFilter(filter);
+        setShowFilterMenu(false);
+        toast.success(`Filter Applied: ${filter}`, { icon: '🔍' });
+    };
 
-      toast.success("Timetable Downloaded as Excel (CSV)! 📄");
-  };
+    const handleDownload = () => {
+        let csvContent = "data:text/csv;charset=utf-8,Day,Time,Subject,Teacher,Room\n";
+        routine.forEach(day => {
+            day.slots.forEach(slot => {
+                if (!slot.is_break) {
+                    csvContent += `${day.fullDay},${slot.time || slot.start_time},${slot.subject},${slot.teacher},${slot.room}\n`;
+                }
+            });
+        });
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "timetable_2026.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success("Timetable Downloaded as Excel (CSV)! 📄");
+    };
 
-  const openAddModal = (dayIdx) => {
-      setActiveDayIndex(dayIdx);
-      setNewSlot({ subject: "", teacher: "", room: "", time: "", color: "blue", icon: "📚" });
-      setShowModal(true);
-  };
+    const openAddModal = (dayCode) => {
+        setActiveDayCode(dayCode);
+        setNewSlot({ subject: "", teacher: "", room: "", start_time: "", end_time: "", color: "blue", is_break: false });
+        setShowModal(true);
+    };
 
-  const handleSaveSlot = () => {
-      if(!newSlot.subject || !newSlot.time) return toast.error("Subject & Time required!");
-      
-      const updatedRoutine = [...routine];
-      updatedRoutine[activeDayIndex].slots.push(newSlot);
-      setRoutine(updatedRoutine);
-      setShowModal(false);
-      toast.success("Class Added Successfully!");
-  };
+    // ✅ SAVE TO DJANGO BACKEND
+    const handleSaveSlot = async () => {
+        if (!newSlot.subject || !newSlot.start_time || !newSlot.end_time) {
+            return toast.error("Subject, Start Time & End Time required!");
+        }
 
-  const handleDeleteSlot = (dayIdx, slotIdx) => {
-      const updatedRoutine = [...routine];
-      updatedRoutine[dayIdx].slots.splice(slotIdx, 1);
-      setRoutine(updatedRoutine);
-      toast("Slot Removed", { icon: '🗑️' });
-  };
+        const payload = {
+            day: activeDayCode,
+            subject: newSlot.subject,
+            teacher: newSlot.teacher,
+            room: newSlot.room,
+            start_time: newSlot.start_time,
+            end_time: newSlot.end_time,
+            color: newSlot.color,
+            is_break: newSlot.is_break
+        };
 
-  return (
-    <div className="timetable-app">
-      <SidebarModern />
-      <Toaster position="bottom-right" />
+        try {
+            await api.post('timetable/list/', payload);
+            toast.success("Class Added Successfully!");
+            setShowModal(false);
+            fetchTimetable(); // Refresh data from backend
+        } catch (error) {
+            console.error("Error saving slot:", error);
+            toast.error("Failed to save class to database.");
+        }
+    };
 
-      {/* --- ANIMATED BACKGROUND MESH --- */}
-      <div className="mesh-bg">
-        <div className="orb orb-1"></div>
-        <div className="orb orb-2"></div>
-        <div className="orb orb-3"></div>
-      </div>
+    // ✅ DELETE FROM DJANGO BACKEND
+    const handleDeleteSlot = async (slotId) => {
+        try {
+            await api.delete(`timetable/list/${slotId}/`);
+            toast("Slot Removed", { icon: '🗑️' });
+            fetchTimetable(); // Refresh data
+        } catch (error) {
+            console.error("Error deleting slot:", error);
+            toast.error("Failed to delete slot.");
+        }
+    };
 
-      <div className="main-content hide-scrollbar">
-        
-        {/* --- HEADER --- */}
-        <header className="glass-header slide-down">
-            <div className="header-left">
-                <div className="calendar-badge">
-                    <span className="cb-month">FEB</span>
-                    <span className="cb-date">06</span>
-                </div>
-                <div>
-                    <h1 className="title">Class Schedule <span className="highlight">2025</span></h1>
-                    <p className="subtitle">Managing routine for {selectedClass}</p>
-                </div>
+    return (
+        <div className="timetable-app">
+            <SidebarModern />
+            <Toaster position="bottom-right" />
+
+            {/* --- ANIMATED BACKGROUND MESH --- */}
+            <div className="mesh-bg">
+                <div className="orb orb-1"></div>
+                <div className="orb orb-2"></div>
+                <div className="orb orb-3"></div>
             </div>
-            
-            <div className="header-actions">
-                <button 
-                    className={`icon-btn-glass ${isEditMode ? 'active-edit' : ''}`}
-                    onClick={() => setIsEditMode(!isEditMode)}
-                    title="Toggle Edit Mode"
-                >
-                    {isEditMode ? <CheckCircle size={18} color="#10B981"/> : <Edit3 size={18}/>}
-                </button>
-                
-                <div className="separator no-mobile"></div>
-                
-                {/* ✅ FILTER DROPDOWN */}
-                <div className="filter-wrapper">
-                    <button 
-                        className={`icon-btn-glass ${showFilterMenu ? 'active-btn' : ''}`} 
-                        onClick={handleFilterClick}
-                        title="Filter View"
-                    >
-                        <Filter size={18}/>
-                    </button>
-                    {showFilterMenu && (
-                        <div className="dropdown-menu">
-                            {['All Classes', 'Morning Shift', 'Evening Shift', 'Exams Only'].map((item) => (
-                                <div 
-                                    key={item}
-                                    className={`menu-item ${selectedFilter === item ? 'active' : ''}`}
-                                    onClick={() => handleSelectFilter(item)}
-                                >
-                                    {item}
+
+            <div className="main-content hide-scrollbar">
+
+                {/* --- HEADER --- */}
+                <header className="glass-header slide-down">
+                    <div className="header-left">
+                        <div className="calendar-badge">
+                            <span className="cb-month">MAR</span>
+                            <span className="cb-date">05</span>
+                        </div>
+                        <div>
+                            <h1 className="title">Class Schedule <span className="highlight">2026</span></h1>
+                            <p className="subtitle">Managing routine for {selectedClass}</p>
+                        </div>
+                    </div>
+
+                    <div className="header-actions">
+                        <button
+                            className={`icon-btn-glass ${isEditMode ? 'active-edit' : ''}`}
+                            onClick={() => setIsEditMode(!isEditMode)}
+                            title="Toggle Edit Mode"
+                        >
+                            {isEditMode ? <CheckCircle size={18} color="#10B981" /> : <Edit3 size={18} />}
+                        </button>
+
+                        <div className="separator no-mobile"></div>
+
+                        {/* FILTER DROPDOWN */}
+                        <div className="filter-wrapper">
+                            <button className={`icon-btn-glass ${showFilterMenu ? 'active-btn' : ''}`} onClick={handleFilterClick}>
+                                <Filter size={18} />
+                            </button>
+                            {showFilterMenu && (
+                                <div className="dropdown-menu">
+                                    {['All Classes', 'Morning Shift', 'Evening Shift', 'Exams Only'].map((item) => (
+                                        <div key={item} className={`menu-item ${selectedFilter === item ? 'active' : ''}`} onClick={() => handleSelectFilter(item)}>
+                                            {item}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <button className="icon-btn-glass" onClick={handleDownload} title="Download Excel">
+                            <Download size={18} />
+                        </button>
+
+                        <button className={`ai-btn-glow ${loading ? 'loading' : ''}`} onClick={handleAutoSchedule}>
+                            {loading ? <RefreshCw size={18} className="spin" /> : <Sparkles size={18} />}
+                            <span>AI Optimize</span>
+                        </button>
+                    </div>
+                </header>
+
+                {/* --- TIMELINE CONTAINER --- */}
+                <div className="timeline-wrapper fade-in-up">
+
+                    {/* Top Time Markers */}
+                    <div className="timeline-header">
+                        <div className="corner-cell">
+                            <div className="class-selector">
+                                <span>{selectedClass}</span>
+                                <ChevronDown size={14} />
+                            </div>
+                        </div>
+                        {["09:00", "10:00", "11:00", "12:00", "01:00", "02:00", "03:00"].map((t, i) => (
+                            <div key={i} className="time-marker">
+                                <span className="tm-text">{t}</span>
+                                <div className="tm-line"></div>
+                            </div>
+                        ))}
+
+                        {/* Simulated Current Time Indicator */}
+                        <div className="current-time-line" style={{ left: `${currentTimePos}%` }}>
+                            <div className="ctl-badge">Now</div>
+                            <div className="ctl-stroke"></div>
+                        </div>
+                    </div>
+
+                    {/* Days Rows */}
+                    {dataLoading ? (
+                        <div style={{ textAlign: 'center', padding: '50px', color: 'var(--primary)', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                            Syncing Timetable...
+                        </div>
+                    ) : (
+                        <div className="routine-grid">
+                            {routine.map((row, idx) => (
+                                <div key={idx} className="day-track" style={{ animationDelay: `${idx * 0.1}s` }}>
+
+                                    {/* Day Label (Left) */}
+                                    <div className="day-cell">
+                                        <span className="day-name">{row.day}</span>
+                                        <span className="day-full">{row.fullDay}</span>
+                                    </div>
+
+                                    {/* Slots */}
+                                    <div className="slots-track">
+                                        {row.slots.length === 0 && !isEditMode && (
+                                            <div style={{ display: 'flex', alignItems: 'center', color: '#94a3b8', fontSize: '0.9rem', fontStyle: 'italic', paddingLeft: '20px' }}>
+                                                No classes scheduled for {row.fullDay}. Turn on Edit Mode to add.
+                                            </div>
+                                        )}
+
+                                        {row.slots.map((slot, sIdx) => (
+                                            <div
+                                                key={slot.id || sIdx}
+                                                className={`slot-item ${slot.is_break ? 'slot-break' : `slot-subject ${slot.color}`}`}
+                                                onMouseEnter={() => setHoveredSlot(`${idx}-${sIdx}`)}
+                                                onMouseLeave={() => setHoveredSlot(null)}
+                                            >
+                                                {/* DELETE BUTTON (EDIT MODE ONLY) */}
+                                                {isEditMode && (
+                                                    <button className="delete-badge" onClick={(e) => { e.stopPropagation(); handleDeleteSlot(slot.id); }}>
+                                                        <X size={12} color="white" />
+                                                    </button>
+                                                )}
+
+                                                {slot.is_break ? (
+                                                    <div className="break-visual">
+                                                        <div className="break-pattern"></div>
+                                                        <span className="break-icon"><Coffee size={16} /></span>
+                                                        <span style={{ fontSize: '0.7rem', fontWeight: 'bold', marginTop: '5px', zIndex: 2 }}>{slot.subject}</span>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <div className="slot-glow"></div>
+                                                        <div className="slot-inner">
+                                                            <div className="slot-header">
+                                                                <span className="subject-icon">📚</span>
+                                                                <span className="room-pill">{slot.room}</span>
+                                                            </div>
+                                                            <div className="slot-body">
+                                                                <h3 className="subject-title">{slot.subject}</h3>
+                                                                <div className="teacher-info">
+                                                                    <User size={12} /> {slot.teacher}
+                                                                </div>
+                                                            </div>
+                                                            <div className="slot-footer">
+                                                                <Clock size={12} /> {slot.time || `${slot.start_time} - ${slot.end_time}`}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Hover Menu */}
+                                                        {hoveredSlot === `${idx}-${sIdx}` && !isEditMode && (
+                                                            <button className="slot-action-btn">
+                                                                <MoreHorizontal size={14} />
+                                                            </button>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </div>
+                                        ))}
+
+                                        {/* ADD BUTTON (EDIT MODE ONLY) */}
+                                        {isEditMode && (
+                                            <button className="add-slot-placeholder" onClick={() => openAddModal(row.day)}>
+                                                <Plus size={24} />
+                                                <span>Add</span>
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     )}
                 </div>
-
-                <button className="icon-btn-glass" onClick={handleDownload} title="Download Excel">
-                    <Download size={18}/>
-                </button>
-
-                <button 
-                    className={`ai-btn-glow ${loading ? 'loading' : ''}`} 
-                    onClick={handleAutoSchedule}
-                >
-                    {loading ? <RefreshCw size={18} className="spin"/> : <Sparkles size={18}/>}
-                    <span>AI Optimize</span>
-                </button>
-            </div>
-        </header>
-
-        {/* --- TIMELINE CONTAINER --- */}
-        <div className="timeline-wrapper fade-in-up">
-            
-            {/* Top Time Markers */}
-            <div className="timeline-header">
-                <div className="corner-cell">
-                    <div className="class-selector">
-                        <span>{selectedClass}</span>
-                        <ChevronDown size={14}/>
-                    </div>
-                </div>
-                {["09:00", "10:00", "11:00", "11:30", "12:30", "01:30"].map((t, i) => (
-                    <div key={i} className="time-marker">
-                        <span className="tm-text">{t}</span>
-                        <div className="tm-line"></div>
-                    </div>
-                ))}
-                
-                {/* Simulated Current Time Indicator */}
-                <div className="current-time-line" style={{left: `${currentTimePos}%`}}>
-                    <div className="ctl-badge">Now</div>
-                    <div className="ctl-stroke"></div>
-                </div>
             </div>
 
-            {/* Days Rows */}
-            <div className="routine-grid">
-                {routine.map((row, idx) => (
-                    <div key={idx} className="day-track" style={{animationDelay: `${idx * 0.1}s`}}>
-                        
-                        {/* Day Label (Left) */}
-                        <div className="day-cell">
-                            <span className="day-name">{row.day}</span>
-                            <span className="day-full">{row.fullDay}</span>
+            {/* --- MODAL FOR MANUAL ENTRY --- */}
+            {showModal && (
+                <div className="glass-modal-overlay">
+                    <div className="glass-modal">
+                        <div className="modal-header">
+                            <h3>Add Class ({activeDayCode})</h3>
+                            <button onClick={() => setShowModal(false)} className="close-btn"><X size={20} /></button>
                         </div>
+                        <div className="modal-form">
+                            <div className="input-group">
+                                <label>Subject / Event Name</label>
+                                <input placeholder="e.g. Mathematics or Lunch Break" value={newSlot.subject} onChange={(e) => setNewSlot({ ...newSlot, subject: e.target.value })} />
+                            </div>
 
-                        {/* Slots */}
-                        <div className="slots-track">
-                            {row.slots.map((slot, sIdx) => (
-                                <div 
-                                    key={sIdx} 
-                                    className={`slot-item ${slot.isBreak ? 'slot-break' : `slot-subject ${slot.color}`}`}
-                                    onMouseEnter={() => setHoveredSlot(`${idx}-${sIdx}`)}
-                                    onMouseLeave={() => setHoveredSlot(null)}
-                                >
-                                    {/* DELETE BUTTON (EDIT MODE ONLY) */}
-                                    {isEditMode && !slot.isBreak && (
-                                        <button className="delete-badge" onClick={(e) => { e.stopPropagation(); handleDeleteSlot(idx, sIdx); }}>
-                                            <X size={12} color="white"/>
-                                        </button>
-                                    )}
+                            <div className="input-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '-5px', marginBottom: '15px' }}>
+                                <input
+                                    type="checkbox"
+                                    id="is_break"
+                                    checked={newSlot.is_break}
+                                    onChange={(e) => setNewSlot({ ...newSlot, is_break: e.target.checked })}
+                                    style={{ width: 'auto' }}
+                                />
+                                <label htmlFor="is_break" style={{ margin: 0, cursor: 'pointer' }}>Mark as Break/Recess</label>
+                            </div>
 
-                                    {slot.isBreak ? (
-                                        <div className="break-visual">
-                                            <div className="break-pattern"></div>
-                                            <span className="break-icon"><Coffee size={16}/></span>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <div className="slot-glow"></div>
-                                            <div className="slot-inner">
-                                                <div className="slot-header">
-                                                    <span className="subject-icon">{slot.icon}</span>
-                                                    <span className="room-pill">{slot.room}</span>
-                                                </div>
-                                                <div className="slot-body">
-                                                    <h3 className="subject-title">{slot.subject}</h3>
-                                                    <div className="teacher-info">
-                                                        <User size={12}/> {slot.teacher}
-                                                    </div>
-                                                </div>
-                                                <div className="slot-footer">
-                                                    <Clock size={12}/> {slot.time}
-                                                </div>
-                                            </div>
-                                            
-                                            {/* Hover Menu (Only show if NOT in edit mode) */}
-                                            {hoveredSlot === `${idx}-${sIdx}` && !isEditMode && (
-                                                <button className="slot-action-btn">
-                                                    <MoreHorizontal size={14}/>
-                                                </button>
-                                            )}
-                                        </>
-                                    )}
+                            {!newSlot.is_break && (
+                                <div className="row-group">
+                                    <div className="input-group">
+                                        <label>Teacher</label>
+                                        <input placeholder="Name" value={newSlot.teacher} onChange={(e) => setNewSlot({ ...newSlot, teacher: e.target.value })} />
+                                    </div>
+                                    <div className="input-group">
+                                        <label>Room</label>
+                                        <input placeholder="101" value={newSlot.room} onChange={(e) => setNewSlot({ ...newSlot, room: e.target.value })} />
+                                    </div>
                                 </div>
-                            ))}
-
-                            {/* ADD BUTTON (EDIT MODE ONLY) */}
-                            {isEditMode && (
-                                <button className="add-slot-placeholder" onClick={() => openAddModal(idx)}>
-                                    <Plus size={24}/>
-                                    <span>Add</span>
-                                </button>
                             )}
+
+                            <div className="row-group">
+                                <div className="input-group">
+                                    <label>Start Time (HH:MM)</label>
+                                    <input type="time" value={newSlot.start_time} onChange={(e) => setNewSlot({ ...newSlot, start_time: e.target.value })} />
+                                </div>
+                                <div className="input-group">
+                                    <label>End Time (HH:MM)</label>
+                                    <input type="time" value={newSlot.end_time} onChange={(e) => setNewSlot({ ...newSlot, end_time: e.target.value })} />
+                                </div>
+                            </div>
+
+                            {!newSlot.is_break && (
+                                <div className="input-group">
+                                    <label>Color Theme</label>
+                                    <select value={newSlot.color} onChange={(e) => setNewSlot({ ...newSlot, color: e.target.value })}>
+                                        <option value="blue">Blue</option>
+                                        <option value="purple">Purple</option>
+                                        <option value="pink">Pink</option>
+                                        <option value="orange">Orange</option>
+                                        <option value="green">Green</option>
+                                        <option value="red">Red</option>
+                                        <option value="indigo">Indigo</option>
+                                    </select>
+                                </div>
+                            )}
+
+                            <button className="save-btn" onClick={handleSaveSlot}>Save to Database</button>
                         </div>
                     </div>
-                ))}
-            </div>
-        </div>
-      </div>
+                </div>
+            )}
 
-      {/* --- MODAL FOR MANUAL ENTRY --- */}
-      {showModal && (
-          <div className="glass-modal-overlay">
-              <div className="glass-modal">
-                  <div className="modal-header">
-                      <h3>Add Class ({routine[activeDayIndex].day})</h3>
-                      <button onClick={() => setShowModal(false)} className="close-btn"><X size={20}/></button>
-                  </div>
-                  <div className="modal-form">
-                      <div className="input-group">
-                          <label>Subject</label>
-                          <input placeholder="e.g. Mathematics" value={newSlot.subject} onChange={(e) => setNewSlot({...newSlot, subject: e.target.value})} />
-                      </div>
-                      <div className="row-group">
-                          <div className="input-group">
-                              <label>Teacher</label>
-                              <input placeholder="Name" value={newSlot.teacher} onChange={(e) => setNewSlot({...newSlot, teacher: e.target.value})} />
-                          </div>
-                          <div className="input-group">
-                              <label>Room</label>
-                              <input placeholder="101" value={newSlot.room} onChange={(e) => setNewSlot({...newSlot, room: e.target.value})} />
-                          </div>
-                      </div>
-                      <div className="row-group">
-                          <div className="input-group">
-                              <label>Time</label>
-                              <input placeholder="00:00 - 00:00" value={newSlot.time} onChange={(e) => setNewSlot({...newSlot, time: e.target.value})} />
-                          </div>
-                          <div className="input-group">
-                              <label>Color</label>
-                              <select value={newSlot.color} onChange={(e) => setNewSlot({...newSlot, color: e.target.value})}>
-                                  <option value="blue">Blue</option>
-                                  <option value="purple">Purple</option>
-                                  <option value="pink">Pink</option>
-                                  <option value="orange">Orange</option>
-                                  <option value="green">Green</option>
-                              </select>
-                          </div>
-                      </div>
-                      <button className="save-btn" onClick={handleSaveSlot}>Save Schedule</button>
-                  </div>
-              </div>
-          </div>
-      )}
-
-      {/* ✨ PREMIUM STYLES WITH MOBILE/DESKTOP RESPONSIVENESS ✨ */}
-      <style>{`
+            {/* ✨ PREMIUM STYLES WITH MOBILE/DESKTOP RESPONSIVENESS ✨ */}
+            <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
         :root {
@@ -360,7 +412,6 @@ export default function Timetable() {
             --primary: #4F46E5;
         }
 
-        /* Basic Setup */
         html, body, #root { margin: 0; padding: 0; height: 100%; }
         
         .timetable-app { display: flex; height: 100vh; background: #F8FAFC; font-family: 'Outfit', sans-serif; overflow: hidden; position: relative; }
@@ -373,7 +424,6 @@ export default function Timetable() {
         }
         .main-content::-webkit-scrollbar { display: none; }
 
-        /* --- BACKGROUND MESH ANIMATION --- */
         .mesh-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; overflow: hidden; pointer-events: none; }
         .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.6; animation: float 10s infinite alternate; }
         .orb-1 { width: 400px; height: 400px; background: #C7D2FE; top: -100px; left: 20%; }
@@ -381,7 +431,6 @@ export default function Timetable() {
         .orb-3 { width: 300px; height: 300px; background: #FECACA; top: 40%; left: 40%; animation-delay: -5s; }
         @keyframes float { 0% { transform: translate(0, 0); } 100% { transform: translate(30px, 50px); } }
 
-        /* --- HEADER --- */
         .glass-header { 
             display: flex; justify-content: space-between; align-items: center; 
             background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border);
@@ -401,11 +450,9 @@ export default function Timetable() {
         .subtitle { margin: 0; color: #64748B; font-weight: 500; font-size: 0.95rem; }
 
         .header-actions { display: flex; align-items: center; gap: 15px; }
-        
         .separator { width: 1px; height: 30px; background: #CBD5E1; margin: 0 5px; }
         
         .filter-wrapper { position: relative; }
-        
         .icon-btn-glass { 
             width: 40px; height: 40px; border-radius: 12px; border: 1px solid #CBD5E1; background: #FFFFFF;
             display: flex; align-items: center; justify-content: center; cursor: pointer; color: #475569; transition: 0.2s;
@@ -432,17 +479,12 @@ export default function Timetable() {
         .ai-btn-glow:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(15, 23, 42, 0.35); }
         .spin { animation: spin 1s linear infinite; }
 
-        /* --- TIMELINE --- */
         .timeline-wrapper {
             background: var(--glass-bg); backdrop-filter: blur(20px); border-radius: 30px;
             border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); padding: 30px;
-            position: relative; 
-            /* ✅ HORIZONTAL SCROLL ENABLED FOR TIMETABLE ONLY */
-            overflow-x: auto; 
-            -webkit-overflow-scrolling: touch;
+            position: relative; overflow-x: auto; -webkit-overflow-scrolling: touch;
         }
 
-        /* Ensure internals don't squish */
         .timeline-header { display: flex; margin-bottom: 20px; position: relative; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 15px; min-width: 800px; }
         .corner-cell { width: 120px; flex-shrink: 0; }
         .class-selector { 
@@ -459,7 +501,6 @@ export default function Timetable() {
         .ctl-badge { background: #EF4444; color: white; font-size: 0.7rem; font-weight: 800; padding: 2px 8px; border-radius: 10px; margin-bottom: 5px; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4); }
         .ctl-stroke { width: 2px; height: 100%; background: #EF4444; }
 
-        /* --- ROUTINE GRID --- */
         .routine-grid { display: flex; flex-direction: column; gap: 15px; min-width: 800px; }
         .day-track { display: flex; align-items: center; animation: slideInLeft 0.5s backwards; }
         
@@ -467,18 +508,10 @@ export default function Timetable() {
         .day-name { font-size: 1.2rem; font-weight: 800; color: #1E293B; line-height: 1; }
         .day-full { font-size: 0.75rem; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
 
-        .slots-track { 
-            flex: 1; display: flex; gap: 15px; 
-            overflow-x: visible; padding-bottom: 5px;
-        }
+        .slots-track { flex: 1; display: flex; align-items: center; gap: 15px; overflow-x: visible; padding-bottom: 5px; }
         
-        /* SLOT ITEM */
-        .slot-item { 
-            flex: 0 0 160px; height: 130px; border-radius: 20px; position: relative; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            overflow: hidden; cursor: pointer;
-        }
+        .slot-item { flex: 0 0 160px; height: 130px; border-radius: 20px; position: relative; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); overflow: hidden; cursor: pointer; }
         
-        /* SUBJECT SLOT STYLES */
         .slot-subject { background: white; border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
         .slot-subject:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1); z-index: 10; }
         
@@ -505,31 +538,19 @@ export default function Timetable() {
         .teacher-info { font-size: 0.75rem; color: #64748B; font-weight: 500; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
 
         .slot-footer { font-size: 0.75rem; font-weight: 600; color: #94A3B8; display: flex; align-items: center; gap: 5px; }
-
         .slot-action-btn { position: absolute; right: 10px; top: 50px; background: white; border: none; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); animation: popIn 0.2s; }
 
-        /* BREAK SLOT */
         .slot-break { background: rgba(255,255,255,0.3); border: 2px dashed #E2E8F0; display: flex; align-items: center; justify-content: center; position: relative; max-width: 80px; flex: 0 0 80px; }
         .break-visual { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; color: #CBD5E1; }
         .break-pattern { position: absolute; inset: 0; background-image: radial-gradient(#CBD5E1 1px, transparent 1px); background-size: 8px 8px; opacity: 0.5; }
         .break-icon { position: relative; z-index: 2; background: white; padding: 8px; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.05); color: #94A3B8; }
 
-        /* EDIT MODE ELEMENTS */
-        .add-slot-placeholder {
-            flex: 0 0 130px; height: 130px; border: 2px dashed #CBD5E1; border-radius: 20px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
-            color: #94A3B8; background: rgba(255,255,255,0.3); cursor: pointer; transition: 0.3s;
-        }
+        .add-slot-placeholder { flex: 0 0 130px; height: 130px; border: 2px dashed #CBD5E1; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: #94A3B8; background: rgba(255,255,255,0.3); cursor: pointer; transition: 0.3s; }
         .add-slot-placeholder:hover { border-color: var(--primary); color: var(--primary); background: #F1F5F9; }
         
-        .delete-badge {
-            position: absolute; top: 5px; right: 5px; width: 22px; height: 22px; background: #EF4444; 
-            border-radius: 50%; border: none; color: white; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; z-index: 20; box-shadow: 0 2px 5px rgba(0,0,0,0.2); animation: popIn 0.2s;
-        }
+        .delete-badge { position: absolute; top: 5px; right: 5px; width: 22px; height: 22px; background: #EF4444; border-radius: 50%; border: none; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20; box-shadow: 0 2px 5px rgba(0,0,0,0.2); animation: popIn 0.2s; }
         .delete-badge:hover { transform: scale(1.1); }
 
-        /* MODAL */
         .glass-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(5px); z-index: 1000; display: flex; align-items: center; justify-content: center; }
         .glass-modal { background: white; width: 400px; border-radius: 24px; padding: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.8); animation: popIn 0.3s; box-sizing: border-box; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -545,7 +566,6 @@ export default function Timetable() {
         .save-btn { width: 100%; padding: 12px; background: #1E293B; color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; }
         .save-btn:hover { background: var(--primary); }
 
-        /* ANIMATIONS */
         @keyframes slideDown { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes fadeUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes slideInLeft { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -555,79 +575,25 @@ export default function Timetable() {
         .slide-down { animation: slideDown 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
         .fade-in-up { animation: fadeUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
         
-        /* 📱 RESPONSIVE MEDIA QUERIES (Mobile & Desktop) */
         @media (max-width: 1024px) {
             .main-content { margin-left: 0 !important; width: 100%; }
         }
 
         @media (max-width: 850px) {
-            /* Unlock Scroll on Mobile completely */
             html, body, #root { height: auto !important; min-height: 100vh !important; overflow-y: visible !important; }
-            
-            .timetable-app {
-                display: block !important; 
-                height: auto !important;
-                min-height: 100vh !important;
-                overflow: visible !important;
-            }
-
-            .main-content {
-                margin-left: 0 !important;
-                padding: 15px !important;
-                padding-top: 85px !important; 
-                /* ✅ Extra bottom padding so chatbot doesn't overlap the scrollable table */
-                padding-bottom: 150px !important; 
-                width: 100vw !important;
-                max-width: 100vw !important;
-                height: auto !important;
-                min-height: 100vh !important;
-                overflow: visible !important;
-                display: block !important;
-            }
-
-            /* Responsive Header */
-            .glass-header { 
-                flex-direction: column; 
-                align-items: flex-start; 
-                gap: 15px; 
-            }
-            .header-actions { 
-                width: 100%; 
-                flex-wrap: wrap; 
-                gap: 10px;
-                justify-content: flex-start;
-            }
-
-            /* ✅ FIXED DROPDOWN POSITION FOR MOBILE */
-            .filter-wrapper { position: static; /* Removes relative wrapper constraint */ }
-            .dropdown-menu {
-                top: 200px; /* Force it below the buttons */
-                left: 15px; /* Snap to left edge */
-                right: auto;
-                width: 250px; 
-            }
-
+            .timetable-app { display: block !important; height: auto !important; min-height: 100vh !important; overflow: visible !important; }
+            .main-content { margin-left: 0 !important; padding: 15px !important; padding-top: 85px !important; padding-bottom: 150px !important; width: 100vw !important; max-width: 100vw !important; height: auto !important; min-height: 100vh !important; overflow: visible !important; display: block !important; }
+            .glass-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .header-actions { width: 100%; flex-wrap: wrap; gap: 10px; justify-content: flex-start; }
+            .filter-wrapper { position: static; }
+            .dropdown-menu { top: 200px; left: 15px; right: auto; width: 250px; }
             .separator.no-mobile { display: none; }
             .ai-btn-glow { flex: 1; justify-content: center; }
-
-            /* Ensure Timetable wrapper triggers horizontal scroll */
-            .timeline-wrapper {
-                padding: 15px !important;
-                border-radius: 20px !important;
-            }
-
-            /* Responsive Modal */
-            .glass-modal {
-                width: 90vw !important;
-                max-width: 400px;
-                padding: 20px;
-            }
-            .row-group {
-                grid-template-columns: 1fr !important;
-                gap: 0;
-            }
+            .timeline-wrapper { padding: 15px !important; border-radius: 20px !important; }
+            .glass-modal { width: 90vw !important; max-width: 400px; padding: 20px; }
+            .row-group { grid-template-columns: 1fr !important; gap: 0; }
         }
       `}</style>
-    </div>
-  );
+        </div>
+    );
 }
