@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  // ✅ Space removed from the start of the URL
-  baseURL: "http://127.0.0.1:8000/api/",
+  // ✅ FIXED: Localhost हटाकर आपका Render का Live Server URL डाल दिया है
+  baseURL: "https://shivadda-backend-updated-software.onrender.com/api/",
   withCredentials: false
 });
 
