@@ -10,7 +10,9 @@ urlpatterns = [
     # Admin / Staff Routes
     path("transactions/", FeeTransactionAPI.as_view(), name="fee-transactions"),
     path("summary/", fee_summary, name="fee-summary"),
-    path("download-report/", download_fee_csv, name="download-fee-report"),
+    
+    # 🔥 FIX: 'download-report/' ko 'download/' kar diya hai frontend se match karne ke liye
+    path("download/", download_fee_csv, name="download-fee-report"),
 
     # Student Route
     path("my-ledger/", StudentFeeLedgerAPI.as_view(), name="student-ledger"),

@@ -8,17 +8,51 @@ from django.contrib.auth import get_user_model
 
 from batches.models import Batch
 from courses.models import Course
-from .models import Exam, Question, QuestionBank, DescriptiveSubmission, AIEvaluationLog, AnswerEvaluation, ExamAttempt, StudentAnswer
-from .serializers import ExamSerializer, QuestionSerializer, QuestionBankSerializer, EvaluationSerializer
+from .models import Exam, Question, QuestionBank, DescriptiveSubmission, AIEvaluationLog, AnswerEvaluation, ExamAttempt, StudentAnswer, Assignment, AssignmentSubmission
+from .serializers import ExamSerializer, QuestionSerializer, QuestionBankSerializer, EvaluationSerializer, AssignmentSerializer, AssignmentSubmissionSerializer
 
 User = get_user_model()
 
-# ---------------- EXAM LIST API ----------------
+# ---------------- EXAM CRUD API (✅ FULLY UPDATED FOR FRONTEND) ----------------
 class ExamAPI(APIView):
-    def get(self, request):
-        exams = Exam.objects.filter(is_active=True)
-        serializer = ExamSerializer(exams, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get(self, request, pk=None):
+        if pk:
+            exam = Exam.objects.filter(id=pk).first()
+            if not exam:
+                return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+            serializer = ExamSerializer(exam)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            exams = Exam.objects.all().order_by('-created_at')
+            serializer = ExamSerializer(exams, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        serializer = ExamSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, pk):
+        try:
+            exam = Exam.objects.get(id=pk)
+        except Exam.DoesNotExist:
+            return Response({"error": "Exam not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ExamSerializer(exam, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        try:
+            exam = Exam.objects.get(id=pk)
+            exam.delete()
+            return Response({"message": "Exam deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+        except Exam.DoesNotExist:
+            return Response({"error": "Exam not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
 # ---------------- QUESTION BANK FULL CRUD API ----------------
@@ -65,7 +99,7 @@ class QuestionBankAPI(APIView):
             return Response({"error": "Question not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-# ---------------- SUBMIT EXAM (✅ UPDATED: NOW SAVES ATTEMPT TO DB) ----------------
+# ---------------- SUBMIT EXAM ----------------
 class SubmitExamAPI(APIView):
     def post(self, request, exam_id):
         try:
@@ -83,14 +117,14 @@ class SubmitExamAPI(APIView):
             answers = data.get("answers", {})
 
             for q in exam.questions.all():
-                if q.q_type in ['MCQ', 'True/False']:
+                if q.q_type in ['mcq', 'True/False']:
                     student_ans = answers.get(str(q.id))
                     is_correct = False
                     
                     if not student_ans:
                         # Question not attempted
                         score -= q.unattempted_marks
-                    elif student_ans == q.correct_option:
+                    elif str(student_ans) == str(q.correct_option_index):
                         # Correct Answer
                         score += q.marks
                         is_correct = True
@@ -284,3 +318,53 @@ def receive_sms(request):
 @csrf_exempt
 def get_incoming_messages(request):
     return JsonResponse({"messages": []})
+
+
+# ==========================================
+# 🔥 NEW: ASSIGNMENT APIs 🔥
+# ==========================================
+
+class AssignmentAPI(APIView):
+    # Get all assignments
+    def get(self, request):
+        assignments = Assignment.objects.all().order_by('-created_at')
+        serializer = AssignmentSerializer(assignments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # Create new assignment
+    def post(self, request):
+        serializer = AssignmentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # Delete assignment
+    def delete(self, request, pk):
+        try:
+            assignment = Assignment.objects.get(id=pk)
+            assignment.delete()
+            return Response({"message": "Deleted"}, status=status.HTTP_204_NO_CONTENT)
+        except Assignment.DoesNotExist:
+            return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+# API to fetch submissions for a specific assignment & Evaluate them
+class AssignmentEvaluationAPI(APIView):
+    # Fetch all student submissions for a specific assignment
+    def get(self, request, assignment_id):
+        submissions = AssignmentSubmission.objects.filter(assignment_id=assignment_id)
+        serializer = AssignmentSubmissionSerializer(submissions, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # Teacher gives marks and feedback
+    def put(self, request, submission_id):
+        try:
+            submission = AssignmentSubmission.objects.get(id=submission_id)
+            submission.marks_awarded = request.data.get('marks_awarded')
+            submission.feedback = request.data.get('feedback')
+            submission.status = 'graded' # Status auto update to graded
+            submission.save()
+            return Response({"message": "Evaluation Saved Successfully!"}, status=status.HTTP_200_OK)
+        except AssignmentSubmission.DoesNotExist:
+            return Response({"error": "Submission not found"}, status=status.HTTP_404_NOT_FOUND)

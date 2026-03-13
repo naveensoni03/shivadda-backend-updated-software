@@ -1,395 +1,447 @@
 import React, { useState, useEffect } from "react";
 import SidebarModern from "../components/SidebarModern";
 import api from "../api/axios";
-import "./dashboard.css"; 
+import "./dashboard.css";
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function Teachers() {
-  const [teachers, setTeachers] = useState([]);
-  const [deptStats, setDeptStats] = useState([]);
-  
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showDetailPanel, setShowDetailPanel] = useState(false);
-  const [selectedTeacher, setSelectedTeacher] = useState(null);
+    const [teachers, setTeachers] = useState([]);
+    const [deptStats, setDeptStats] = useState([]);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5; 
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [showDetailPanel, setShowDetailPanel] = useState(false);
+    const [selectedTeacher, setSelectedTeacher] = useState(null);
 
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [editMode, setEditMode] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
 
-  const [formData, setFormData] = useState({
-    full_name: "", employee_id: "", email: "", phone: "", gender: "Male", 
-    department: "", subject: "", qualification: "", experience: "", designation: "Assistant Teacher"
-  });
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [editMode, setEditMode] = useState(false);
 
-  const getDummyTeachers = () => [
-    { id: 1, full_name: "Dr. Kunal Verma", employee_id: "TCH-101", department: "Science", subject: "Physics", designation: "HOD", email: "kunal@shivadda.com", phone: "+91 9876543210", gender: "Male", qualification: "PhD", experience: "12 Years" },
-    { id: 2, full_name: "Shivani Sharma", employee_id: "TCH-102", department: "Mathematics", subject: "Calculus", designation: "PGT", email: "shivani@shivadda.com", phone: "+91 9876543211", gender: "Female", qualification: "M.Sc", experience: "8 Years" }
-  ];
+    const [formData, setFormData] = useState({
+        full_name: "", employee_id: "", email: "", phone: "", gender: "Male",
+        department: "", subject: "", qualification: "", experience: "", designation: "Assistant Teacher"
+    });
 
-  useEffect(() => { 
-      fetchTeachers();
-      fetchDeptStats(); 
-  }, []);
+    const getDummyTeachers = () => [
+        { id: 1, full_name: "Dr. Kunal Verma", employee_id: "TCH-101", department: "Science", subject: "Physics", designation: "HOD", email: "kunal@shivadda.com", phone: "+91 9876543210", gender: "Male", qualification: "PhD", experience: "12 Years" },
+        { id: 2, full_name: "Shivani Sharma", employee_id: "TCH-102", department: "Mathematics", subject: "Calculus", designation: "PGT", email: "shivani@shivadda.com", phone: "+91 9876543211", gender: "Female", qualification: "M.Sc", experience: "8 Years" }
+    ];
 
-  const fetchTeachers = async () => {
-      try {
-        const res = await api.get("/teachers/"); 
-        setTeachers(res.data && res.data.length > 0 ? res.data : getDummyTeachers());
-      } catch (err) { setTeachers(getDummyTeachers()); }
-  };
-
-  const fetchDeptStats = async () => {
-      try {
-          const res = await api.get("/teachers/department-stats/");
-          setDeptStats(res.data);
-      } catch (err) {
-          console.error("Stats fetch error:", err);
-      }
-  };
-
-  // 🚀 FIX: EKDUM SAFE UPDATE LOGIC (No Damage to anything)
-  const handleOnboardSubmit = async () => {
-    if (!formData.full_name || !formData.employee_id || !formData.email) return toast.error("Essential details required!");
-    setLoading(true);
-    
-    try {
-        const safeData = {
-            ...formData,
-            email: formData.email.trim().toLowerCase(),
-            employee_id: formData.employee_id.trim()
-        };
-
-        if (editMode && selectedTeacher) {
-            // 🔥 SMART FIX: Agar email change NAHI hua hai, toh use update list se hata do
-            if (safeData.email === (selectedTeacher.email || "").trim().toLowerCase()) {
-                delete safeData.email;
-            }
-            // 🔥 SMART FIX: Agar employee_id change NAHI hua hai, toh use bhi hata do
-            if (safeData.employee_id === (selectedTeacher.employee_id || "").trim()) {
-                delete safeData.employee_id;
-            }
-
-            const res = await api.patch(`/teachers/${selectedTeacher.id}/`, safeData);
-            setTeachers(teachers.map(t => t.id === selectedTeacher.id ? res.data : t));
-            toast.success("Profile Updated Successfully!");
-        } else {
-            const res = await api.post("/teachers/", safeData);
-            setTeachers([res.data, ...teachers]); 
-            toast.success("New Instructor Onboarded!");
-            setShowSuccess(true);
-            setTimeout(() => { setShowSuccess(false); }, 2000);
-        }
-
+    useEffect(() => {
+        fetchTeachers();
         fetchDeptStats();
+    }, []);
 
-        setFormData({ full_name: "", employee_id: "", email: "", phone: "", gender: "Male", department: "", subject: "", qualification: "", experience: "", designation: "Assistant Teacher" });
-        setShowAddModal(false);
-        setEditMode(false);
+    const fetchTeachers = async () => {
+        try {
+            const res = await api.get("/teachers/");
+            setTeachers(res.data && res.data.length > 0 ? res.data : getDummyTeachers());
+        } catch (err) { setTeachers(getDummyTeachers()); }
+    };
 
-    } catch (error) {
-        console.error("Backend Error Data:", error.response?.data);
-        const serverError = error.response?.data;
-        if (serverError && typeof serverError === 'object') {
-            const firstKey = Object.keys(serverError)[0];
-            const errorMsg = Array.isArray(serverError[firstKey]) ? serverError[firstKey][0] : serverError[firstKey];
-            toast.error(`${firstKey.toUpperCase()}: ${errorMsg}`, { duration: 4000 });
-        } else {
-            toast.error("Database connection failed!");
+    const fetchDeptStats = async () => {
+        try {
+            const res = await api.get("/teachers/department-stats/");
+            setDeptStats(res.data);
+        } catch (err) {
+            console.error("Stats fetch error:", err);
         }
-    } finally {
-        setLoading(false);
-    }
-  };
+    };
 
-  const handleEditClick = () => {
-      setFormData({...selectedTeacher});
-      setEditMode(true);
-      setShowDetailPanel(false);
-      setShowAddModal(true);
-  };
+    const handleOnboardSubmit = async () => {
+        if (!formData.full_name || !formData.employee_id || !formData.email) return toast.error("Essential details required!");
+        setLoading(true);
 
-  const handleDeleteClick = async () => {
-      if(!window.confirm(`Are you sure you want to deactivate ${selectedTeacher.full_name}?`)) return;
-      try {
-          await api.delete(`/teachers/${selectedTeacher.id}/`);
-          setTeachers(teachers.filter(t => t.id !== selectedTeacher.id));
-          toast.success("Teacher deactivated successfully.");
-          fetchDeptStats();
-      } catch (err) {
-          toast.error("Delete Action Failed.");
-      }
-      setShowDetailPanel(false);
-  };
+        try {
+            const safeData = {
+                ...formData,
+                email: formData.email.trim().toLowerCase(),
+                employee_id: formData.employee_id.trim()
+            };
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = teachers.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(teachers.length / itemsPerPage);
+            if (editMode && selectedTeacher) {
+                if (safeData.email === (selectedTeacher.email || "").trim().toLowerCase()) {
+                    delete safeData.email;
+                }
+                if (safeData.employee_id === (selectedTeacher.employee_id || "").trim()) {
+                    delete safeData.employee_id;
+                }
 
-  const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
+                const res = await api.patch(`/teachers/${selectedTeacher.id}/`, safeData);
+                setTeachers(teachers.map(t => t.id === selectedTeacher.id ? res.data : t));
+                toast.success("Profile Updated Successfully!");
+            } else {
+                // 🚀 NAYA ADDITION: Teacher Create aur Password Toast
+                const res = await api.post("/teachers/", safeData);
+                setTeachers([res.data, ...teachers]);
 
-  const handleViewTeacher = (teacher) => {
-    setSelectedTeacher(teacher);
-    setShowDetailPanel(true);
-  };
+                const generatedPassword = res.data.generated_password || `${safeData.employee_id}@123`;
 
-  const handleInput = (e) => setFormData({...formData, [e.target.name]: e.target.value});
+                // 🌟 Lamba Notification jisme Email aur Password hoga
+                toast.success(
+                    (t) => (
+                        <div style={{ lineHeight: '1.5' }}>
+                            <b>🎉 Teacher Onboarded!</b><br />
+                            <span style={{ fontSize: '0.85rem', color: '#64748b' }}>A new login account has been created. Share these credentials:</span><br /><br />
+                            <b>ID:</b> {safeData.email}<br />
+                            <b>Password:</b> <span style={{ color: '#4f46e5', fontWeight: 'bold', fontSize: '1.1rem' }}>{generatedPassword}</span>
+                        </div>
+                    ),
+                    { duration: 15000, style: { minWidth: '350px' } } // 15 seconds tak rukega taaki admin copy kar sake
+                );
 
-  const openNewAddModal = () => {
-      setEditMode(false);
-      setFormData({ full_name: "", employee_id: "", email: "", phone: "", gender: "Male", department: "", subject: "", qualification: "", experience: "", designation: "Assistant Teacher" });
-      setShowAddModal(true);
-  };
+                setShowSuccess(true);
+                setTimeout(() => { setShowSuccess(false); }, 2000);
+            }
 
-  const totalTeachers = teachers.length || 1; 
-  const statColors = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
-  const existingDepartments = deptStats.map(stat => stat.department);
+            fetchDeptStats();
 
-  return (
-    <div className="teachers-page-wrapper" style={{background: '#f8fafc', height: '100vh', display: 'flex', overflowX: 'hidden'}}>
-      <SidebarModern />
-      <Toaster position="top-center" />
-      
-      <div className="teachers-main-content" style={{flex: 1, padding: '30px 40px', position: 'relative', display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto', boxSizing: 'border-box'}}>
-        
-        <header className="fade-in-down page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexShrink: 0 }}>
-          <div>
-            <h1 style={{ fontSize: '2.2rem', fontWeight: '800', color: '#1e293b', letterSpacing: '-1px', margin: 0 }}>
-              Teachers Hub
-            </h1>
-            <p style={{ color: '#64748b', fontSize: '0.95rem', fontWeight: '500', margin: 0 }}>Manage faculty profiles, payroll & roles.</p>
-          </div>
-          
-          <button className="btn-glow" onClick={openNewAddModal} style={{ position: 'relative', zIndex: 50 }}>
-            <span style={{marginRight: '8px', fontSize: '1.1rem'}}>+</span> Onboard Teacher
-          </button>
-        </header>
+            setFormData({ full_name: "", employee_id: "", email: "", phone: "", gender: "Male", department: "", subject: "", qualification: "", experience: "", designation: "Assistant Teacher" });
+            setShowAddModal(false);
+            setEditMode(false);
 
-        <div className="flex-container" style={{ display: 'flex', gap: '30px' }}>
-          
-          {/* Main Table Area */}
-          <div className="glass-card table-card fade-in-up" style={{ flex: 2, background: 'white', padding: '25px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', animationDelay: '0.1s', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div>
-                <h3 style={{marginBottom: '20px', color: '#0f172a'}}>Staff Directory</h3>
-                <div className="table-wrapper">
-                    <table className="modern-table">
-                    <thead>
-                        <tr>
-                        <th>INSTRUCTOR</th>
-                        <th>DEPARTMENT / SUBJECT</th>
-                        <th>CONTACT</th>
-                        <th>ACTION</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {currentItems.map((t, idx) => (
-                        <tr key={t.id} className="floating-row stagger-animation" style={{ animationDelay: `${idx * 0.1}s` }}>
-                            <td>
-                            <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
-                                <div className="mini-avatar">{t.full_name ? t.full_name.charAt(0).toUpperCase() : 'T'}</div>
-                                <div>
-                                    <div style={{color: '#0f172a', fontWeight: '700', fontSize: '0.95rem'}}>{t.full_name}</div>
-                                    <div style={{fontSize: '0.75rem', color: '#6366f1'}}>#{t.employee_id}</div>
+        } catch (error) {
+            console.error("Backend Error Data:", error.response?.data);
+            const serverError = error.response?.data;
+            if (serverError && typeof serverError === 'object') {
+                const firstKey = Object.keys(serverError)[0];
+                const errorMsg = Array.isArray(serverError[firstKey]) ? serverError[firstKey][0] : serverError[firstKey];
+                toast.error(`${firstKey.toUpperCase()}: ${errorMsg}`, { duration: 4000 });
+            } else {
+                toast.error("Database connection failed!");
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleEditClick = () => {
+        setFormData({ ...selectedTeacher });
+        setEditMode(true);
+        setShowDetailPanel(false);
+        setShowAddModal(true);
+    };
+
+    const handleDeleteClick = async () => {
+        if (!window.confirm(`Are you sure you want to deactivate ${selectedTeacher.full_name}?`)) return;
+        try {
+            await api.delete(`/teachers/${selectedTeacher.id}/`);
+            setTeachers(teachers.filter(t => t.id !== selectedTeacher.id));
+            toast.success("Teacher deactivated successfully.");
+            fetchDeptStats();
+        } catch (err) {
+            toast.error("Delete Action Failed.");
+        }
+        setShowDetailPanel(false);
+    };
+
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = teachers.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(teachers.length / itemsPerPage);
+
+    const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
+
+    const handleViewTeacher = (teacher) => {
+        setSelectedTeacher(teacher);
+        setShowDetailPanel(true);
+    };
+
+    const handleInput = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+    const openNewAddModal = () => {
+        setEditMode(false);
+        setFormData({ full_name: "", employee_id: "", email: "", phone: "", gender: "Male", department: "", subject: "", qualification: "", experience: "", designation: "Assistant Teacher" });
+        setShowAddModal(true);
+    };
+
+    const totalTeachers = teachers.length || 1;
+    const statColors = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
+    const existingDepartments = deptStats.map(stat => stat.department);
+
+    return (
+        <div className="teachers-page-wrapper">
+            <SidebarModern />
+            <Toaster position="top-center" />
+
+            {/* Inline styles replaced with proper CSS classes below */}
+            <div className="teachers-main-content">
+
+                <header className="page-header fade-in-down">
+                    <div>
+                        <h1 style={{ fontSize: '2.2rem', fontWeight: '800', color: '#1e293b', letterSpacing: '-1px', margin: 0 }}>
+                            Teachers Hub
+                        </h1>
+                        <p style={{ color: '#64748b', fontSize: '0.95rem', fontWeight: '500', margin: 0 }}>Manage faculty profiles, payroll & roles.</p>
+                    </div>
+
+                    <button className="btn-glow" onClick={openNewAddModal}>
+                        <span style={{ marginRight: '8px', fontSize: '1.1rem' }}>+</span> Onboard Teacher
+                    </button>
+                </header>
+
+                <div className="flex-container">
+
+                    {/* Main Table Area */}
+                    <div className="glass-card table-card fade-in-up">
+                        <div>
+                            <h3 style={{ marginBottom: '20px', color: '#0f172a' }}>Staff Directory</h3>
+                            <div className="table-wrapper">
+                                <table className="modern-table">
+                                    <thead>
+                                        <tr>
+                                            <th>INSTRUCTOR</th>
+                                            <th>DEPARTMENT / SUBJECT</th>
+                                            <th>CONTACT</th>
+                                            <th>ACTION</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {currentItems.map((t, idx) => (
+                                            <tr key={t.id} className="floating-row stagger-animation" style={{ animationDelay: `${idx * 0.1}s` }}>
+                                                <td>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                        <div className="mini-avatar">{t.full_name ? t.full_name.charAt(0).toUpperCase() : 'T'}</div>
+                                                        <div>
+                                                            <div style={{ color: '#0f172a', fontWeight: '700', fontSize: '0.95rem' }}>{t.full_name}</div>
+                                                            <div style={{ fontSize: '0.75rem', color: '#6366f1' }}>#{t.employee_id}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span className="dept-badge">{t.department || "General"}</span>
+                                                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px' }}>{t.subject || "N/A"}</div>
+                                                </td>
+                                                <td>
+                                                    <div style={{ fontSize: '0.85rem', color: '#334155' }}>{t.phone || "--"}</div>
+                                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{t.email}</div>
+                                                </td>
+                                                <td>
+                                                    <button className="btn-view-detail hover-scale" onClick={() => handleViewTeacher(t)}>
+                                                        View ↗
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {totalPages > 1 && (
+                            <div className="pagination-bar">
+                                <button className="page-btn" disabled={currentPage === 1} onClick={() => handlePageChange(currentPage - 1)}>← Prev</button>
+                                <span className="page-info">Page <b>{currentPage}</b> of {totalPages}</span>
+                                <button className="page-btn" disabled={currentPage === totalPages} onClick={() => handlePageChange(currentPage + 1)}>Next →</button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Dept Stats Area */}
+                    <div className="glass-card stat-card fade-in-up">
+                        <h3 style={{ marginBottom: '25px', color: '#0f172a' }}>Department Stats</h3>
+
+                        {deptStats.length === 0 ? (
+                            <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>No stats available.</p>
+                        ) : (
+                            deptStats.slice(0, 6).map((stat, i) => {
+                                const fillPercentage = (stat.count / totalTeachers) * 100;
+                                return (
+                                    <div key={i} className="stat-card-mini" style={{ marginTop: i === 0 ? 0 : '20px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                                            <span style={{ color: '#64748b', fontWeight: '600', fontSize: '0.9rem' }}>{stat.department}</span>
+                                            <b style={{ color: '#0f172a', fontSize: '1rem' }}>{stat.count} Staff</b>
+                                        </div>
+                                        <div className="progress-bar-bg">
+                                            <div className="progress-bar-fill" style={{ width: `${fillPercentage}%`, background: statColors[i % statColors.length] }}></div>
+                                        </div>
+                                    </div>
+                                )
+                            })
+                        )}
+                    </div>
+
+                </div>
+
+                {/* DETAIL PANEL */}
+                {showDetailPanel && selectedTeacher && (
+                    <div className="overlay-blur" onClick={() => setShowDetailPanel(false)}>
+                        <div className="luxe-panel slide-in-right" onClick={(e) => e.stopPropagation()}>
+                            <div className="panel-header-simple">
+                                <button className="close-circle-btn hover-rotate" onClick={() => setShowDetailPanel(false)}>✕</button>
+                                <span>Staff Profile</span>
+                            </div>
+                            <div className="panel-content-scroll">
+                                <div className="student-profile-hero zoom-in">
+                                    <div className="hero-avatar">{selectedTeacher.full_name ? selectedTeacher.full_name.charAt(0).toUpperCase() : 'T'}</div>
+                                    <h2 style={{ color: '#0f172a', fontSize: '1.4rem', fontWeight: '800', margin: '10px 0 5px 0' }}>{selectedTeacher.full_name}</h2>
+                                    <span className="course-tag">{selectedTeacher.designation} • {selectedTeacher.department || 'General'}</span>
+                                </div>
+                                <div className="stats-row fade-in-up" style={{ animationDelay: '0.1s' }}>
+                                    <div className="stat-box"><small>Experience</small><b>{selectedTeacher.experience || "N/A"}</b></div>
+                                    <div className="stat-box"><small>Qualification</small><b>{selectedTeacher.qualification || "N/A"}</b></div>
+                                </div>
+                                <div className="detail-section fade-in-up" style={{ animationDelay: '0.2s' }}>
+                                    <h4>Contact & Official Info</h4>
+                                    <div className="info-row"><label>Employee ID</label><p>#{selectedTeacher.employee_id}</p></div>
+                                    <div className="info-row"><label>Official Email</label><p>{selectedTeacher.email}</p></div>
+                                    <div className="info-row"><label>Phone</label><p>{selectedTeacher.phone || 'N/A'}</p></div>
+                                    <div className="info-row"><label>Department</label><p>{selectedTeacher.department || 'General'}</p></div>
+                                    <div className="info-row"><label>Subject Taught</label><p>{selectedTeacher.subject || 'N/A'}</p></div>
+                                    <div className="info-row"><label>Gender</label><p>{selectedTeacher.gender || 'Not Specified'}</p></div>
+                                </div>
+                                <div className="panel-footer-actions fade-in-up" style={{ animationDelay: '0.4s' }}>
+                                    <button className="btn-edit-pro hover-lift" onClick={handleEditClick}>Edit Profile</button>
+                                    <button className="btn-suspend-pro hover-lift" onClick={handleDeleteClick}>Deactivate</button>
                                 </div>
                             </div>
-                            </td>
-                            <td>
-                                <span className="dept-badge">{t.department || "General"}</span>
-                                <div style={{fontSize: '0.8rem', color: '#64748b', marginTop:'4px'}}>{t.subject || "N/A"}</div>
-                            </td>
-                            <td>
-                                <div style={{fontSize: '0.85rem', color: '#334155'}}>{t.phone || "--"}</div>
-                                <div style={{fontSize: '0.75rem', color: '#94a3b8'}}>{t.email}</div>
-                            </td>
-                            <td>
-                            <button className="btn-view-detail hover-scale" onClick={() => handleViewTeacher(t)}>
-                                View ↗
-                            </button>
-                            </td>
-                        </tr>
-                        ))}
-                    </tbody>
-                    </table>
-                </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ADD / EDIT MODAL */}
+                {showAddModal && (
+                    <div className="overlay-blur centered-flex" style={{ zIndex: 3000 }} onClick={() => setShowAddModal(false)}>
+                        <div className="luxe-modal zoom-in" onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <div>
+                                    <h2 style={{ fontSize: '1.5rem', color: '#0f172a', margin: 0 }}>{editMode ? "Edit Profile" : "New Instructor"}</h2>
+                                    <p style={{ fontSize: '0.9rem', color: '#64748b', margin: 0 }}>Enter official staff details.</p>
+                                </div>
+                                <button className="close-btn" onClick={() => setShowAddModal(false)}>✕</button>
+                            </div>
+
+                            <div className="modal-body" style={{ marginTop: '20px' }}>
+                                <div className="modal-row" style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label className="form-label">Full Name</label>
+                                        <input type="text" name="full_name" className="luxe-input" placeholder="Dr. A.K. Gupta" value={formData.full_name} onChange={handleInput} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <label className="form-label">Employee ID</label>
+                                        <input type="text" name="employee_id" className="luxe-input" placeholder="TCH-101" value={formData.employee_id} onChange={handleInput} />
+                                    </div>
+                                </div>
+
+                                <div className="modal-row" style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label className="form-label">Email ID</label>
+                                        <input type="email" name="email" className="luxe-input" placeholder="official@school.com" value={formData.email} onChange={handleInput} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <label className="form-label">Phone Number</label>
+                                        <input type="text" name="phone" className="luxe-input" placeholder="+91 98..." value={formData.phone} onChange={handleInput} />
+                                    </div>
+                                </div>
+
+                                <div className="modal-row" style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label className="form-label">Designation</label>
+                                        <select name="designation" className="luxe-input" value={formData.designation} onChange={handleInput}>
+                                            <option>Assistant Teacher</option><option>PGT</option><option>TGT</option><option>HOD</option><option>Lab Instructor</option><option>Coach</option>
+                                        </select>
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <label className="form-label">Department</label>
+                                        <input list="department-list" type="text" name="department" className="luxe-input" placeholder="e.g. Science, Arts" value={formData.department} onChange={handleInput} />
+                                        <datalist id="department-list">
+                                            {existingDepartments.map((dept, index) => <option key={index} value={dept} />)}
+                                        </datalist>
+                                    </div>
+                                </div>
+
+                                <div className="modal-row" style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label className="form-label">Subject Taught</label>
+                                        <input type="text" name="subject" className="luxe-input" placeholder="e.g. Physics, History" value={formData.subject} onChange={handleInput} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <label className="form-label">Qualification</label>
+                                        <input type="text" name="qualification" className="luxe-input" placeholder="M.Sc, B.Ed" value={formData.qualification} onChange={handleInput} />
+                                    </div>
+                                </div>
+
+                                <div className="modal-row" style={{ display: 'flex', gap: '15px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label className="form-label">Experience</label>
+                                        <input type="text" name="experience" className="luxe-input" placeholder="5 Years" value={formData.experience} onChange={handleInput} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <label className="form-label">Gender</label>
+                                        <select name="gender" className="luxe-input" value={formData.gender} onChange={handleInput}>
+                                            <option>Male</option>
+                                            <option>Female</option>
+                                            <option>Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="modal-action-row" style={{ marginTop: '30px', display: 'flex', gap: '10px' }}>
+                                    <button className="btn-confirm-gradient" style={{ marginTop: 0, flex: 1 }} onClick={handleOnboardSubmit} disabled={loading}>
+                                        {loading ? 'Saving...' : (editMode ? 'Update Profile' : 'Save Profile')}
+                                    </button>
+                                    <button className="btn-ghost" style={{ flex: 1 }} onClick={() => setShowAddModal(false)}>Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {showSuccess && (
+                    <div className="overlay-blur centered-flex" style={{ zIndex: 3000 }}>
+                        <div className="glass-card zoom-in" style={{ background: 'white', padding: '40px', borderRadius: '30px', textAlign: 'center', width: '350px' }}>
+                            <div className="success-ring"><span className="checkmark">L</span></div>
+                            <h2 style={{ color: '#0f172a', marginTop: '20px' }}>Success!</h2>
+                            <p style={{ color: '#64748b' }}>Action completed successfully.</p>
+                        </div>
+                    </div>
+                )}
+
             </div>
 
-            {totalPages > 1 && (
-                <div className="pagination-bar">
-                    <button className="page-btn" disabled={currentPage === 1} onClick={() => handlePageChange(currentPage - 1)}>← Prev</button>
-                    <span className="page-info">Page <b>{currentPage}</b> of {totalPages}</span>
-                    <button className="page-btn" disabled={currentPage === totalPages} onClick={() => handlePageChange(currentPage + 1)}>Next →</button>
-                </div>
-            )}
-          </div>
+            <style>{`
+        /* 🚀 MAIN LAYOUT FIXES FOR DESKTOP */
+        .teachers-page-wrapper { 
+            background: #f8fafc;
+            overflow-x: hidden; 
+            width: 100%; 
+            display: flex; 
+            flex-direction: row; 
+            min-height: 100vh;
+        }
 
-          {/* Dept Stats Area */}
-          <div className="glass-card stat-card fade-in-up" style={{ flex: 1, background: 'white', padding: '30px', borderRadius: '24px', height: 'fit-content', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', animationDelay: '0.3s' }}>
-             <h3 style={{marginBottom: '25px', color: '#0f172a'}}>Department Stats</h3>
-             
-             {deptStats.length === 0 ? (
-                 <p style={{color: '#94a3b8', fontSize: '0.9rem'}}>No stats available.</p>
-             ) : (
-                 deptStats.slice(0, 6).map((stat, i) => {
-                     const fillPercentage = (stat.count / totalTeachers) * 100;
-                     return (
-                     <div key={i} className="stat-card-mini" style={{marginTop: i===0?0:'20px'}}>
-                        <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '10px'}}>
-                            <span style={{color: '#64748b', fontWeight: '600', fontSize: '0.9rem'}}>{stat.department}</span> 
-                            <b style={{color: '#0f172a', fontSize: '1rem'}}>{stat.count} Staff</b>
-                        </div>
-                        <div className="progress-bar-bg">
-                            <div className="progress-bar-fill" style={{width: `${fillPercentage}%`, background: statColors[i % statColors.length]}}></div>
-                        </div>
-                     </div>
-                 )})
-             )}
-          </div>
+        .teachers-main-content {
+            flex: 1;
+            margin-left: 260px; /* 🔥 FIX: Sidebar ki width ka margin lagaya */
+            padding: 30px 40px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            width: calc(100% - 260px); 
+            box-sizing: border-box;
+        }
 
-        </div>
+        .flex-container { 
+            display: flex; 
+            gap: 30px; 
+            width: 100%;
+        }
 
-        {/* --- DETAIL PANEL --- */}
-        {showDetailPanel && selectedTeacher && (
-          <div className="overlay-blur" onClick={() => setShowDetailPanel(false)}>
-            <div className="luxe-panel slide-in-right" onClick={(e) => e.stopPropagation()}>
-              <div className="panel-header-simple">
-                 <button className="close-circle-btn hover-rotate" onClick={() => setShowDetailPanel(false)}>✕</button>
-                 <span>Staff Profile</span>
-              </div>
-              <div className="panel-content-scroll">
-                <div className="student-profile-hero zoom-in">
-                    <div className="hero-avatar">{selectedTeacher.full_name ? selectedTeacher.full_name.charAt(0).toUpperCase() : 'T'}</div>
-                    <h2 style={{ color: '#0f172a', fontSize: '1.4rem', fontWeight: '800', margin: '10px 0 5px 0' }}>{selectedTeacher.full_name}</h2>
-                    <span className="course-tag">{selectedTeacher.designation} • {selectedTeacher.department || 'General'}</span>
-                </div>
-                <div className="stats-row fade-in-up" style={{animationDelay: '0.1s'}}>
-                    <div className="stat-box"><small>Experience</small><b>{selectedTeacher.experience || "N/A"}</b></div>
-                    <div className="stat-box"><small>Qualification</small><b>{selectedTeacher.qualification || "N/A"}</b></div>
-                </div>
-                <div className="detail-section fade-in-up" style={{animationDelay: '0.2s'}}>
-                    <h4>Contact & Official Info</h4>
-                    <div className="info-row"><label>Employee ID</label><p>#{selectedTeacher.employee_id}</p></div>
-                    <div className="info-row"><label>Official Email</label><p>{selectedTeacher.email}</p></div>
-                    <div className="info-row"><label>Phone</label><p>{selectedTeacher.phone || 'N/A'}</p></div>
-                    <div className="info-row"><label>Department</label><p>{selectedTeacher.department || 'General'}</p></div>
-                    <div className="info-row"><label>Subject Taught</label><p>{selectedTeacher.subject || 'N/A'}</p></div>
-                    <div className="info-row"><label>Gender</label><p>{selectedTeacher.gender || 'Not Specified'}</p></div>
-                </div>
-                <div className="panel-footer-actions fade-in-up" style={{animationDelay: '0.4s'}}>
-                    <button className="btn-edit-pro hover-lift" onClick={handleEditClick}>Edit Profile</button>
-                    <button className="btn-suspend-pro hover-lift" onClick={handleDeleteClick}>Deactivate</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        .page-header {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 30px; 
+            flex-shrink: 0;
+            position: relative; 
+            z-index: 50;
+        }
 
-        {/* --- ADD / EDIT MODAL --- */}
-        {showAddModal && (
-          <div className="overlay-blur centered-flex" style={{zIndex: 3000}} onClick={() => setShowAddModal(false)}>
-            <div className="luxe-modal zoom-in" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-header">
-                    <div>
-                        <h2 style={{fontSize: '1.5rem', color: '#0f172a', margin: 0}}>{editMode ? "Edit Profile" : "New Instructor"}</h2>
-                        <p style={{fontSize: '0.9rem', color: '#64748b', margin: 0}}>Enter official staff details.</p>
-                    </div>
-                    <button className="close-btn" onClick={() => setShowAddModal(false)}>✕</button>
-                </div>
-                
-                <div className="modal-body" style={{marginTop: '20px'}}>
-                    <div className="modal-row" style={{display: 'flex', gap: '15px', marginBottom: '15px'}}>
-                        <div style={{flex: 1}}>
-                            <label className="form-label">Full Name</label>
-                            <input type="text" name="full_name" className="luxe-input" placeholder="Dr. A.K. Gupta" value={formData.full_name} onChange={handleInput} />
-                        </div>
-                        <div style={{flex: 1}}>
-                            <label className="form-label">Employee ID</label>
-                            <input type="text" name="employee_id" className="luxe-input" placeholder="TCH-101" value={formData.employee_id} onChange={handleInput} />
-                        </div>
-                    </div>
-
-                    <div className="modal-row" style={{display: 'flex', gap: '15px', marginBottom: '15px'}}>
-                        <div style={{flex: 1}}>
-                            <label className="form-label">Email ID</label>
-                            <input type="email" name="email" className="luxe-input" placeholder="official@school.com" value={formData.email} onChange={handleInput} />
-                        </div>
-                        <div style={{flex: 1}}>
-                            <label className="form-label">Phone Number</label>
-                            <input type="text" name="phone" className="luxe-input" placeholder="+91 98..." value={formData.phone} onChange={handleInput} />
-                        </div>
-                    </div>
-
-                    <div className="modal-row" style={{display: 'flex', gap: '15px', marginBottom: '15px'}}>
-                        <div style={{flex: 1}}>
-                            <label className="form-label">Designation</label>
-                            <select name="designation" className="luxe-input" value={formData.designation} onChange={handleInput}>
-                                <option>Assistant Teacher</option><option>PGT</option><option>TGT</option><option>HOD</option><option>Lab Instructor</option><option>Coach</option>
-                            </select>
-                        </div>
-                        <div style={{flex: 1}}>
-                            <label className="form-label">Department</label>
-                            <input list="department-list" type="text" name="department" className="luxe-input" placeholder="e.g. Science, Arts" value={formData.department} onChange={handleInput} />
-                            <datalist id="department-list">
-                                {existingDepartments.map((dept, index) => <option key={index} value={dept} />)}
-                            </datalist>
-                        </div>
-                    </div>
-
-                    <div className="modal-row" style={{display: 'flex', gap: '15px', marginBottom: '15px'}}>
-                        <div style={{flex: 1}}>
-                            <label className="form-label">Subject Taught</label>
-                            <input type="text" name="subject" className="luxe-input" placeholder="e.g. Physics, History" value={formData.subject} onChange={handleInput} />
-                        </div>
-                        <div style={{flex: 1}}>
-                            <label className="form-label">Qualification</label>
-                            <input type="text" name="qualification" className="luxe-input" placeholder="M.Sc, B.Ed" value={formData.qualification} onChange={handleInput} />
-                        </div>
-                    </div>
-
-                    <div className="modal-row" style={{display: 'flex', gap: '15px'}}>
-                        <div style={{flex: 1}}>
-                            <label className="form-label">Experience</label>
-                            <input type="text" name="experience" className="luxe-input" placeholder="5 Years" value={formData.experience} onChange={handleInput} />
-                        </div>
-                        <div style={{flex: 1}}>
-                            <label className="form-label">Gender</label>
-                            <select name="gender" className="luxe-input" value={formData.gender} onChange={handleInput}>
-                                <option>Male</option>
-                                <option>Female</option>
-                                <option>Other</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div className="modal-action-row" style={{marginTop: '30px', display: 'flex', gap: '10px'}}>
-                        <button className="btn-confirm-gradient" style={{marginTop: 0, flex: 1}} onClick={handleOnboardSubmit} disabled={loading}>
-                            {loading ? 'Saving...' : (editMode ? 'Update Profile' : 'Save Profile')}
-                        </button>
-                        <button className="btn-ghost" style={{flex: 1}} onClick={() => setShowAddModal(false)}>Cancel</button>
-                    </div>
-                </div>
-            </div>
-          </div>
-        )}
-
-        {showSuccess && (
-          <div className="overlay-blur centered-flex" style={{zIndex: 3000}}>
-              <div className="glass-card zoom-in" style={{background: 'white', padding: '40px', borderRadius: '30px', textAlign: 'center', width: '350px'}}>
-                <div className="success-ring"><span className="checkmark">L</span></div>
-                <h2 style={{color: '#0f172a', marginTop: '20px'}}>Success!</h2>
-                <p style={{color: '#64748b'}}>Action completed successfully.</p>
-              </div>
-          </div>
-        )}
-
-      </div>
-
-      {/* 🚀 CSS FOR 100% RESPONSIVENESS AND TABLE HORIZONTAL SCROLL */}
-      <style>{`
-        /* Avoid Body scroll locking */
-        .teachers-page-wrapper { overflow-x: hidden; width: 100%; display: flex; flex-direction: row; }
+        .glass-card { background: white; padding: 25px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .table-card { flex: 2; display: flex; flexDirection: column; justifyContent: space-between; animation-delay: 0.1s; }
+        .stat-card { flex: 1; height: fit-content; animation-delay: 0.3s; }
 
         @keyframes fadeDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
@@ -478,50 +530,43 @@ export default function Teachers() {
         .progress-bar-bg { background: #e2e8f0; height: 6px; border-radius: 3px; overflow: hidden; }
         .progress-bar-fill { height: 100%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        /* 📱 TABLET & MOBILE MEDIA QUERIES */
+        /* 📱 TABLET & MOBILE MEDIA QUERIES (100% RESPONSIVE) */
         @media (max-width: 1024px) {
-            .teachers-main-content { margin-left: 0 !important; width: 100%; }
+            .teachers-main-content { margin-left: 0; width: 100%; padding: 20px; }
             .flex-container { flex-direction: column; }
             .table-card { width: 100%; }
             .stat-card { width: 100%; }
         }
 
         @media (max-width: 850px) {
-            /* Unlock Scroll on Mobile */
-            html, body, #root { height: auto !important; min-height: 100vh !important; overflow-y: visible !important; }
-            
             .teachers-page-wrapper {
-                display: block !important; 
-                height: auto !important;
-                min-height: 100vh !important;
+                display: block; 
+                height: auto;
             }
 
             .teachers-main-content {
-                margin-left: 0 !important;
-                padding: 15px !important;
-                padding-top: 85px !important; 
-                padding-bottom: 150px !important; /* Space for chatbot */
-                width: 100vw !important;
-                max-width: 100vw !important;
-                height: auto !important;
-                min-height: 100vh !important;
-                overflow: visible !important;
-                display: block !important; /* Break Flex lock */
+                margin-left: 0;
+                padding: 15px;
+                padding-top: 85px; 
+                width: 100%;
+                max-width: 100vw;
+                min-height: 100vh;
+                display: block; 
             }
 
-            .page-header { flex-direction: column; align-items: flex-start !important; gap: 15px; }
+            .page-header { flex-direction: column; align-items: flex-start; gap: 15px; }
             .flex-container { display: flex; flex-direction: column; gap: 20px; width: 100%; }
             
-            .table-card { padding: 15px !important; width: 100%; box-sizing: border-box; overflow: hidden; }
+            .table-card { padding: 15px; width: 100%; box-sizing: border-box; }
             
             /* Add/Edit Modal mobile adjustments */
-            .modal-row { flex-direction: column; gap: 15px !important; }
+            .modal-row { flex-direction: column; gap: 15px; }
             .modal-action-row { flex-direction: column; }
             
             /* Slide Panel mobile fix */
             .luxe-panel { width: 100%; }
         }
       `}</style>
-    </div>
-  );
+        </div>
+    );
 }

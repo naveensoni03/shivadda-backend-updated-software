@@ -18,9 +18,50 @@ class FeeTransactionAPI(APIView):
     permission_classes = [AllowAny] 
 
     def get(self, request):
-        transactions = FeeTransaction.objects.all().order_by('-payment_date', '-created_at')
-        serializer = FeeTransactionSerializer(transactions, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        # 🔥 NAYA LOGIC: Ab ye sirf transactions nahi, balki SAARE students ko fetch karega
+        students = Student.objects.all().order_by('first_name')
+        response_data = []
+
+        for student in students:
+            # 1. Bacchhe ki total fee kitni banti hai? (Installments se nikalenge)
+            installments = Installment.objects.filter(student=student)
+            total_fee = installments.aggregate(Sum('amount'))['amount__sum'] or 0
+
+            # 2. Bacche ne kitna pay kar diya hai? (Transactions se nikalenge)
+            transactions = FeeTransaction.objects.filter(student=student)
+            total_paid = transactions.aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0
+
+            # (Fallback): Agar installment set nahi hai, par direct transaction me total fee daali thi
+            if total_fee == 0 and transactions.exists():
+                # Sabse latest transaction ka total amount utha lo
+                latest_txn = transactions.order_by('-payment_date').first()
+                total_fee = latest_txn.total_amount if latest_txn else 0
+
+            # 3. Pending kitna hai?
+            due_amount = float(total_fee) - float(total_paid)
+
+            # 4. Status set karo
+            if total_fee == 0:
+                current_status = "Unpaid" # Default agar fee set hi nahi ki hai
+            elif due_amount <= 0:
+                current_status = "Paid"
+            elif total_paid > 0:
+                current_status = "Partial"
+            else:
+                current_status = "Unpaid"
+
+            # 5. Frontend ke map ke hisaab se data bhejo
+            response_data.append({
+                "id": student.roll_number or f"STD-{student.id}",
+                "student": f"{student.first_name} {student.last_name}".strip() or "Unknown Student",
+                "class": student.student_class or "General",
+                "total": total_fee,
+                "paid": total_paid,
+                "due": due_amount if due_amount > 0 else 0,
+                "status": current_status
+            })
+
+        return Response(response_data, status=status.HTTP_200_OK)
 
     def post(self, request):
         serializer = FeeTransactionSerializer(data=request.data)

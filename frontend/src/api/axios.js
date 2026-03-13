@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  // ✅ Live Render URL (with /api/ at the end)
-  baseURL: "https://shivadda-backend-updated-software.onrender.com/api/",
+  // ✅ Space removed from the start of the URL
+  baseURL: "http://127.0.0.1:8000/api/",
   withCredentials: false
 });
 
@@ -35,14 +35,10 @@ api.interceptors.response.use(
       const currentPath = window.location.pathname;
 
       // 🚀 SMART REDIRECT LOGIC
-      // Agar user pehle se kisi login page par nahi hai, tabhi redirect karo (infinite loop se bachne ke liye)
       if (!currentPath.includes("/login")) {
-
-        // Agar URL mein "/student" hai, toh usko student ke login page par bhejo
         if (currentPath.startsWith("/student")) {
           window.location.href = "/student/login";
         } else {
-          // Warna default Admin/Main login par bhejo
           window.location.href = "/login";
         }
       }
