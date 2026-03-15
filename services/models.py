@@ -128,3 +128,69 @@ class ActionLog(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self): return f"{self.action_type} on {self.module_affected}"
+    
+    
+    
+    
+    # ==========================================
+# SUPER ADMIN: GLOBAL SYSTEM SETTINGS (SINGLETON)
+# ==========================================
+class GlobalSettings(models.Model):
+    # Core Branding
+    site_name = models.CharField(max_length=255, default="Shiv Adda")
+    
+    # Regional Settings
+    default_language = models.CharField(max_length=50, default="English")
+    default_currency = models.CharField(max_length=10, default="INR")
+    currency_symbol = models.CharField(max_length=5, default="₹")
+    
+    # Weather Module (As per PDF)
+    show_weather = models.BooleanField(default=True)
+    default_weather_location = models.CharField(max_length=100, default="New Delhi, India")
+    
+    # Feature Toggles (As per Doc)
+    enable_file_converter = models.BooleanField(default=True, help_text="Turn ON/OFF File Converter Tool")
+    maintenance_mode = models.BooleanField(default=False, help_text="Turn ON to lock frontend for maintenance")
+    
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Global Setting"
+        verbose_name_plural = "Global Settings"
+
+    def save(self, *args, **kwargs):
+        # 🔥 SINGLETON LOGIC: Hamesha ID=1 hi rahegi, dusri row nahi banegi
+        self.pk = 1
+        super(GlobalSettings, self).save(*args, **kwargs)
+
+    @classmethod
+    def load(cls):
+        # Database se settings uthao, agar nahi hai toh default bana do
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def __str__(self):
+        return f"System Settings ({self.site_name})"
+    
+    
+    # ==========================================
+# SUPER ADMIN: RECYCLE BIN & DATA RECOVERY
+# ==========================================
+class RecycleBinItem(models.Model):
+    original_model_name = models.CharField(max_length=100) # e.g., 'Student', 'Exam', 'Teacher'
+    original_object_id = models.CharField(max_length=100)
+    object_repr = models.CharField(max_length=255, help_text="Name of the deleted item")
+    
+    # Ye column us data ka pura backup JSON format mein save karega
+    object_data = models.JSONField(help_text="Serialized data for restore")
+    
+    deleted_by = models.CharField(max_length=150, default='System / Admin')
+    deleted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-deleted_at']
+        verbose_name = "Recycle Bin Item"
+        verbose_name_plural = "Recycle Bin Items"
+
+    def __str__(self):
+        return f"Deleted {self.original_model_name}: {self.object_repr}"

@@ -1,4 +1,7 @@
 from rest_framework import serializers
+from .models import GlobalSettings
+from .models import RecycleBinItem
+
 from .models import (
     EducationLevel, 
     ServiceType, 
@@ -73,4 +76,19 @@ class SupportTicketSerializer(serializers.ModelSerializer):
 class MailboxStatSerializer(serializers.ModelSerializer):
     class Meta:
         model = MailboxStat
+        fields = '__all__'
+        
+        
+        
+
+class GlobalSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GlobalSettings
+        fields = '__all__'
+        
+        
+
+class RecycleBinItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RecycleBinItem
         fields = '__all__'

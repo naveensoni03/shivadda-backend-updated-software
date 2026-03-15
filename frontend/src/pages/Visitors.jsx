@@ -25,13 +25,12 @@ export default function Visitors() {
     const today = new Date().toISOString().split('T')[0];
     const [visitors, setVisitors] = useState([]);
 
-    // ✅ ADVANCED FORM DATA (Requirement 1, 3, 5, 7) + ✨ NEW VISITOR FEATURES
+    // ✅ ADVANCED FORM DATA
     const [formData, setFormData] = useState({
         name: "", phone: "", purpose: "", person_to_meet: "",
         gender: "Male", id_proof: "", address: "",
         otp: "", captcha: "", terms_accepted: false, photo: null,
         place_id: "IND-UP-JAUNPUR-01", virtual_id: "V-SEC-001", allocated_mb: 50,
-        // ✨ NEW ADDED: Identity File, Vehicle & Accompanying Persons
         id_proof_file: null, vehicle_number: "", accompanying_persons: "0"
     });
 
@@ -39,83 +38,111 @@ export default function Visitors() {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedDate, setSelectedDate] = useState(today);
     const [selectedPass, setSelectedPass] = useState(null);
-
-    // ✅ BULK ACTIONS STATE (Requirement 4)
     const [selectedVisitorIds, setSelectedVisitorIds] = useState([]);
 
-    // ✅ WEBCAM STATE (Requirement 6)
     const [showCamera, setShowCamera] = useState(false);
     const webcamRef = useRef(null);
 
-    // ✅ CAPTCHA STATE
     const [captchaQ] = useState("7 + 5");
     const [captchaAns] = useState("12");
 
     useEffect(() => { fetchVisitors(); }, [selectedDate]);
 
+    // 🚀 LIVE: Fetch real data from backend
     const fetchVisitors = async () => {
         try {
-            // Simulated fetch for demonstration. Replace with actual API.
             const res = await api.get(`visitors/?date=${selectedDate}`);
             setVisitors(res.data || []);
         } catch (err) { console.error("Fetch error:", err); }
     };
 
-    // WEBCAM CAPTURE HANDLER
     const capturePhoto = useCallback(() => {
         const imageSrc = webcamRef.current.getScreenshot();
         setFormData(prev => ({ ...prev, photo: imageSrc }));
         setShowCamera(false);
     }, [webcamRef]);
 
+    // 🚀 LIVE: Send new visitor data to backend
     const handleEntry = async (e) => {
         e.preventDefault();
 
-        // Custom Validations matching blueprint
         if (!formData.terms_accepted) return toast.error("Please accept Terms & Conditions!");
         if (formData.captcha !== captchaAns) return toast.error("Invalid Captcha!");
         if (!formData.photo) return toast.error("Visitor Photo is mandatory!");
         if (formData.otp.length < 4) return toast.error("Please verify OTP!");
 
         setLoading(true);
+        const loadToast = toast.loading("Verifying and Generating Pass...");
+
         try {
-            // Prepare payload
-            const payload = { ...formData, check_in_time: new Date().toISOString(), is_checked_out: false };
+            // FormData is used to handle the File upload correctly
+            const payload = new FormData();
+            Object.keys(formData).forEach(key => {
+                if (key === 'id_proof_file' && formData[key]) {
+                    payload.append(key, formData[key]);
+                } else if (key !== 'id_proof_file') {
+                    payload.append(key, formData[key]);
+                }
+            });
+            payload.append("check_in_time", new Date().toISOString());
+            payload.append("is_checked_out", false);
 
-            // API CALL
-            // const res = await api.post("visitors/", payload);
+            // ACTUAL API POST CALL
+            await api.post("visitors/", payload, {
+                headers: { "Content-Type": "multipart/form-data" }
+            });
 
-            // OPTIMISTIC UI UPDATE (Since we don't have your real backend yet)
-            const newVisitor = { id: Date.now(), ...payload };
-            setVisitors([newVisitor, ...visitors]);
+            toast.success("Gate Pass Generated & Storage Allocated! 🎫", { id: loadToast });
 
-            toast.success("Gate Pass Generated & Storage Allocated! 🎫");
+            // Fetch updated list from backend
+            fetchVisitors();
 
-            // Reset Form (✨ Updated with New Fields)
+            // Reset Form
             setFormData({
                 name: "", phone: "", purpose: "", person_to_meet: "",
                 gender: "Male", id_proof: "", address: "", otp: "", captcha: "",
                 terms_accepted: false, photo: null, place_id: "IND-UP-JAUNPUR-01", virtual_id: "V-SEC-001", allocated_mb: 50,
-                id_proof_file: null, vehicle_number: "", accompanying_persons: "0" // ✨ NEW ADDED
+                id_proof_file: null, vehicle_number: "", accompanying_persons: "0"
             });
-        } catch (error) { toast.error("Entry Failed"); }
+        } catch (error) {
+            console.error(error);
+            toast.error(error.response?.data?.message || "Entry Failed. Check details.", { id: loadToast });
+        }
         setLoading(false);
     };
 
+    // 🚀 LIVE: Update checkout status in backend
     const handleCheckout = async (id) => {
+        const loadToast = toast.loading("Processing Checkout...");
         try {
-            // await api.post(`visitors/${id}/checkout/`);
-            setVisitors(visitors.map(v => v.id === id ? { ...v, is_checked_out: true, check_out_time: new Date().toISOString() } : v));
-            toast.success("Visitor Checked Out 👋");
-        } catch (error) { toast.error("Error checking out"); }
+            await api.patch(`visitors/${id}/`, {
+                is_checked_out: true,
+                check_out_time: new Date().toISOString()
+            });
+            toast.success("Visitor Checked Out 👋", { id: loadToast });
+            fetchVisitors(); // Refresh list to get updated time from server
+        } catch (error) {
+            toast.error("Error checking out", { id: loadToast });
+        }
     };
 
-    // BULK CHECKOUT LOGIC
-    const handleBulkCheckout = () => {
+    // 🚀 LIVE: Bulk Checkout in backend
+    const handleBulkCheckout = async () => {
         if (selectedVisitorIds.length === 0) return;
-        setVisitors(visitors.map(v => selectedVisitorIds.includes(v.id) ? { ...v, is_checked_out: true, check_out_time: new Date().toISOString() } : v));
-        toast.success(`${selectedVisitorIds.length} Visitors Checked Out in Bulk!`);
-        setSelectedVisitorIds([]);
+        const loadToast = toast.loading(`Checking out ${selectedVisitorIds.length} visitors...`);
+
+        try {
+            const checkoutTime = new Date().toISOString();
+            await Promise.all(selectedVisitorIds.map(id =>
+                api.patch(`visitors/${id}/`, { is_checked_out: true, check_out_time: checkoutTime })
+            ));
+            toast.success(`${selectedVisitorIds.length} Visitors Checked Out in Bulk!`, { id: loadToast });
+            setSelectedVisitorIds([]);
+            fetchVisitors();
+        } catch (error) {
+            toast.error("Some checkouts failed. Refreshing list.", { id: loadToast });
+            fetchVisitors();
+        }
     };
 
     const toggleSelection = (id) => {
@@ -180,8 +207,8 @@ export default function Visitors() {
 Visitor Name:  ${selectedPass.name}
 Phone Number:  ${selectedPass.phone}
 ID Proof No:   ${selectedPass.id_proof || 'N/A'}
-Vehicle No:    ${selectedPass.vehicle_number || 'N/A'}  // ✨ NEW ADDED
-Accompanying:  +${selectedPass.accompanying_persons || '0'} Persons // ✨ NEW ADDED
+Vehicle No:    ${selectedPass.vehicle_number || 'N/A'}
+Accompanying:  +${selectedPass.accompanying_persons || '0'} Persons
 To Meet:       ${selectedPass.person_to_meet}
 Purpose:       ${selectedPass.purpose}
 Time In:       ${new Date(selectedPass.check_in_time).toLocaleString()}
@@ -200,7 +227,6 @@ Status:        ${selectedPass.is_checked_out ? "Checked Out" : "Inside Campus"}
 
     const insideCount = visitors.filter(v => !v.is_checked_out).length;
 
-    // Advanced Search Logic
     const filteredVisitors = visitors.filter(v =>
         (v.name && v.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (v.phone && v.phone.includes(searchTerm)) ||
@@ -327,7 +353,6 @@ Status:        ${selectedPass.is_checked_out ? "Checked Out" : "Inside Campus"}
                                 </div>
                             </div>
 
-                            {/* ✨ NEW ADDED: ID File Upload & Extra Details Row */}
                             <div className="form-split-row">
                                 <div className="form-input-wrapper">
                                     <label style={labelStyle}>Upload ID Document (Image/PDF)</label>
@@ -339,7 +364,6 @@ Status:        ${selectedPass.is_checked_out ? "Checked Out" : "Inside Campus"}
                                 </div>
                             </div>
 
-                            {/* ✨ NEW ADDED: Vehicle Input */}
                             <div className="form-input-wrapper">
                                 <label style={labelStyle}>Vehicle Number (Optional)</label>
                                 <input placeholder="e.g. UP 62 AB 1234" value={formData.vehicle_number} onChange={e => setFormData({ ...formData, vehicle_number: e.target.value })} style={cleanInputStyle} />
@@ -469,7 +493,6 @@ Status:        ${selectedPass.is_checked_out ? "Checked Out" : "Inside Campus"}
                                 <div style={{ padding: '25px', overflowY: 'auto', flex: 1 }}>
                                     <div style={passRow}><span style={passLabel}>Phone</span><span style={passValue}>{selectedPass.phone}</span></div>
 
-                                    {/* ✨ NEW ADDED IN MODAL UI */}
                                     <div style={passRow}><span style={passLabel}>Vehicle No.</span><span style={passValue}>{selectedPass.vehicle_number || 'N/A'}</span></div>
                                     <div style={passRow}><span style={passLabel}>Accompanying</span><span style={passValue}>{selectedPass.accompanying_persons || '0'} Person(s)</span></div>
 

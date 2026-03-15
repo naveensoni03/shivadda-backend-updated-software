@@ -9,7 +9,7 @@ from django.dispatch import receiver
 # 1. EXAM STRUCTURE (UPDATED WITH PREMIUM FEATURES)
 # ==========================================
 class Exam(models.Model):
-    # 🔥 NAYA: Status Toggles for Draft / Active / Completed (Frontend req)
+    # Status Toggles for Draft / Active / Completed (Frontend req)
     STATUS_CHOICES = (
         ('draft', 'Draft'),
         ('upcoming', 'Upcoming'),
@@ -38,13 +38,13 @@ class Exam(models.Model):
     validity = models.CharField(max_length=100, blank=True, null=True)
     permission = models.CharField(max_length=100, blank=True, null=True)
     
-    # ✅ NEW: Toggles and Modes Added from Frontend
+    # --- Toggles and Modes Added from Frontend ---
     mode_of_exam = models.CharField(max_length=50, blank=True, null=True)
     tools_allowed = models.CharField(max_length=255, blank=True, null=True)
     exam_type = models.CharField(max_length=50, blank=True, null=True) # Mock Test etc.
     paper_type = models.CharField(max_length=50, blank=True, null=True) # Objective/Descriptive
 
-    # 🔥 NAYA: Start Time and End Time for specific scheduling
+    # --- Start Time and End Time for specific scheduling ---
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
     
@@ -52,14 +52,14 @@ class Exam(models.Model):
     passing_marks = models.IntegerField(default=33)
     duration_minutes = models.IntegerField(default=60)
     
-    # 🔥 NAYA: Negative Marks field at Exam level
+    # --- Negative Marks field at Exam level ---
     negative_marks = models.FloatField(default=0.0)
 
     # --- SMS Notification Fields ---
-    exam_date = models.DateField(null=True, blank=True, help_text="Exam date") # Changed to DateField to match TimeField logic
+    exam_date = models.DateField(null=True, blank=True, help_text="Exam date")
     is_notification_sent = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True) # Added for sorting
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     def __str__(self):
         return f"{self.title} - Set {self.paper_set_number}"
@@ -78,23 +78,23 @@ class QuestionBank(models.Model):
     
     # --- NEW FRONTEND FIELDS ---
     section = models.CharField(max_length=50, default="A", blank=True, null=True)
-    level = models.CharField(max_length=50, default="Level 1", blank=True, null=True) # ✅ NEW LEVEL FIELD
-    exam_meta = models.JSONField(default=dict, blank=True, null=True)
+    level = models.CharField(max_length=50, default="Level 1", blank=True, null=True)
+    exam_meta = models.JSONField(default=dict, blank=True, null=True) # Captures the whole examMeta React state!
 
     # --- MARKING SCHEME ---
     marks = models.FloatField(default=5.0) 
     negative_marks = models.FloatField(default=0.0) 
     unattempted_marks = models.FloatField(default=0.0) 
     
-    # --- OMR OPTIONS (✅ EXTENDED UP TO H) ---
+    # --- OMR OPTIONS (EXTENDED UP TO H) ---
     option_a = models.CharField(max_length=255, null=True, blank=True)
     option_b = models.CharField(max_length=255, null=True, blank=True)
     option_c = models.CharField(max_length=255, null=True, blank=True)
     option_d = models.CharField(max_length=255, null=True, blank=True)
     option_e = models.CharField(max_length=255, null=True, blank=True)
-    option_f = models.CharField(max_length=255, null=True, blank=True) # ✅ NEW
-    option_g = models.CharField(max_length=255, null=True, blank=True) # ✅ NEW
-    option_h = models.CharField(max_length=255, null=True, blank=True) # ✅ NEW
+    option_f = models.CharField(max_length=255, null=True, blank=True)
+    option_g = models.CharField(max_length=255, null=True, blank=True)
+    option_h = models.CharField(max_length=255, null=True, blank=True)
     correct_option = models.CharField(max_length=10, blank=True, null=True)
 
     subject = models.CharField(max_length=100, blank=True, null=True)
@@ -110,35 +110,26 @@ class QuestionBank(models.Model):
 # 3. QUESTION (EXAM SPECIFIC)
 # ==========================================
 class Question(models.Model):
-    # 🔥 NAYA: Type Choices updated to match frontend logic
     Q_TYPE_CHOICES = (('mcq', 'Multiple Choice'), ('subjective', 'Subjective / Theory'))
 
     exam = models.ForeignKey(Exam, related_name='questions', on_delete=models.CASCADE)
     text = models.TextField()
-    
-    # 🔥 NAYA: Image field added for questions containing diagrams/equations
     image = models.ImageField(upload_to='question_images/', null=True, blank=True)
-    
-    # 🔥 NAYA: Question Type
     q_type = models.CharField(max_length=20, choices=Q_TYPE_CHOICES, default='mcq')
-    
     section = models.CharField(max_length=50, default="A", blank=True, null=True)
-    level = models.CharField(max_length=50, default="Level 1", blank=True, null=True) # ✅ NEW LEVEL FIELD
+    level = models.CharField(max_length=50, default="Level 1", blank=True, null=True)
     
-    # --- OMR OPTIONS (✅ EXTENDED UP TO H) ---
+    # --- OMR OPTIONS (EXTENDED UP TO H) ---
     option_a = models.CharField(max_length=255, null=True, blank=True)
     option_b = models.CharField(max_length=255, null=True, blank=True)
     option_c = models.CharField(max_length=255, null=True, blank=True)
     option_d = models.CharField(max_length=255, null=True, blank=True)
     option_e = models.CharField(max_length=255, null=True, blank=True)
-    option_f = models.CharField(max_length=255, null=True, blank=True) # ✅ NEW
-    option_g = models.CharField(max_length=255, null=True, blank=True) # ✅ NEW
-    option_h = models.CharField(max_length=255, null=True, blank=True) # ✅ NEW
+    option_f = models.CharField(max_length=255, null=True, blank=True)
+    option_g = models.CharField(max_length=255, null=True, blank=True)
+    option_h = models.CharField(max_length=255, null=True, blank=True)
     
-    # 🔥 NAYA: Integer based correct option (matches React frontend 0, 1, 2, 3)
     correct_option_index = models.IntegerField(default=0, null=True, blank=True) 
-    
-    # Purana correct option preserved
     correct_option = models.CharField(max_length=10, blank=True, null=True)
     
     marks = models.FloatField(default=1.0)
@@ -150,15 +141,24 @@ class Question(models.Model):
 
 
 # ==========================================
-# 4. EXAM ATTEMPTS
+# 4. EXAM ATTEMPTS (🔥 UPDATED FOR FEATURE 3: OMR RESULT)
 # ==========================================
 class ExamAttempt(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE)
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     start_time = models.DateTimeField(auto_now_add=True)
     end_time = models.DateTimeField(null=True, blank=True)
+    
+    # --- Detailed OMR Status ---
     score = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    correct_count = models.IntegerField(default=0)
+    incorrect_count = models.IntegerField(default=0)
+    unattempted_count = models.IntegerField(default=0)
+    percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    grade = models.CharField(max_length=10, blank=True, null=True)
+    
     is_evaluated = models.BooleanField(default=False)
+    omr_sheet_image = models.ImageField(upload_to='omr_scans/', null=True, blank=True) # Scanner file save
 
     @property
     def batch_rank(self):
@@ -173,6 +173,7 @@ class StudentAnswer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     selected_option = models.CharField(max_length=10)
     is_correct = models.BooleanField(default=False)
+    marks_awarded = models.FloatField(default=0.0)
 
 
 # ==========================================
@@ -189,17 +190,32 @@ class StudentPerformance(models.Model):
 
 
 # ==========================================
-# 7. DESCRIPTIVE SUBMISSION
+# 7. DESCRIPTIVE SUBMISSION (🔥 UPDATED FOR FEATURE 2: 3-TEACHER EVAL)
 # ==========================================
 class DescriptiveSubmission(models.Model):
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     question = models.ForeignKey(QuestionBank, on_delete=models.CASCADE)
     answer_text = models.TextField(blank=True)
     submitted_at = models.DateTimeField(auto_now_add=True)
+    
+    # --- 3-Teacher Checking System ---
+    t1_score = models.FloatField(null=True, blank=True)
+    t1_remarks = models.TextField(blank=True, null=True)
+    t1_status = models.CharField(max_length=20, default="Pending")
+
+    t2_score = models.FloatField(null=True, blank=True)
+    t2_remarks = models.TextField(blank=True, null=True)
+    t2_status = models.CharField(max_length=20, default="Pending")
+
+    t3_score = models.FloatField(null=True, blank=True)
+    t3_remarks = models.TextField(blank=True, null=True)
+    t3_status = models.CharField(max_length=20, default="Pending")
+
+    final_average_score = models.FloatField(null=True, blank=True)
 
 
 # ==========================================
-# 8. ANSWER EVALUATION
+# 8. ANSWER EVALUATION (Legacy support)
 # ==========================================
 class AnswerEvaluation(models.Model):
     submission = models.ForeignKey(DescriptiveSubmission, on_delete=models.CASCADE, related_name="evaluations")
@@ -220,21 +236,44 @@ class AIEvaluationLog(models.Model):
 
 
 # ==========================================
-# 10. 🔥 NEW: ASSIGNMENTS MODULE
+# 🔥 10. NEW FEATURE 1: LIVE QUIZ (KBC STYLE)
+# ==========================================
+class LiveQuizSession(models.Model):
+    title = models.CharField(max_length=255, default="Mega Live Quiz")
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+    current_timer = models.IntegerField(default=0) # 40 or 20
+    conducted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return f"{self.title} (Active: {self.is_active})"
+
+class QuizGroup(models.Model):
+    session = models.ForeignKey(LiveQuizSession, related_name='groups', on_delete=models.CASCADE)
+    group_name = models.CharField(max_length=50) # e.g., G1, G2
+    main_score = models.IntegerField(default=0)
+    bonus_score = models.IntegerField(default=0)
+
+    def total_score(self):
+        return self.main_score + self.bonus_score
+
+    def __str__(self):
+        return f"{self.group_name} - Score: {self.total_score()}"
+
+
+# ==========================================
+# 11. ASSIGNMENTS MODULE
 # ==========================================
 class Assignment(models.Model):
     STATUS_CHOICES = (('active', 'Active'), ('closed', 'Closed'))
 
     title = models.CharField(max_length=255)
-    subject = models.CharField(max_length=150) # Frontend ke dropdown ke liye
+    subject = models.CharField(max_length=150)
     max_marks = models.FloatField(default=10.0)
-    
     deadline_date = models.DateField(null=True, blank=True)
     deadline_time = models.TimeField(null=True, blank=True)
-    
     instructions = models.TextField(blank=True, null=True)
     reference_file = models.FileField(upload_to='assignment_materials/', null=True, blank=True)
-    
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -247,10 +286,8 @@ class AssignmentSubmission(models.Model):
 
     assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name='submissions')
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    
     submitted_file = models.FileField(upload_to='student_homeworks/', null=True, blank=True)
     submitted_at = models.DateTimeField(auto_now_add=True)
-    
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='submitted')
     marks_awarded = models.FloatField(null=True, blank=True)
     feedback = models.TextField(blank=True, null=True)

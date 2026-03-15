@@ -1,16 +1,12 @@
 ﻿import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-// ✅ IMPORT ADDED FOR ACTIVITY ICON
-import { Menu, X, Activity } from "lucide-react";
+// ✅ NEW ICONS ADDED (Settings, Trash2, Edit3 for Homework)
+import { Menu, X, Activity, Settings, Trash2, Edit3 } from "lucide-react";
 
-// YAHAN CHANGE KIYA HAI: forceOpen prop receive kiya hai
 const SidebarModern = ({ forceOpen }) => {
   const navigate = useNavigate();
-  // State for mobile toggle
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  // YAHAN NAYA CODE JODA HAI: 
-  // Ye dekhega ki jab bhi VirtualSpace se forceOpen aayega, ye khud ko open kar lega
   useEffect(() => {
     if (forceOpen !== undefined) {
       setIsMobileOpen(forceOpen);
@@ -31,8 +27,6 @@ const SidebarModern = ({ forceOpen }) => {
     fontWeight: isActive ? "700" : "500",
     transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
     boxShadow: isActive ? "0 10px 20px -5px rgba(79, 70, 229, 0.15), inset 0 0 0 1px rgba(79, 70, 229, 0.1)" : "none",
-
-    // ✅ YAHAN FIX KIYA HAI: Taaki clicks dusre link par leak na hon
     position: "relative",
     zIndex: 10,
     cursor: "pointer",
@@ -47,7 +41,7 @@ const SidebarModern = ({ forceOpen }) => {
 
   return (
     <>
-      {/* 📱 MOBILE TOP HEADER (Sirf phone par dikhega) */}
+      {/* 📱 MOBILE TOP HEADER */}
       <div className="mobile-header">
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <div style={{
@@ -69,14 +63,13 @@ const SidebarModern = ({ forceOpen }) => {
         <div className="mobile-overlay" onClick={() => setIsMobileOpen(false)}></div>
       )}
 
-      {/* 🖥️ MAIN SIDEBAR (Desktop par hamesha, Mobile par toggle) */}
+      {/* 🖥️ MAIN SIDEBAR */}
       <aside className={`custom-sidebar ${isMobileOpen ? "open" : ""}`} style={{
         width: "280px", background: "#ffffff", height: "100vh", position: "fixed",
         top: 0, display: "flex", flexDirection: "column", padding: "35px 25px",
         borderRight: "1px solid #f1f5f9", zIndex: 1000, overflowY: "auto"
       }}>
 
-        {/* Mobile Close Button */}
         <button className="mobile-close-btn" onClick={() => setIsMobileOpen(false)}>
           <X size={24} color="#64748b" />
         </button>
@@ -96,7 +89,6 @@ const SidebarModern = ({ forceOpen }) => {
           <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', letterSpacing: '1.5px', paddingLeft: '8px' }}>Super Controls</p>
           <NavLink to="/dashboard" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📊 Dashboard</NavLink>
 
-          {/* ✅ ANALYTICS & LOGS MOVED TO SUPER CONTROLS */}
           <NavLink to="/analytics" style={linkStyle} onClick={() => setIsMobileOpen(false)}>
             <Activity size={18} /> Analytics & Logs
           </NavLink>
@@ -118,6 +110,10 @@ const SidebarModern = ({ forceOpen }) => {
           <NavLink to="/teachers" style={linkStyle} onClick={() => setIsMobileOpen(false)}>👨‍🏫 Teachers</NavLink>
           <NavLink to="/courses" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📚 Course Manager</NavLink>
           <NavLink to="/exams" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📝 Exams & AI</NavLink>
+          {/* 🔥 NEW: HOMEWORK LINK PROPERLY ADDED HERE */}
+          <NavLink to="/homework" style={linkStyle} onClick={() => setIsMobileOpen(false)}>
+            <Edit3 size={18} /> Homework & Tasks
+          </NavLink>
 
           <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', marginTop: '30px', letterSpacing: '1.5px', paddingLeft: '8px' }}>Finance & Assets</p>
           <NavLink to="/fees" style={linkStyle} onClick={() => setIsMobileOpen(false)}>💰 Fees Ledger</NavLink>
@@ -133,7 +129,12 @@ const SidebarModern = ({ forceOpen }) => {
 
           <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', marginTop: '30px', letterSpacing: '1.5px', paddingLeft: '8px' }}>System</p>
           <NavLink to="/services" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🛠️ Service Master</NavLink>
-          <NavLink to="/system" style={linkStyle} onClick={() => setIsMobileOpen(false)}>⚙️ Config</NavLink>
+          <NavLink to="/global-settings" style={linkStyle} onClick={() => setIsMobileOpen(false)}>
+            <Settings size={18} /> Global Config
+          </NavLink>
+          <NavLink to="/recycle-bin" style={linkStyle} onClick={() => setIsMobileOpen(false)}>
+            <Trash2 size={18} /> Recycle Bin
+          </NavLink>
 
         </nav>
 

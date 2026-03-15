@@ -14,7 +14,7 @@ import Teachers from "./pages/Teachers";
 import FeesLedger from "./pages/FeesLedger";
 import SystemConfig from "./pages/SystemConfig";
 import Exams from "./pages/Exams";
-import Homework from "./pages/Homework";
+import Homework from "./pages/Homework"; // ✅ Ek hi baar import rakha hai
 import Library from "./pages/Library";
 import Transport from "./pages/Transport";
 import Hostel from "./pages/Hostel";
@@ -30,6 +30,8 @@ import VirtualSpace from "./pages/VirtualSpace";
 import Timetable from "./pages/Timetable";
 import Communication from "./pages/Communication";
 import AIBrain from "./pages/AIBrain";
+import GlobalSettings from "./pages/GlobalSettings";
+import RecycleBin from "./pages/RecycleBin";
 
 // 🎓 STUDENT PORTAL IMPORTS
 import StudentLogin from "./pages/student/StudentLogin";
@@ -50,7 +52,6 @@ import TeacherExams from "./pages/Teachers/Exams";
 import TeacherAssignments from "./pages/Teachers/TeacherAssignments";
 import TeacherStudents from "./pages/Teachers/TeacherStudents";
 import TeacherMailbox from "./pages/Teachers/TeacherMailbox";
-// 🔥 NAYA IMPORT: Teacher Fees
 import TeacherFees from "./pages/Teachers/Fees";
 import TeacherSettings from "./pages/Teachers/TeacherSettings";
 
@@ -128,7 +129,10 @@ export default function App() {
 
           <Route path="/virtual-space" element={<ProtectedRoute allowedRoles={ACADEMIC_STAFF}><VirtualSpace /></ProtectedRoute>} />
           <Route path="/attendance" element={<ProtectedRoute allowedRoles={ACADEMIC_STAFF}><Attendance /></ProtectedRoute>} />
+
+          {/* ✅ Homework Route strictly added once here */}
           <Route path="/homework" element={<ProtectedRoute allowedRoles={ACADEMIC_STAFF}><Homework /></ProtectedRoute>} />
+
           <Route path="/exams" element={<ProtectedRoute allowedRoles={ACADEMIC_STAFF}><Exams /></ProtectedRoute>} />
           <Route path="/timetable" element={<ProtectedRoute allowedRoles={ACADEMIC_STAFF}><Timetable /></ProtectedRoute>} />
 
@@ -140,6 +144,8 @@ export default function App() {
           <Route path="/hostel" element={<ProtectedRoute allowedRoles={STAFF_ALL}><Hostel /></ProtectedRoute>} />
           <Route path="/inventory" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><Inventory /></ProtectedRoute>} />
           <Route path="/communication" element={<ProtectedRoute allowedRoles={["Super Admin", "Admin", "Teacher"]}><Communication /></ProtectedRoute>} />
+          <Route path="/global-settings" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><GlobalSettings /></ProtectedRoute>} />
+          <Route path="/recycle-bin" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><RecycleBin /></ProtectedRoute>} />
 
           {/* ==========================================
               🎓 STUDENT PORTAL PROTECTED ROUTES 
@@ -151,10 +157,6 @@ export default function App() {
           <Route path="/student/exams" element={<ProtectedRoute allowedRoles={["Student", "Super Admin"]}><StudentExams /></ProtectedRoute>} />
           <Route path="/student/profile" element={<ProtectedRoute allowedRoles={["Student", "Super Admin"]}><StudentProfile /></ProtectedRoute>} />
 
-
-          {/* ==========================================
-              👩‍🏫 TEACHER PORTAL PROTECTED ROUTES 
-          ============================================= */}
           {/* ==========================================
               👩‍🏫 TEACHER PORTAL PROTECTED ROUTES 
           ============================================= */}
@@ -174,14 +176,10 @@ export default function App() {
             <Route path="students" element={<TeacherStudents />} />
             <Route path="mailbox" element={<TeacherMailbox />} />
             <Route path="messages" element={<TeacherMailbox />} />
-
-            {/* 🔥 FIX YAHAN HAI: "wallet" route add kar diya hai 🔥 */}
             <Route path="fees" element={<TeacherFees />} />
             <Route path="wallet" element={<TeacherFees />} />
             <Route path="settings" element={<TeacherSettings />} />
           </Route>
-
-
 
         </Routes>
 

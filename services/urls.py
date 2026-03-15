@@ -1,7 +1,8 @@
 from rest_framework.routers import DefaultRouter
 from django.urls import path, include
 from .views import (
-    EducationLevelViewSet, 
+    EducationLevelViewSet,
+    GlobalSettingsAPIView, 
     ServiceTypeViewSet, 
     ServiceModeViewSet,
     ManagementTypeViewSet,        
@@ -10,6 +11,9 @@ from .views import (
     ServiceSeekerGroupViewSet,      
     ServiceProviderGroupViewSet,    
     ServiceChargeViewSet,
+    RecycleBinAPIView, 
+    RestoreRecycleBinAPIView,
+    GlobalSettingsAPIView,
     NoticeViewSet,                  # ✅ NEW
     SupportTicketViewSet,           # ✅ NEW
     MailboxStatViewSet              # ✅ NEW
@@ -35,4 +39,7 @@ router.register(r'mailbox-stats', MailboxStatViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('global-settings/', GlobalSettingsAPIView.as_view(), name='global-settings'),
+    path('recycle-bin/', RecycleBinAPIView.as_view(), name='recycle-bin-list'),
+    path('recycle-bin/<int:pk>/restore/', RestoreRecycleBinAPIView.as_view(), name='recycle-bin-restore'),
 ]

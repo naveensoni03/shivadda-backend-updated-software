@@ -28,3 +28,25 @@ class RoomAllocation(models.Model):
 
     def __str__(self):
         return f"{self.student.name} -> {self.room.room_number}"
+
+# 🚀 NAYE MODELS: COMPLAINT AUR GATE PASS 🚀
+
+class HostelComplaint(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    issue = models.TextField()
+    status = models.CharField(max_length=20, default='Pending', choices=(('Pending', 'Pending'), ('Resolved', 'Resolved')))
+    date_filed = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.student.name} - {self.issue}"
+
+class GatePass(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    reason = models.TextField()
+    out_time = models.DateTimeField(auto_now_add=True) # Or you can let student set it
+    status = models.CharField(max_length=30, default='Pending Approval', choices=(('Pending Approval', 'Pending Approval'), ('Approved', 'Approved'), ('Rejected', 'Rejected')))
+
+    def __str__(self):
+        return f"{self.student.name} - {self.status}"
