@@ -37,7 +37,7 @@ export default function TeacherDashboard() {
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get('/teachers/dashboard-stats/');
+      const response = await api.get('teachers/dashboard-stats/');
 
       // Backend se aayi hui real values set karo
       setStats({
