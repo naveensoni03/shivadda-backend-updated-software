@@ -1,0 +1,953 @@
+D:\shivadda_platform\backend
+├── accounts
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── 0002_user_national_identity_user_profile_photo.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── permissions.py
+|  ├── serializers.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── permissions.cpython-312.pyc
+|     ├── permissions.cpython-314.pyc
+|     ├── serializers.cpython-312.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── urls.cpython-312.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── activate_exam.py
+├── activate_filters.py
+├── add_animations.py
+├── add_delete_button.py
+├── add_edit_view.py
+├── add_pagination.py
+├── add_paper_setter.py
+├── add_phone_and_fix_ui.py
+├── add_principal.py
+├── add_ultra_animations.py
+├── agents
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-312.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── urls.cpython-312.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── all_my_code.txt
+├── api
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── 0002_classrecording.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── urls.py
+|  ├── views.py
+|  └── __pycache__
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── urls.cpython-314.pyc
+|     └── views.cpython-314.pyc
+├── apply_light_theme.py
+├── apply_light_theme_pro.py
+├── attendance
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── 0002_alter_attendance_options_remove_attendance_present_and_more.py
+|  |  ├── 0003_alter_attendance_options_alter_attendance_batch_and_more.py
+|  |  ├── 0004_alter_attendance_options_and_more.py
+|  |  ├── 0005_alter_attendance_options_and_more.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-312.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── urls.cpython-312.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── backend
+├── batches
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-312.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── urls.cpython-312.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── beautify_form_ui.py
+├── centers
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-314.pyc
+|     └── __init__.cpython-314.pyc
+├── chatbot
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── classifieds
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── tests.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── compact_ui_fix.py
+├── connect_locations.py
+├── connect_react.py
+├── core
+|  ├── asgi.py
+|  ├── settings.py
+|  ├── settings.py.bak
+|  ├── urls.py
+|  ├── utils.py
+|  ├── wsgi.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── settings.cpython-314.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── wsgi.cpython-314.pyc
+|     └── __init__.cpython-314.pyc
+├── courses
+|  ├── admin.py
+|  ├── apps.py
+|  ├── management
+|  |  ├── commands
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── 0002_lessonprogress.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-312.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── urls.cpython-312.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── crash_fix_locations.py
+├── dashboard
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── urls.cpython-312.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── db.sqlite3
+├── edit_fix_locations.py
+├── enhance_vs.py
+├── enrollments
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── 0002_enrollment_class_name.py
+|  |  ├── 0003_enrollment_mailbox_assigned_enrollment_sub_subjects_and_more.py
+|  |  ├── 0004_alter_enrollment_options_enrollment_fee_status_and_more.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-312.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── urls.cpython-312.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── erp_plan.txt
+├── exams
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── 0002_remove_studentanswer_attempt_and_more.py
+|  |  ├── 0003_questionbank_subject_alter_exam_exam_date_and_more.py
+|  |  ├── 0004_exam_class_name_exam_examinee_body_and_more.py
+|  |  ├── 0005_exam_exam_password_exam_paper_id_exam_permission_and_more.py
+|  |  ├── 0006_exam_exam_type_exam_mode_of_exam_exam_paper_type_and_more.py
+|  |  ├── 0007_assignment_exam_created_at_exam_end_time_and_more.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-312.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── urls.cpython-312.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── export_code.py
+├── expose_api.py
+├── fees
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── 0002_alter_feetransaction_options_and_more.py
+|  |  ├── 0003_feetransaction_discount_approved_by_and_more.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── utils.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-312.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── urls.cpython-312.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── final_fix_modal.py
+├── final_polish_locations.py
+├── final_vs_fix.py
+├── final_waoo_fix.py
+├── fix_buttons_final.py
+├── fix_console_errors.py
+├── fix_duplicates.py
+├── fix_encoding.py
+├── fix_exam_buttons.py
+├── fix_exam_ui.py
+├── fix_filters_logic.py
+├── fix_filter_logic.py
+├── fix_final.py
+├── fix_institutions_page.py
+├── fix_institutions_view.py
+├── fix_layout_noscroll.py
+├── fix_locations.py
+├── fix_locations_final.py
+├── fix_locations_modal.py
+├── fix_locations_page.py
+├── fix_real_vs.py
+├── fix_resources_ui.py
+├── fix_search_bar.py
+├── fix_text_and_modal.py
+├── fix_visibility_vs.py
+├── fix_vs.py
+├── force_delete_button.py
+├── force_delete_visible.py
+├── frontend
+|  ├── all_frontend_code.txt
+|  ├── eslint.config.js
+|  ├── index.html
+|  ├── package-lock.json
+|  ├── package.json
+|  ├── public
+|  |  └── vite.svg
+|  ├── README.md
+|  ├── src
+|  |  ├── api
+|  |  ├── App.css
+|  |  ├── App.jsx
+|  |  ├── assets
+|  |  ├── components
+|  |  ├── index.css
+|  |  ├── layouts
+|  |  ├── main.jsx
+|  |  └── pages
+|  ├── vercel.json
+|  └── vite.config.js
+├── hostel
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── 0002_gatepass_hostelcomplaint.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── signals.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-312.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── signals.cpython-312.pyc
+|     ├── signals.cpython-314.pyc
+|     ├── urls.cpython-312.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── install_complete_system.py
+├── install_features.py
+├── institutions
+|  ├── admin.py
+|  ├── apps.py
+|  ├── management
+|  |  ├── commands
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── 0002_institution_district_institution_has_hostel_and_more.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-312.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── urls.cpython-312.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── inventory
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-312.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── urls.cpython-312.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── library
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-312.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── urls.cpython-312.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── lift_ui_up.py
+├── lms
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── 0002_homework_attachment_homework_status_and_more.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── urls.cpython-312.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── locations
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── 0002_place_beat_no_place_google_map_id_place_pin_code_and_more.py
+|  |  ├── 0003_alter_place_status.py
+|  |  ├── 0004_alter_place_place_uses_for_alter_place_space_type_and_more.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-312.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── urls.cpython-312.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── logs
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── 0002_activitylog_email_activitylog_group_id_and_more.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── signals.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── utils.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-312.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── signals.cpython-312.pyc
+|     ├── signals.cpython-314.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── utils.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── make_buttons_real.py
+├── manage.py
+├── master_fix_locations.py
+├── media
+|  ├── course_resources
+|  |  └── sample_guide.pdf
+|  └── students
+|     ├── docs
+|     └── photos
+├── move_ui_up.py
+├── package-lock.json
+├── package.json
+├── payments
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── tests.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── payroll
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-312.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── urls.cpython-312.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── polish_ui_fix.py
+├── precision_fix.py
+├── profiles
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-312.pyc
+|     ├── urls.cpython-312.pyc
+|     ├── views.cpython-312.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── real_class_grid.py
+├── repair_models.py
+├── requirements.txt
+├── reset_institutions.py
+├── run_fix.ps1
+├── save_project_code.py
+├── seed_global.py
+├── seed_questions.py
+├── services
+|  ├── admin.py
+|  ├── apps.py
+|  ├── management
+|  |  ├── commands
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── 0002_managementtype_placecodemapping.py
+|  |  ├── 0003_natureofservice_servicecharge_serviceprovidergroup_and_more.py
+|  |  ├── 0004_mailboxstat_notice_supportticket.py
+|  |  ├── 0005_actionlog_systemsession.py
+|  |  ├── 0006_globalsettings.py
+|  |  ├── 0007_recyclebinitem.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── utils.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-312.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── urls.cpython-312.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── setup_exam_backend.py
+├── show_full_project.py
+├── src
+|  ├── api
+|  ├── App.jsx
+|  ├── components
+|  |  └── DashboardCard.jsx
+|  ├── main.jsx
+|  └── pages
+|     └── Dashboard.jsx
+├── students
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── 0002_student_beliefs_student_experience_student_height_and_more.py
+|  |  ├── 0003_rename_student_photo_student_photo_and_more.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-312.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── urls.cpython-312.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── teachers
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── 0002_teacher_department.py
+|  |  ├── 0003_studymaterial_teachermail.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-312.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── urls.cpython-312.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── timetable
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-314.pyc
+|     └── __init__.cpython-314.pyc
+├── transform_vs.py
+├── transport
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── tests.py
+|  ├── urls.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-312.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── urls.cpython-312.pyc
+|     ├── urls.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── ultimate_fix.py
+├── ultimate_text_visibility_fix.py
+├── ultra_waoo_locations.py
+├── update_institutions.py
+├── update_models.py
+├── upgrade_4k.py
+├── upgrade_institutions_waaoo.py
+├── upgrade_view_modal.py
+├── venv
+|  ├── Include
+|  ├── Lib
+|  |  └── site-packages
+|  ├── pyvenv.cfg
+|  └── Scripts
+|     ├── activate
+|     ├── activate.bat
+|     ├── activate.fish
+|     ├── Activate.ps1
+|     ├── deactivate.bat
+|     ├── django-admin.exe
+|     ├── normalizer.exe
+|     ├── pip.exe
+|     ├── pip3.14.exe
+|     ├── pip3.exe
+|     ├── python.exe
+|     ├── pythonw.exe
+|     ├── sqlformat.exe
+|     ├── tqdm.exe
+|     └── wheel.exe
+├── visitors
+|  ├── admin.py
+|  ├── apps.py
+|  ├── migrations
+|  |  ├── 0001_initial.py
+|  |  ├── 0002_visitor_address_visitor_allocated_mb_visitor_gender_and_more.py
+|  |  ├── 0003_visitor_accompanying_persons_visitor_id_proof_file_and_more.py
+|  |  ├── __init__.py
+|  |  └── __pycache__
+|  ├── models.py
+|  ├── serializers.py
+|  ├── tests.py
+|  ├── views.py
+|  ├── __init__.py
+|  └── __pycache__
+|     ├── admin.cpython-312.pyc
+|     ├── admin.cpython-314.pyc
+|     ├── apps.cpython-312.pyc
+|     ├── apps.cpython-314.pyc
+|     ├── models.cpython-312.pyc
+|     ├── models.cpython-314.pyc
+|     ├── serializers.cpython-312.pyc
+|     ├── serializers.cpython-314.pyc
+|     ├── views.cpython-312.pyc
+|     ├── views.cpython-314.pyc
+|     ├── __init__.cpython-312.pyc
+|     └── __init__.cpython-314.pyc
+├── waoo_ui_redesign.py
+└── write_exam_code.py
+
+directory: 483 file: 980
+
+ignored: directory (20)
