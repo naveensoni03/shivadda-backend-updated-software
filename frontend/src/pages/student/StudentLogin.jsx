@@ -34,22 +34,31 @@ export default function StudentLogin() {
             });
 
             if (res.data && res.data.access) {
-                const userRole = res.data.role || "Student";
+                // Backend role ko standard format me laate hain (e.g. "Student" ya "Teacher")
+                let userRole = res.data.role || "Student";
 
-                if (userRole === "Super Admin" || userRole === "Admin" || userRole === "Staff") {
-                    toast.error("Admins must login via Admin Portal.");
+                // 🔥 THE FIX: Blocking Teacher as well as Admins from entering Student Portal
+                if (userRole === "Super Admin" || userRole === "Admin" || userRole === "Staff" || userRole === "Teacher") {
+                    toast.error(`Access Denied! You are a ${userRole}. Redirecting to your portal...`);
+
                     setTimeout(() => {
-                        navigate("/dashboard");
+                        if (userRole === "Teacher") {
+                            navigate("/teacher/dashboard");
+                        } else {
+                            navigate("/dashboard"); // Admin dashboard
+                        }
                     }, 1500);
-                    return;
+                    return; // Login process yahin rok do
                 }
 
-                // ✅ TOKENS & USER DATA SAVED CORRECTLY HERE
+                // ✅ Agar real student hai tabhi aage badhne do
                 localStorage.setItem("access_token", res.data.access);
                 if (res.data.refresh) {
                     localStorage.setItem("refresh_token", res.data.refresh);
                 }
-                localStorage.setItem("user_role", userRole);
+
+                // Hamesha ensure karo ki role cleanly set ho
+                localStorage.setItem("user_role", userRole.trim());
                 localStorage.setItem("user_email", res.data.email || email);
                 localStorage.setItem("user_name", res.data.name || res.data.full_name || "Student");
 
