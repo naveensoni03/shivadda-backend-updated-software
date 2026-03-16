@@ -7,6 +7,9 @@ import {
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 
+// 🔥 ASLI API IMPORT (Jo Render BaseURL se connected hai)
+import api from "../../api/axios";
+
 export default function TeacherStudents() {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState("");
@@ -17,7 +20,7 @@ export default function TeacherStudents() {
     const [isLoading, setIsLoading] = useState(true);
     const [isAlerting, setIsAlerting] = useState(false);
 
-    // 🔥 NAYA STATE: Custom Message Modal ke liye
+    // Custom Message Modal State
     const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
     const [customMessage, setCustomMessage] = useState("");
     const [isSendingMessage, setIsSendingMessage] = useState(false);
@@ -26,13 +29,11 @@ export default function TeacherStudents() {
         fetchStudents();
     }, []);
 
+    // ✅ FIXED: Removed Hardcoded Localhost and used api.get()
     const fetchStudents = async () => {
         try {
-            const response = await fetch("http://127.0.0.1:8000/api/teachers/my-students/");
-            if (!response.ok) throw new Error("Failed to fetch");
-
-            const data = await response.json();
-            setStudents(data);
+            const response = await api.get("teachers/my-students/");
+            setStudents(response.data);
             setIsLoading(false);
         } catch (error) {
             console.error("Error fetching students:", error);
@@ -41,32 +42,28 @@ export default function TeacherStudents() {
         }
     };
 
+    // ✅ FIXED: Removed Hardcoded Localhost and used api.post()
     const handleAlertParents = async (student) => {
         setIsAlerting(true);
         try {
-            const response = await fetch("http://127.0.0.1:8000/api/teachers/send-message/", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    student_id: student.id,
-                    recipient_type: "parent",
-                    message: `Dear Parent, this is an urgent alert regarding ${student.name}. Please check their portal for recent low attendance or performance drops.`
-                })
+            const response = await api.post("teachers/send-message/", {
+                student_id: student.id,
+                recipient_type: "parent",
+                message: `Dear Parent, this is an urgent alert regarding ${student.name}. Please check their portal for recent low attendance or performance drops.`
             });
-            const data = await response.json();
-            if (response.ok) {
-                toast.success(`🚨 SMS/Email Alert sent to ${student.name}'s parents!`);
-            } else {
-                toast.error(data.error || "Failed to send alert.");
-            }
+
+            // Axios automatically throws error if not 2xx, so if it reaches here, it's success.
+            toast.success(`🚨 SMS/Email Alert sent to ${student.name}'s parents!`);
+
         } catch (error) {
-            toast.error("Server connection error.");
+            const errorMsg = error.response?.data?.error || "Failed to send alert.";
+            toast.error(errorMsg);
         } finally {
             setIsAlerting(false);
         }
     };
 
-    // 🔥 NAYA FUNCTION: Jab Submit dabaaye
+    // ✅ FIXED: Removed Hardcoded Localhost and used api.post()
     const submitCustomMessage = async () => {
         if (!customMessage.trim()) {
             toast.error("Please type a message first!");
@@ -75,25 +72,19 @@ export default function TeacherStudents() {
 
         setIsSendingMessage(true);
         try {
-            const response = await fetch("http://127.0.0.1:8000/api/teachers/send-message/", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    student_id: selectedStudent.id,
-                    recipient_type: "student",
-                    message: customMessage
-                })
+            const response = await api.post("teachers/send-message/", {
+                student_id: selectedStudent.id,
+                recipient_type: "student",
+                message: customMessage
             });
-            const data = await response.json();
-            if (response.ok) {
-                toast.success("✅ Message Delivered Successfully!");
-                setIsMessageModalOpen(false); // Close modal on success
-                setCustomMessage(""); // Reset input
-            } else {
-                toast.error(data.error || "Message delivery failed.");
-            }
+
+            toast.success("✅ Message Delivered Successfully!");
+            setIsMessageModalOpen(false); // Close modal on success
+            setCustomMessage(""); // Reset input
+
         } catch (error) {
-            toast.error("Server connection error.");
+            const errorMsg = error.response?.data?.error || "Message delivery failed.";
+            toast.error(errorMsg);
         } finally {
             setIsSendingMessage(false);
         }
@@ -311,7 +302,7 @@ export default function TeacherStudents() {
                 )}
             </AnimatePresence>
 
-            {/* 🔥 NAYA: BEAUTIFUL CUSTOM MESSAGE MODAL (CENTER POPUP) 🔥 */}
+            {/* 🔥 CUSTOM MESSAGE MODAL (CENTER POPUP) 🔥 */}
             <AnimatePresence>
                 {isMessageModalOpen && selectedStudent && (
                     <div className="custom-modal-backdrop" onClick={() => setIsMessageModalOpen(false)}>
@@ -440,7 +431,7 @@ export default function TeacherStudents() {
         .btn-primary { flex: 2; padding: 14px; border: none; background: #10b981; color: white; font-weight: 700; border-radius: 14px; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(16,185,129,0.3);}
         .btn-primary:hover { background: #059669; transform: translateY(-2px); }
 
-        /* 🔥 NAYA CSS: CUSTOM MESSAGE MODAL 🔥 */
+        /* CUSTOM MESSAGE MODAL */
         .custom-modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 9999; display: flex; justify-content: center; align-items: center; }
         .custom-message-modal { width: 90%; max-width: 500px; background: white; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column; }
         .c-modal-header { padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; background: #f8fafc; }
