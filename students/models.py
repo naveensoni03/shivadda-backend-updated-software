@@ -1,5 +1,7 @@
 from django.db import models
 from django.conf import settings 
+# ✨ NEW: ParentProfile ko import karo
+from parents.models import ParentProfile 
 
 class AcademicSession(models.Model):
     year = models.CharField(max_length=9, help_text="e.g., 2024-2025")
@@ -9,6 +11,10 @@ class AcademicSession(models.Model):
 class Student(models.Model):
     # --- 🔐 AUTHENTICATION LINK ---
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name='student_profile')
+    
+    # ✨ NEW: Parent Relation Add Kiya
+    parent = models.ForeignKey(ParentProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='children', help_text="Link this student to a parent profile")
+    
     role = models.CharField(max_length=50, default='Student', editable=False)
 
     # --- CHOICES ---
@@ -21,7 +27,7 @@ class Student(models.Model):
 
     # --- 1. CORE ACADEMIC INFO ---
     session = models.ForeignKey(AcademicSession, on_delete=models.SET_NULL, null=True, blank=True)
-    batch_session = models.CharField(max_length=50, blank=True, null=True) # ✅ FIX: Added to match frontend
+    batch_session = models.CharField(max_length=50, blank=True, null=True) 
     admission_number = models.CharField(max_length=50, unique=True)
     virtual_id = models.CharField(max_length=100, unique=True, blank=True, null=True) 
     roll_number = models.CharField(max_length=20, blank=True, null=True)
@@ -29,15 +35,15 @@ class Student(models.Model):
     section = models.CharField(max_length=10, default="A") 
     admission_date = models.DateField(auto_now_add=True)
     fee_status = models.CharField(max_length=20, choices=FEE_STATUS_CHOICES, default='Pending')
-    previous_school = models.CharField(max_length=150, blank=True, null=True) # ✅
-    tc_number = models.CharField(max_length=50, blank=True, null=True) # ✅ FIX: Added missing field
-    scholarship_percent = models.CharField(max_length=10, blank=True, null=True) # ✅ FIX: Added missing field
+    previous_school = models.CharField(max_length=150, blank=True, null=True) 
+    tc_number = models.CharField(max_length=50, blank=True, null=True) 
+    scholarship_percent = models.CharField(max_length=10, blank=True, null=True) 
 
     # --- 2. PERSONAL INFO ---
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100, blank=True)
     dob = models.DateField()
-    place_of_birth = models.CharField(max_length=100, blank=True, null=True) # ✅ FIXED
+    place_of_birth = models.CharField(max_length=100, blank=True, null=True) 
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='Male')
     blood_group = models.CharField(max_length=5, choices=BLOOD_GROUP_CHOICES, blank=True, null=True)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='General')
@@ -52,6 +58,7 @@ class Student(models.Model):
     spouse_name = models.CharField(max_length=100, blank=True, null=True)
 
     # --- 3. PARENTS / GUARDIAN INFO ---
+    # In details ko hum naye ParentProfile model se automatically link karne ke baad use kar sakte hain
     father_name = models.CharField(max_length=100, blank=True, null=True)
     father_occupation = models.CharField(max_length=100, blank=True, null=True)
     mother_name = models.CharField(max_length=100, blank=True, null=True)
@@ -67,10 +74,10 @@ class Student(models.Model):
     state = models.CharField(max_length=50, default='Uttar Pradesh')
     pincode = models.CharField(max_length=10, blank=True, null=True)
     
-    continent = models.CharField(max_length=50, default='Asia') # ✅ FIX
-    country = models.CharField(max_length=50, default='India') # ✅ FIX
-    latitude = models.CharField(max_length=50, blank=True, null=True) # ✅ FIX
-    longitude = models.CharField(max_length=50, blank=True, null=True) # ✅ FIX
+    continent = models.CharField(max_length=50, default='Asia') 
+    country = models.CharField(max_length=50, default='India') 
+    latitude = models.CharField(max_length=50, blank=True, null=True) 
+    longitude = models.CharField(max_length=50, blank=True, null=True) 
 
     # --- 5. MASTER PLACE & SERVICE MAPPING ---
     place_id = models.CharField(max_length=50, blank=True, null=True)
@@ -91,10 +98,10 @@ class Student(models.Model):
     validity_start = models.DateField(blank=True, null=True)
     validity_end = models.DateField(blank=True, null=True)
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='Active')
-    transport_mode = models.CharField(max_length=50, blank=True, null=True) # ✅ FIX
+    transport_mode = models.CharField(max_length=50, blank=True, null=True) 
 
     # --- 8. FILES / SCANS ---
-    photo = models.ImageField(upload_to='students/photos/', blank=True, null=True) # ✅ CHANGED FROM 'student_photo' to 'photo' to match frontend exactly
+    photo = models.ImageField(upload_to='students/photos/', blank=True, null=True) 
     aadhar_scan = models.FileField(upload_to='students/docs/', blank=True, null=True)
     tc_scan = models.FileField(upload_to='students/docs/', blank=True, null=True)
     marksheet_scan = models.FileField(upload_to='students/docs/', blank=True, null=True) 

@@ -370,7 +370,8 @@ export default function Exams() {
             await api.post("exams/submit/1/", {
                 answers: studentAnswers,
                 final_score: obtainedMarks,
-                percentage: percentage
+                percentage: percentage,
+                negative_marks_deducted: totalIncorrectMarksDeducted // 🔥 NEW: Backend OMR tracker ke liye
             });
             toast.success("Result Saved to Database Successfully!", { id: loadId });
         } catch (error) {

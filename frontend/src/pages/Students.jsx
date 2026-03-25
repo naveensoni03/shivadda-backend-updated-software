@@ -6,10 +6,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Search, GraduationCap, X, CheckCircle, Loader2 } from "lucide-react";
 import "./dashboard.css";
 
-const InputField = ({ label, value, onChange, type = "text", placeholder = "", readOnly = false }) => (
+const InputField = ({ label, value, onChange, type = "text", placeholder = "", readOnly = false, maxLength }) => (
     <div className="input-group">
         <label style={{ display: 'block', marginBottom: '5px', color: '#000', fontWeight: '800', fontSize: '0.85rem' }}>{label}</label>
-        <input type={type} value={value || ""} onChange={onChange} placeholder={placeholder} readOnly={readOnly} className="modern-input" style={readOnly ? { background: '#f1f5f9', cursor: 'not-allowed', color: '#6366f1' } : {}} />
+        <input type={type} value={value || ""} onChange={onChange} placeholder={placeholder} readOnly={readOnly} maxLength={maxLength} className="modern-input" style={readOnly ? { background: '#f1f5f9', cursor: 'not-allowed', color: '#6366f1' } : {}} />
     </div>
 );
 
@@ -48,7 +48,7 @@ export default function Students() {
         student_class: "10th", section: "A", roll_number: "TBD", admission_number: "", admission_date: todayDate,
         batch_session: "2024-2025", previous_school: "", tc_number: "", fee_status: "Pending",
         father_name: "", father_occupation: "", mother_name: "", mother_occupation: "", primary_mobile: "",
-        secondary_mobile: "", email: "", current_address: "", permanent_address: "", place_id: "", subplace_id: "",
+        secondary_mobile: "", email: "", parent_email: "", current_address: "", permanent_address: "", place_id: "", subplace_id: "",
         service_id: "", subservice_id: "", user_group: "Service Seekers", user_subgroup: "Students",
         highest_qualification: "", experience: "", hobbies: "", beliefs: "", registration_status: "Registered",
         validity_start: todayDate, validity_end: "2026-03-31", status: "Active", scholarship_percent: "",
@@ -60,16 +60,11 @@ export default function Students() {
     const [searchTerm, setSearchTerm] = useState("");
     const [classFilter, setClassFilter] = useState("All");
 
-    // 🚀 THE MAGIC FETCH
     const fetchData = async (isSilent = false) => {
         if (!isSilent) setIsLoading(true);
         try {
-            const timeStamp = new Date().getTime(); // Cache hatane ke liye
+            const timeStamp = new Date().getTime();
             const res = await api.get(`/students/list/?limit=10000&t=${timeStamp}`);
-
-            // 🔎 TERE LIYE DEBUG TOOL: Console me check kariyo kitne bachhe aaye
-            console.log("🔥 DJANGO SE KITNE BACHHE AAYE:", res.data);
-
             const data = Array.isArray(res.data) ? res.data : res.data.results || [];
             const sortedData = [...data].sort((a, b) => b.id - a.id);
             setStudents(sortedData);
@@ -107,7 +102,8 @@ export default function Students() {
     const handleBulkAction = async (newStatus) => {
         const load = toast.loading(`Applying ${newStatus}...`);
         try {
-            await Promise.all(selectedRows.map(id => api.patch(`/students/list/${id}/`, { status: newStatus })));
+            // 🚀 FIX 1: Bulk update me 'detail' URL lagaya
+            await Promise.all(selectedRows.map(id => api.patch(`/students/detail/${id}/`, { status: newStatus })));
             toast.success(`Profiles marked as ${newStatus}! ✅`, { id: load });
             setSelectedRows([]);
             await fetchData(true);
@@ -126,7 +122,7 @@ export default function Students() {
 
     const handleAddStudent = async () => {
         if (!formData.first_name || !formData.admission_number || !formData.email) {
-            return toast.error("First Name, Admission No, and Email are mandatory!");
+            return toast.error("First Name, Admission No, and Student Email are mandatory!");
         }
 
         const load = toast.loading(isEditing ? "Updating Profile..." : "Creating Account...");
@@ -134,6 +130,8 @@ export default function Students() {
         try {
             const submissionData = new FormData();
             Object.keys(formData).forEach(key => {
+                if (key === 'parent_email') return;
+
                 if (key !== 'id' && formData[key] !== null && formData[key] !== undefined) {
                     if (['photo', 'aadhar_scan', 'tc_scan', 'marksheet_scan'].includes(key)) {
                         if (formData[key] instanceof File) submissionData.append(key, formData[key]);
@@ -144,13 +142,15 @@ export default function Students() {
             });
 
             if (isEditing) {
-                await api.patch(`/students/list/${formData.id}/`, submissionData);
+                // 🚀 FIX 2: Yahan par update karte time URL 'detail' hona chahiye, 'list' nahi!
+                await api.patch(`/students/detail/${formData.id}/`, submissionData);
                 toast.success("Student Updated! ✨", { id: load });
             } else {
                 const generatedPassword = Math.random().toString(36).slice(-8);
                 submissionData.append('is_new_student', 'true');
                 submissionData.append('password', generatedPassword);
 
+                // Naya banate time 'list' theek hai
                 await api.post("/students/list/", submissionData);
                 toast.success(
                     <div><b>Admission Done ✅</b><br />Login ID: {formData.email}<br />Password: <b>{generatedPassword}</b></div>,
@@ -169,7 +169,7 @@ export default function Students() {
             let errorMsg = "Operation Failed. Pura form check karo.";
             if (err.response && err.response.data) {
                 if (err.response.data.error) {
-                    errorMsg = err.response.data.error; // Custom email error aayega yaha
+                    errorMsg = err.response.data.error;
                 } else if (typeof err.response.data === 'string') {
                     errorMsg = err.response.data;
                 } else if (typeof err.response.data === 'object') {
@@ -339,6 +339,10 @@ export default function Students() {
                                             {formStep === 1 && <>
                                                 <InputField label="First Name (*)" value={formData.first_name} onChange={e => setFormData({ ...formData, first_name: e.target.value })} placeholder="e.g. Aarav" />
                                                 <InputField label="Last Name" value={formData.last_name} onChange={e => setFormData({ ...formData, last_name: e.target.value })} />
+
+                                                <InputField label="Student Email (Login ID) (*)" type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="student@email.com" />
+                                                <InputField label="Student Mobile Number" value={formData.secondary_mobile} onChange={e => setFormData({ ...formData, secondary_mobile: e.target.value })} placeholder="10-digit number" maxLength="15" />
+
                                                 <InputField label="Virtual ID" value={formData.virtual_id} readOnly={true} />
                                                 <InputField label="Aadhar Number" value={formData.aadhar_number} onChange={e => setFormData({ ...formData, aadhar_number: e.target.value })} placeholder="12-digit number" />
                                                 <InputField label="DOB (*)" type="date" value={formData.dob} onChange={e => setFormData({ ...formData, dob: e.target.value })} />
@@ -369,8 +373,8 @@ export default function Students() {
                                             {formStep === 3 && <>
                                                 <InputField label="Father's Name" value={formData.father_name} onChange={e => setFormData({ ...formData, father_name: e.target.value })} />
                                                 <InputField label="Mother's Name" value={formData.mother_name} onChange={e => setFormData({ ...formData, mother_name: e.target.value })} />
-                                                <InputField label="Primary Mobile" value={formData.primary_mobile} onChange={e => setFormData({ ...formData, primary_mobile: e.target.value })} />
-                                                <InputField label="Email Address (*)" type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="Naya Email Daalna Zaroori Hai" />
+                                                <InputField label="Parent's Mobile (Linking Number) (*)" value={formData.primary_mobile} onChange={e => setFormData({ ...formData, primary_mobile: e.target.value })} placeholder="Parent's Mobile Number" maxLength="15" />
+                                                <InputField label="Parent's Email ID" type="email" value={formData.parent_email} onChange={e => setFormData({ ...formData, parent_email: e.target.value })} placeholder="parent@email.com" />
                                                 <InputField label="Highest Qualification" value={formData.highest_qualification} onChange={e => setFormData({ ...formData, highest_qualification: e.target.value })} />
                                                 <InputField label="Hobbies" value={formData.hobbies} onChange={e => setFormData({ ...formData, hobbies: e.target.value })} />
                                                 <InputField label="Beliefs & Faiths" value={formData.beliefs} onChange={e => setFormData({ ...formData, beliefs: e.target.value })} />

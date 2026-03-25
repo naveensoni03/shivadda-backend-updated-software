@@ -1,4 +1,4 @@
-"""
+﻿"""
 Django settings for core project.
 """
 import os
@@ -25,6 +25,7 @@ ALLOWED_HOSTS = ['*']
 # APPLICATIONS
 # --------------------------------------------------
 INSTALLED_APPS = [
+    'interactions',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -44,7 +45,7 @@ INSTALLED_APPS = [
     'attendance', 'fees', 'exams', 'lms', 'library',
     'inventory', 'hostel', 'transport', 'payroll',
     'services', 'classifieds', 'payments', 'profiles',
-    'agents', 'timetable',
+    'agents', 'timetable','news','parents',
 ]
 
 # --------------------------------------------------
@@ -141,21 +142,19 @@ TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER')
 CORS_ALLOW_ALL_ORIGINS = True
 
 
-
-
 # Email Settings (Gmail)
 # --------------------------------------------------
-# 🔥 EMAIL SETTINGS (DEVELOPMENT MODE) 🔥
+# 🔥 EMAIL SETTINGS (REAL MODE) 🔥
 # --------------------------------------------------
 
+# Console mode ko band kar diya hai
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' 
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' 
-
-# 👇 PURANA: Jab client asli password de dega, tab isko wapas uncomment kar dena
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' 
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER') 
-# EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD') 
-# DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+# 👇 Asli SMTP settings ko chalu (uncomment) kar diya hai
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' 
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER') 
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD') 
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

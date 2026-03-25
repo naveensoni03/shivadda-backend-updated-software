@@ -9,7 +9,9 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("access_token");
-    if (token) {
+
+    // 🚀 MEGA FIX: Agar URL mein 'send-otp' ya 'login' hai, toh Token MAT bhejo!
+    if (token && !config.url.includes('send-otp') && !config.url.includes('login')) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
@@ -32,7 +34,6 @@ api.interceptors.response.use(
     // 🔥 LICENSE EXPIRED LOGIC (402 Payment Required)
     // ==============================================
     if (error.response?.status === 402 && error.response?.data?.code === "LICENSE_EXPIRED") {
-      // Poori screen par strict lock message dikhao (Isme apna number aur email zaroor likhna)
       document.body.innerHTML = `
             <div style="display:flex; height:100vh; width:100%; background-color:#0f172a; color:white; justify-content:center; align-items:center; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align:center; padding: 20px; box-sizing: border-box; position: fixed; top:0; left:0; z-index:999999;">
                 <div style="background:#1e293b; padding: 40px; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); max-width: 600px;">
@@ -57,12 +58,8 @@ api.interceptors.response.use(
     // PURANA 401 (UNAUTHORIZED) LOGIC
     // ==========================================
     if (error.response?.status === 401) {
-      // Token expire hone par local storage saaf karo
       localStorage.clear();
-
       const currentPath = window.location.pathname;
-
-      // 🚀 SMART REDIRECT LOGIC
       if (!currentPath.includes("/login")) {
         if (currentPath.startsWith("/student")) {
           window.location.href = "/student/login";

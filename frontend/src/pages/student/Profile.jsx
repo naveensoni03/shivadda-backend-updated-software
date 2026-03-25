@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../api/axios";
 import {
-  User, Mail, Phone, MapPin, Award,
+  User, Mail, Phone, MapPin, Award, Activity, Briefcase, HeartPulse, GraduationCap,
   Shield, Edit3, Camera, CheckCircle, Sparkles, Loader2, X, Lock, EyeOff, Eye, QrCode
 } from "lucide-react";
 import StudentSidebar from "../../components/StudentSidebar";
@@ -24,12 +24,18 @@ export default function StudentProfile() {
   const [isPassLoading, setIsPassLoading] = useState(false);
 
   // 2FA Form State
-  const [twoFaStep, setTwoFaStep] = useState(1); // 1: Info, 2: QR Code
+  const [twoFaStep, setTwoFaStep] = useState(1);
   const [twoFaCode, setTwoFaCode] = useState("");
 
   const [userData, setUserData] = useState({
     name: "Loading...", email: "Loading...", phone: "---", address: "---",
     course: "---", batch: "---", rollNo: "---", bloodGroup: "---", dob: "---"
+  });
+
+  // 🚀 MEGA PROFILE STATES
+  const [activeTab, setActiveTab] = useState("medical");
+  const [megaProfile, setMegaProfile] = useState({
+    medical: {}, academic: {}, professional: {}, social: {}
   });
 
   useEffect(() => {
@@ -49,34 +55,58 @@ export default function StudentProfile() {
 
       setUserData(prev => ({ ...prev, name: loggedInName, email: loggedInEmail || "Email Loading..." }));
 
-      const res = await api.get("/students/list/?limit=1000");
-      const allStudents = Array.isArray(res.data) ? res.data : res.data.results || [];
+      // 1. Old Basic Data Fetch (Kept as is)
+      try {
+        const res = await api.get("/students/list/?limit=1000");
+        const allStudents = Array.isArray(res.data) ? res.data : res.data.results || [];
+        const myProfile = allStudents.find(s => {
+          const backendEmail = (s.email || "").toLowerCase().trim();
+          const backendLoginId = (s.login_id || "").toLowerCase().trim();
+          const fullName = `${s.first_name || ""} ${s.last_name || ""}`.toLowerCase().trim();
 
-      const myProfile = allStudents.find(s => {
-        const backendEmail = (s.email || "").toLowerCase().trim();
-        const backendLoginId = (s.login_id || "").toLowerCase().trim();
-        const fullName = `${s.first_name || ""} ${s.last_name || ""}`.toLowerCase().trim();
-
-        if (loggedInEmail && (backendEmail === loggedInEmail || backendLoginId === loggedInEmail)) return true;
-        if (!loggedInEmail && loggedInName && fullName === loggedInName.toLowerCase()) return true;
-        return false;
-      });
-
-      if (myProfile) {
-        setUserData({
-          name: `${myProfile.first_name || ""} ${myProfile.last_name || ""}`.trim() || loggedInName,
-          email: myProfile.email || myProfile.login_id || loggedInEmail,
-          phone: myProfile.primary_mobile || "---",
-          address: myProfile.current_address || "---",
-          course: myProfile.student_class ? `Class ${myProfile.student_class} - ${myProfile.section}` : "---",
-          batch: myProfile.batch_session || "---",
-          rollNo: myProfile.roll_number || myProfile.admission_number || "---",
-          bloodGroup: myProfile.blood_group || "---",
-          dob: myProfile.dob || "---"
+          if (loggedInEmail && (backendEmail === loggedInEmail || backendLoginId === loggedInEmail)) return true;
+          if (!loggedInEmail && loggedInName && fullName === loggedInName.toLowerCase()) return true;
+          return false;
         });
-      }
+
+        if (myProfile) {
+          setUserData({
+            name: `${myProfile.first_name || ""} ${myProfile.last_name || ""}`.trim() || loggedInName,
+            email: myProfile.email || myProfile.login_id || loggedInEmail,
+            phone: myProfile.primary_mobile || "---",
+            address: myProfile.current_address || "---",
+            course: myProfile.student_class ? `Class ${myProfile.student_class} - ${myProfile.section}` : "---",
+            batch: myProfile.batch_session || "---",
+            rollNo: myProfile.roll_number || myProfile.admission_number || "---",
+            bloodGroup: myProfile.blood_group || "---",
+            dob: myProfile.dob || "---"
+          });
+        }
+      } catch (e) { console.log("Basic profile fetch error ignored"); }
+
+      // 🚀 2. NEW: Fetch Mega Profile Data
+      try {
+        const megaRes = await api.get("profiles/me/");
+        setMegaProfile(megaRes.data);
+      } catch (e) { console.error("Mega Profile Fetch Error:", e); }
+
     } catch (error) {
       console.error("Error fetching profile:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 🚀 SAVE MEGA PROFILE DATA TO DATABASE
+  const handleSaveProfile = async () => {
+    setIsLoading(true);
+    try {
+      await api.put("profiles/me/", megaProfile);
+      toast.success("Profile Updated Successfully! 🚀");
+      setIsEditing(false); // Turn off edit mode
+    } catch (error) {
+      toast.error("Failed to update profile. Please try again.");
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -114,6 +144,13 @@ export default function StudentProfile() {
     setTwoFaCode("");
   };
 
+  const handleMegaChange = (category, field, value) => {
+    setMegaProfile(prev => ({
+      ...prev,
+      [category]: { ...prev[category], [field]: value }
+    }));
+  };
+
   const pageTransition = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.5, staggerChildren: 0.15 } } };
   const slideUp = { hidden: { y: 40, opacity: 0, scale: 0.95 }, show: { y: 0, opacity: 1, scale: 1, transition: { type: "spring", stiffness: 100, damping: 14 } } };
   const modalVariants = { hidden: { opacity: 0, scale: 0.9, y: 20 }, visible: { opacity: 1, scale: 1, y: 0, transition: { type: "spring" } }, exit: { opacity: 0, scale: 0.95, y: 20 } };
@@ -146,13 +183,18 @@ export default function StudentProfile() {
                   <p className="badge-primary">{userData.course}</p>
                 </div>
                 <div className="profile-actions">
-                  <motion.button className={`action-btn ${isEditing ? 'btn-success' : 'btn-outline'}`} onClick={() => setIsEditing(!isEditing)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <motion.button
+                    className={`action-btn ${isEditing ? 'btn-success' : 'btn-outline'}`}
+                    onClick={() => isEditing ? handleSaveProfile() : setIsEditing(true)}
+                    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                  >
                     {isEditing ? <><CheckCircle size={18} /> Save Profile</> : <><Edit3 size={18} /> Edit Profile</>}
                   </motion.button>
                 </div>
               </div>
             </motion.div>
 
+            {/* OLD PROFILE GRID */}
             <div className="profile-grid">
               <div className="grid-col-left">
                 <motion.div className="glass-panel info-card" variants={slideUp} whileHover={{ y: -5, boxShadow: "0 20px 40px rgba(0,0,0,0.08)" }}>
@@ -182,15 +224,15 @@ export default function StudentProfile() {
                     <div className="contact-grid">
                       <div className="contact-item">
                         <div className="c-icon"><Mail size={18} /></div>
-                        <div className="c-details"><small>Email Address</small>{isEditing ? <input type="email" defaultValue={userData.email} className="edit-input" /> : <p style={{ color: '#4f46e5', fontWeight: '800' }}>{userData.email}</p>}</div>
+                        <div className="c-details"><small>Email Address</small><p style={{ color: '#4f46e5', fontWeight: '800' }}>{userData.email}</p></div>
                       </div>
                       <div className="contact-item">
                         <div className="c-icon"><Phone size={18} /></div>
-                        <div className="c-details"><small>Phone Number</small>{isEditing ? <input type="text" defaultValue={userData.phone} className="edit-input" /> : <p>{userData.phone}</p>}</div>
+                        <div className="c-details"><small>Phone Number</small><p>{userData.phone}</p></div>
                       </div>
                       <div className="contact-item full-width">
                         <div className="c-icon"><MapPin size={18} /></div>
-                        <div className="c-details"><small>Residential Address</small>{isEditing ? <textarea defaultValue={userData.address} className="edit-textarea"></textarea> : <p>{userData.address}</p>}</div>
+                        <div className="c-details"><small>Residential Address</small><p>{userData.address}</p></div>
                       </div>
                     </div>
                   </div>
@@ -208,6 +250,137 @@ export default function StudentProfile() {
                 </motion.div>
               </div>
             </div>
+
+            {/* 🚀 NEW MEGA PROFILE TABS SECTION */}
+            <motion.div className="mega-profile-section glass-panel" variants={slideUp} style={{ marginTop: '30px', padding: '30px' }}>
+              <div className="mega-tabs-header">
+                <button className={`mega-tab ${activeTab === 'medical' ? 'active' : ''}`} onClick={() => setActiveTab('medical')}><HeartPulse size={18} /> Physical & Medical</button>
+                <button className={`mega-tab ${activeTab === 'academic' ? 'active' : ''}`} onClick={() => setActiveTab('academic')}><GraduationCap size={18} /> Academic Journey</button>
+                <button className={`mega-tab ${activeTab === 'professional' ? 'active' : ''}`} onClick={() => setActiveTab('professional')}><Briefcase size={18} /> Professional Details</button>
+                <button className={`mega-tab ${activeTab === 'social' ? 'active' : ''}`} onClick={() => setActiveTab('social')}><Activity size={18} /> Social & Humanity</button>
+              </div>
+
+              <div className="mega-tab-content" style={{ marginTop: '20px' }}>
+
+                {/* MEDICAL TAB */}
+                {activeTab === 'medical' && (
+                  <div className="mega-grid">
+                    <div className="mega-field">
+                      <label>Blood Group</label>
+                      {isEditing ? <input type="text" className="mega-input" value={megaProfile.medical?.blood_group || ''} onChange={e => handleMegaChange('medical', 'blood_group', e.target.value)} placeholder="e.g. O+" /> : <p className="mega-value">{megaProfile.medical?.blood_group || "---"}</p>}
+                    </div>
+                    <div className="mega-field">
+                      <label>Height (cm) & Weight (kg)</label>
+                      {isEditing ? (
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <input type="number" className="mega-input" value={megaProfile.medical?.height_cm || ''} onChange={e => handleMegaChange('medical', 'height_cm', e.target.value)} placeholder="Height" />
+                          <input type="number" className="mega-input" value={megaProfile.medical?.weight_kg || ''} onChange={e => handleMegaChange('medical', 'weight_kg', e.target.value)} placeholder="Weight" />
+                        </div>
+                      ) : <p className="mega-value">{megaProfile.medical?.height_cm ? `${megaProfile.medical.height_cm} cm, ` : ''} {megaProfile.medical?.weight_kg ? `${megaProfile.medical.weight_kg} kg` : "---"}</p>}
+                    </div>
+                    <div className="mega-field full-width">
+                      <label>Emergency Contact (Name - Relation - Number)</label>
+                      {isEditing ? (
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <input type="text" className="mega-input" value={megaProfile.medical?.emergency_contact_name || ''} onChange={e => handleMegaChange('medical', 'emergency_contact_name', e.target.value)} placeholder="Name" />
+                          <input type="text" className="mega-input" value={megaProfile.medical?.emergency_contact_relation || ''} onChange={e => handleMegaChange('medical', 'emergency_contact_relation', e.target.value)} placeholder="Relation" />
+                          <input type="text" className="mega-input" value={megaProfile.medical?.emergency_contact_number || ''} onChange={e => handleMegaChange('medical', 'emergency_contact_number', e.target.value)} placeholder="Phone" />
+                        </div>
+                      ) : <p className="mega-value">{megaProfile.medical?.emergency_contact_name || "---"} ({megaProfile.medical?.emergency_contact_relation || "---"}) - {megaProfile.medical?.emergency_contact_number || "---"}</p>}
+                    </div>
+                    <div className="mega-field full-width">
+                      <label>Chronic Diseases / Allergies</label>
+                      {isEditing ? <textarea className="mega-input" value={megaProfile.medical?.chronic_diseases || ''} onChange={e => handleMegaChange('medical', 'chronic_diseases', e.target.value)} placeholder="Any medical history we should know about..." rows="2" /> : <p className="mega-value">{megaProfile.medical?.chronic_diseases || "None recorded."}</p>}
+                    </div>
+                  </div>
+                )}
+
+                {/* ACADEMIC TAB */}
+                {activeTab === 'academic' && (
+                  <div className="mega-grid">
+                    <div className="mega-field">
+                      <label>10th Standard (School & %)</label>
+                      {isEditing ? (
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <input type="text" className="mega-input" value={megaProfile.academic?.tenth_school || ''} onChange={e => handleMegaChange('academic', 'tenth_school', e.target.value)} placeholder="School Name" />
+                          <input type="number" className="mega-input" style={{ width: '80px' }} value={megaProfile.academic?.tenth_percentage || ''} onChange={e => handleMegaChange('academic', 'tenth_percentage', e.target.value)} placeholder="%" />
+                        </div>
+                      ) : <p className="mega-value">{megaProfile.academic?.tenth_school || "---"} ({megaProfile.academic?.tenth_percentage ? `${megaProfile.academic.tenth_percentage}%` : "---"})</p>}
+                    </div>
+                    <div className="mega-field">
+                      <label>12th Standard (School & %)</label>
+                      {isEditing ? (
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <input type="text" className="mega-input" value={megaProfile.academic?.twelfth_school || ''} onChange={e => handleMegaChange('academic', 'twelfth_school', e.target.value)} placeholder="School Name" />
+                          <input type="number" className="mega-input" style={{ width: '80px' }} value={megaProfile.academic?.twelfth_percentage || ''} onChange={e => handleMegaChange('academic', 'twelfth_percentage', e.target.value)} placeholder="%" />
+                        </div>
+                      ) : <p className="mega-value">{megaProfile.academic?.twelfth_school || "---"} ({megaProfile.academic?.twelfth_percentage ? `${megaProfile.academic.twelfth_percentage}%` : "---"})</p>}
+                    </div>
+                    <div className="mega-field full-width">
+                      <label>Graduation (Degree, College & %)</label>
+                      {isEditing ? (
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <input type="text" className="mega-input" value={megaProfile.academic?.graduation_degree || ''} onChange={e => handleMegaChange('academic', 'graduation_degree', e.target.value)} placeholder="B.Tech, B.Sc etc." />
+                          <input type="text" className="mega-input" value={megaProfile.academic?.graduation_college || ''} onChange={e => handleMegaChange('academic', 'graduation_college', e.target.value)} placeholder="College Name" />
+                          <input type="number" className="mega-input" style={{ width: '80px' }} value={megaProfile.academic?.graduation_percentage || ''} onChange={e => handleMegaChange('academic', 'graduation_percentage', e.target.value)} placeholder="%" />
+                        </div>
+                      ) : <p className="mega-value">{megaProfile.academic?.graduation_degree || "---"} from {megaProfile.academic?.graduation_college || "---"} ({megaProfile.academic?.graduation_percentage ? `${megaProfile.academic.graduation_percentage}%` : "---"})</p>}
+                    </div>
+                    <div className="mega-field full-width">
+                      <label>Technical Skills</label>
+                      {isEditing ? <input type="text" className="mega-input" value={megaProfile.academic?.technical_skills || ''} onChange={e => handleMegaChange('academic', 'technical_skills', e.target.value)} placeholder="Python, React, Django..." /> : <p className="mega-value">{megaProfile.academic?.technical_skills || "---"}</p>}
+                    </div>
+                  </div>
+                )}
+
+                {/* PROFESSIONAL TAB */}
+                {activeTab === 'professional' && (
+                  <div className="mega-grid">
+                    <div className="mega-field">
+                      <label>Total Experience</label>
+                      {isEditing ? (
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <input type="number" className="mega-input" value={megaProfile.professional?.total_experience_years || ''} onChange={e => handleMegaChange('professional', 'total_experience_years', e.target.value)} placeholder="Years" />
+                          <input type="number" className="mega-input" value={megaProfile.professional?.total_experience_months || ''} onChange={e => handleMegaChange('professional', 'total_experience_months', e.target.value)} placeholder="Months" />
+                        </div>
+                      ) : <p className="mega-value">{megaProfile.professional?.total_experience_years || 0} Years, {megaProfile.professional?.total_experience_months || 0} Months</p>}
+                    </div>
+                    <div className="mega-field">
+                      <label>Last Company & Title</label>
+                      {isEditing ? (
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <input type="text" className="mega-input" value={megaProfile.professional?.last_company_name || ''} onChange={e => handleMegaChange('professional', 'last_company_name', e.target.value)} placeholder="Company" />
+                          <input type="text" className="mega-input" value={megaProfile.professional?.last_job_title || ''} onChange={e => handleMegaChange('professional', 'last_job_title', e.target.value)} placeholder="Job Title" />
+                        </div>
+                      ) : <p className="mega-value">{megaProfile.professional?.last_job_title || "---"} at {megaProfile.professional?.last_company_name || "---"}</p>}
+                    </div>
+                    <div className="mega-field full-width">
+                      <label>Reason for Leaving Last Job</label>
+                      {isEditing ? <input type="text" className="mega-input" value={megaProfile.professional?.reason_for_leaving || ''} onChange={e => handleMegaChange('professional', 'reason_for_leaving', e.target.value)} placeholder="Reason..." /> : <p className="mega-value">{megaProfile.professional?.reason_for_leaving || "---"}</p>}
+                    </div>
+                  </div>
+                )}
+
+                {/* SOCIAL TAB */}
+                {activeTab === 'social' && (
+                  <div className="mega-grid">
+                    <div className="mega-field full-width">
+                      <label>Blood Donation History</label>
+                      {isEditing ? <textarea className="mega-input" value={megaProfile.social?.blood_donation_history || ''} onChange={e => handleMegaChange('social', 'blood_donation_history', e.target.value)} placeholder="Where and when did you donate blood?" rows="2" /> : <p className="mega-value">{megaProfile.social?.blood_donation_history || "No records yet."}</p>}
+                    </div>
+                    <div className="mega-field full-width">
+                      <label>NGO & Volunteer Work</label>
+                      {isEditing ? <textarea className="mega-input" value={megaProfile.social?.ngo_social_work || ''} onChange={e => handleMegaChange('social', 'ngo_social_work', e.target.value)} placeholder="Any social services?" rows="2" /> : <p className="mega-value">{megaProfile.social?.ngo_social_work || "No records yet."}</p>}
+                    </div>
+                    <div className="mega-field full-width">
+                      <label>Awards & Achievements</label>
+                      {isEditing ? <textarea className="mega-input" value={megaProfile.social?.awards_achievements || ''} onChange={e => handleMegaChange('social', 'awards_achievements', e.target.value)} placeholder="Special recognitions..." rows="2" /> : <p className="mega-value">{megaProfile.social?.awards_achievements || "No records yet."}</p>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+
           </motion.div>
         )}
       </main>
@@ -219,14 +392,12 @@ export default function StudentProfile() {
             <motion.div variants={modalVariants} initial="hidden" animate="visible" exit="exit" className="modal-content security-modal" onClick={e => e.stopPropagation()}>
               <div className="modal-header">
                 <div>
-                  {/* Fixed Text Visibility */}
                   <h2 style={{ color: '#0f172a', margin: 0, fontWeight: '800' }}>Update Password</h2>
                   <p style={{ color: '#64748b', margin: '5px 0 0 0', fontSize: '0.9rem' }}>Ensure your account stays secure.</p>
                 </div>
                 <button className="close-btn" onClick={() => setShowPasswordModal(false)}><X size={20} /></button>
               </div>
               <form onSubmit={handlePasswordChange} className="modal-body">
-
                 <div className="input-group">
                   <label style={{ color: '#0f172a', fontWeight: '700' }}>Current Password</label>
                   <div className="pass-input-wrapper">
@@ -235,7 +406,6 @@ export default function StudentProfile() {
                     <button type="button" onClick={() => setShowPass({ ...showPass, old: !showPass.old })} className="eye-btn">{showPass.old ? <EyeOff size={16} /> : <Eye size={16} />}</button>
                   </div>
                 </div>
-
                 <div className="input-group">
                   <label style={{ color: '#0f172a', fontWeight: '700' }}>New Password</label>
                   <div className="pass-input-wrapper">
@@ -244,7 +414,6 @@ export default function StudentProfile() {
                     <button type="button" onClick={() => setShowPass({ ...showPass, new: !showPass.new })} className="eye-btn">{showPass.new ? <EyeOff size={16} /> : <Eye size={16} />}</button>
                   </div>
                 </div>
-
                 <div className="input-group">
                   <label style={{ color: '#0f172a', fontWeight: '700' }}>Confirm New Password</label>
                   <div className="pass-input-wrapper">
@@ -253,7 +422,6 @@ export default function StudentProfile() {
                     <button type="button" onClick={() => setShowPass({ ...showPass, confirm: !showPass.confirm })} className="eye-btn">{showPass.confirm ? <EyeOff size={16} /> : <Eye size={16} />}</button>
                   </div>
                 </div>
-
                 <button type="submit" className="btn-primary-gradient full-btn" disabled={isPassLoading} style={{ marginTop: '20px' }}>
                   {isPassLoading ? <Loader2 size={18} className="spinner" /> : "Update Password"}
                 </button>
@@ -263,7 +431,7 @@ export default function StudentProfile() {
         )}
       </AnimatePresence>
 
-      {/* 🛡️ SETUP 2FA MODAL (FIXED TEXT VISIBILITY) */}
+      {/* 🛡️ SETUP 2FA MODAL */}
       <AnimatePresence>
         {show2FAModal && (
           <div className="modal-overlay" onClick={() => setShow2FAModal(false)}>
@@ -279,12 +447,8 @@ export default function StudentProfile() {
                 {twoFaStep === 1 ? (
                   <div className="two-fa-step1">
                     <Shield size={60} color="#10b981" style={{ margin: '0 auto 15px' }} />
-                    <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: '#0f172a', marginBottom: '10px' }}>
-                      Protect your learning data
-                    </h3>
-                    <p style={{ color: '#475569', fontSize: '0.95rem', lineHeight: '1.5', marginBottom: '25px' }}>
-                      When you enable 2FA, you'll be required to enter a code from Google Authenticator or Authy every time you sign in.
-                    </p>
+                    <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: '#0f172a', marginBottom: '10px' }}>Protect your learning data</h3>
+                    <p style={{ color: '#475569', fontSize: '0.95rem', lineHeight: '1.5', marginBottom: '25px' }}>When you enable 2FA, you'll be required to enter a code from Google Authenticator or Authy every time you sign in.</p>
                     <button className="btn-success full-btn" onClick={() => setTwoFaStep(2)}>Begin Setup</button>
                   </div>
                 ) : (
@@ -292,17 +456,9 @@ export default function StudentProfile() {
                     <QrCode size={120} color="#0f172a" style={{ margin: '0 auto 15px', background: '#f8fafc', padding: '10px', borderRadius: '12px', border: '1px solid #e2e8f0' }} />
                     <p style={{ fontWeight: '800', color: '#0f172a', fontSize: '1.1rem', marginBottom: '5px' }}>Scan this QR Code in your App</p>
                     <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '20px' }}>Or enter code manually: <b style={{ color: '#4f46e5' }}>X7Y9-LMN2-K9P0-QR55</b></p>
-
                     <div className="input-group text-left" style={{ marginBottom: '0' }}>
                       <label style={{ color: '#0f172a', fontWeight: '800', fontSize: '0.9rem' }}>Enter 6-digit code</label>
-                      <input
-                        type="text"
-                        value={twoFaCode}
-                        onChange={e => setTwoFaCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
-                        className="modern-input text-center"
-                        placeholder="000000"
-                        style={{ letterSpacing: '10px', fontSize: '1.5rem', fontWeight: '900', color: '#0f172a', background: '#f8fafc', border: '2px solid #e2e8f0' }}
-                      />
+                      <input type="text" value={twoFaCode} onChange={e => setTwoFaCode(e.target.value.replace(/\D/g, '').substring(0, 6))} className="modern-input text-center" placeholder="000000" style={{ letterSpacing: '10px', fontSize: '1.5rem', fontWeight: '900', color: '#0f172a', background: '#f8fafc', border: '2px solid #e2e8f0' }} />
                     </div>
                     <button className="btn-primary-gradient full-btn" onClick={handle2FAVerify} style={{ marginTop: '20px' }}>Verify & Activate</button>
                   </div>
@@ -377,7 +533,6 @@ export default function StudentProfile() {
         .c-details small { display: block; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; text-transform: uppercase; font-size: 0.7rem;}
         .c-details p { margin: 0; font-weight: 700; color: var(--text-main); word-break: break-word;}
         
-        .edit-input, .edit-textarea { width: 100%; padding: 8px 12px; border-radius: 8px; border: 2px solid var(--primary-light); outline: none; font-weight: 600; color: var(--primary); }
         .academic-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
         .stat-box { background: white; padding: 20px; border-radius: 16px; text-align: center; border: 1px solid #e2e8f0; }
         .stat-box h4 { margin: 0 0 5px 0; font-size: 2rem; font-weight: 900; color: var(--primary); }
@@ -387,6 +542,22 @@ export default function StudentProfile() {
         .security-btn:hover { background: #e2e8f0; color: #0f172a; }
         .security-btn.outline { background: transparent; border: 2px dashed #cbd5e1; }
         .security-btn.outline:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+
+        /* 🚀 NEW MEGA PROFILE CSS */
+        .mega-tabs-header { display: flex; gap: 15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; overflow-x: auto; scrollbar-width: none; }
+        .mega-tabs-header::-webkit-scrollbar { display: none; }
+        .mega-tab { background: none; border: none; padding: 10px 20px; font-weight: 700; color: #64748b; cursor: pointer; border-radius: 12px; transition: 0.3s; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+        .mega-tab:hover { background: #f1f5f9; color: var(--primary); }
+        .mega-tab.active { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(79,70,229,0.3); }
+
+        .mega-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 10px; }
+        .mega-field { background: rgba(255,255,255,0.5); padding: 15px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.05); }
+        .mega-field.full-width { grid-column: 1 / -1; }
+        .mega-field label { display: block; font-size: 0.85rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; }
+        .mega-value { margin: 0; font-weight: 700; color: var(--text-main); font-size: 1rem; }
+        .mega-input { width: 100%; padding: 10px 15px; border-radius: 10px; border: 2px solid #e2e8f0; outline: none; font-weight: 600; color: var(--text-main); transition: 0.2s; background: white; }
+        .mega-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+        textarea.mega-input { resize: vertical; min-height: 80px; }
 
         /* 🔐 MODAL STYLES */
         .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(5px); z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px; }
@@ -423,6 +594,7 @@ export default function StudentProfile() {
             .action-btn { width: 100%; justify-content: center; }
             .contact-grid { grid-template-columns: 1fr; }
             .academic-stats { grid-template-columns: 1fr; }
+            .mega-grid { grid-template-columns: 1fr; }
         }
       `}} />
     </div>

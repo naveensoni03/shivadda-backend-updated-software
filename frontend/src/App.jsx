@@ -14,7 +14,7 @@ import Teachers from "./pages/Teachers";
 import FeesLedger from "./pages/FeesLedger";
 import SystemConfig from "./pages/SystemConfig";
 import Exams from "./pages/Exams";
-import Homework from "./pages/Homework"; // ✅ Ek hi baar import rakha hai
+import Homework from "./pages/Homework";
 import Library from "./pages/Library";
 import Transport from "./pages/Transport";
 import Hostel from "./pages/Hostel";
@@ -32,6 +32,9 @@ import Communication from "./pages/Communication";
 import AIBrain from "./pages/AIBrain";
 import GlobalSettings from "./pages/GlobalSettings";
 import RecycleBin from "./pages/RecycleBin";
+
+// 📰 PUBLIC PORTAL IMPORTS
+import NewsPortal from "./pages/NewsPortal";
 
 // 🎓 STUDENT PORTAL IMPORTS
 import StudentLogin from "./pages/student/StudentLogin";
@@ -55,22 +58,30 @@ import TeacherMailbox from "./pages/Teachers/TeacherMailbox";
 import TeacherFees from "./pages/Teachers/Fees";
 import TeacherSettings from "./pages/Teachers/TeacherSettings";
 
+// 👨‍👩‍👧 PARENT PORTAL IMPORTS 
+import ParentDashboard from "./pages/parent/ParentDashboard";
+import ParentLogin from "./pages/parent/ParentLogin";
+import ParentFees from "./pages/parent/ParentFees";
+import ParentChildren from "./pages/parent/ParentChildren";
+import ParentExams from "./pages/parent/ParentExams";
+import ParentCommunication from "./pages/parent/ParentCommunication";
+import ParentSettings from "./pages/parent/ParentSettings"; // 👈 Aakhri page import kar liya hai!
+
 // Components
 import ChatWidget from "./components/ChatWidget";
 
 // 🔐 ADVANCED ROLE-BASED SECURITY GUARD
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const token = localStorage.getItem("access_token");
-  let rawRole = localStorage.getItem("user_role") || "Super Admin";
+  let rawRole = localStorage.getItem("user_role") || "";
 
-  rawRole = rawRole.replace(/['"]/g, "").trim();
+  const userRole = rawRole.replace(/['"]/g, "").trim().toLowerCase().replace(/_/g, " ");
 
   if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  const userRole = rawRole.toLowerCase();
-  const safeAllowedRoles = allowedRoles.map(role => role.toLowerCase().trim());
+  const safeAllowedRoles = allowedRoles.map(role => role.toLowerCase().trim().replace(/_/g, " "));
 
   if (!safeAllowedRoles.includes(userRole)) {
     console.warn(`🛡️ Access Denied! Role "${rawRole}" tried to access a restricted route.`);
@@ -81,7 +92,11 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     if (userRole === "teacher") {
       return <Navigate to="/teacher/dashboard" replace />;
     }
-    return <Navigate to="/dashboard" replace />;
+    if (userRole === "parent") {
+      return <Navigate to="/parent/dashboard" replace />;
+    }
+
+    return <Navigate to="/login" replace />;
   }
 
   return children;
@@ -93,6 +108,8 @@ export default function App() {
   const FINANCE_ROLES = ["Super Admin", "Admin", "Accountant"];
   const ACADEMIC_STAFF = ["Super Admin", "Admin", "Teacher"];
 
+  const PARENT_ROLES = ["Parent", "Super Admin"];
+
   return (
     <BrowserRouter>
       <div className="app-layout">
@@ -100,9 +117,13 @@ export default function App() {
         <Routes>
 
           {/* 🌐 Public Routes */}
+          <Route path="/news" element={<NewsPortal />} />
           <Route path="/login" element={<Login />} />
           <Route path="/student/login" element={<StudentLogin />} />
           <Route path="/teacher/login" element={<TeacherLogin />} />
+
+          {/* ✨ Parent Login */}
+          <Route path="/parent/login" element={<ParentLogin />} />
 
           {/* 🏠 Default Protected Route */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -130,7 +151,6 @@ export default function App() {
           <Route path="/virtual-space" element={<ProtectedRoute allowedRoles={ACADEMIC_STAFF}><VirtualSpace /></ProtectedRoute>} />
           <Route path="/attendance" element={<ProtectedRoute allowedRoles={ACADEMIC_STAFF}><Attendance /></ProtectedRoute>} />
 
-          {/* ✅ Homework Route strictly added once here */}
           <Route path="/homework" element={<ProtectedRoute allowedRoles={ACADEMIC_STAFF}><Homework /></ProtectedRoute>} />
 
           <Route path="/exams" element={<ProtectedRoute allowedRoles={ACADEMIC_STAFF}><Exams /></ProtectedRoute>} />
@@ -180,6 +200,18 @@ export default function App() {
             <Route path="wallet" element={<TeacherFees />} />
             <Route path="settings" element={<TeacherSettings />} />
           </Route>
+
+          {/* ==========================================
+              👨‍👩‍👧 PARENT PORTAL PROTECTED ROUTES
+          ============================================= */}
+          <Route path="/parent/dashboard" element={<ProtectedRoute allowedRoles={PARENT_ROLES}><ParentDashboard /></ProtectedRoute>} />
+          <Route path="/parent/children" element={<ProtectedRoute allowedRoles={PARENT_ROLES}><ParentChildren /></ProtectedRoute>} />
+          <Route path="/parent/fees" element={<ProtectedRoute allowedRoles={PARENT_ROLES}><ParentFees /></ProtectedRoute>} />
+          <Route path="/parent/exams" element={<ProtectedRoute allowedRoles={PARENT_ROLES}><ParentExams /></ProtectedRoute>} />
+          <Route path="/parent/messages" element={<ProtectedRoute allowedRoles={PARENT_ROLES}><ParentCommunication /></ProtectedRoute>} />
+
+          {/* 🚀 FIX: Aakhri Settings Route Set Kar Diya Naye Component Ke Sath */}
+          <Route path="/parent/settings" element={<ProtectedRoute allowedRoles={PARENT_ROLES}><ParentSettings /></ProtectedRoute>} />
 
         </Routes>
 

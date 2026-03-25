@@ -58,8 +58,13 @@ class StudentListCreateView(generics.ListCreateAPIView):
                         return Response({"error": "Email and Password are required!"}, status=status.HTTP_400_BAD_REQUEST)
 
                     # 🔥 Agar Email pehle se hai toh Crash nahi hoga!
+                    # 🔥 FIXED ERROR FORMAT
                     if User.objects.filter(email=email).exists():
-                        return Response({"error": f"Bhai dhyan de: Yeh Email ({email}) pehle se kisi aur student ki hai. Nayi email daal!"}, status=status.HTTP_400_BAD_REQUEST)
+                        # Sirf ek clean string message return karo jise React easily dikha sake
+                        return Response(
+                            {"error": "This Login ID (Email) is already registered. A Student MUST have a unique email separate from the Parent."}, 
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
 
                     user_obj = User.objects.create(
                         email=email,

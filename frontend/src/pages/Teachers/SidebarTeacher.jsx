@@ -1,19 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import {
-    LayoutDashboard,
-    BookOpen,
-    Video,
-    FileText,
-    CheckSquare,
-    Users,
-    MessageSquare,
-    Wallet,
-    Settings,
-    LogOut,
-    Menu,
-    X
-} from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react"; // Sirf zaroori UI icons rakhe hain
 
 export default function SidebarTeacher() {
     const navigate = useNavigate();
@@ -24,16 +11,17 @@ export default function SidebarTeacher() {
         navigate("/teacher/login");
     };
 
+    // Icons hata diye gaye hain
     const menuItems = [
-        { name: "Dashboard", icon: <LayoutDashboard size={20} />, path: "/teacher/dashboard" },
-        { name: "My Classes", icon: <Video size={20} />, path: "/teacher/classes" },
-        { name: "Study Material", icon: <BookOpen size={20} />, path: "/teacher/material" },
-        { name: "Assignments", icon: <FileText size={20} />, path: "/teacher/assignments" },
-        { name: "Exams & Quizzes", icon: <CheckSquare size={20} />, path: "/teacher/exams" },
-        { name: "My Students", icon: <Users size={20} />, path: "/teacher/students" },
-        { name: "Mailbox/Chat", icon: <MessageSquare size={20} />, path: "/teacher/messages" },
-        { name: "Wallet & Earnings", icon: <Wallet size={20} />, path: "/teacher/wallet" },
-        { name: "Settings", icon: <Settings size={20} />, path: "/teacher/settings" },
+        { name: "Dashboard", path: "/teacher/dashboard" },
+        { name: "My Classes", path: "/teacher/classes" },
+        { name: "Study Material", path: "/teacher/material" },
+        { name: "Assignments", path: "/teacher/assignments" },
+        { name: "Exams & Quizzes", path: "/teacher/exams" },
+        { name: "My Students", path: "/teacher/students" },
+        { name: "Mailbox/Chat", path: "/teacher/messages" },
+        { name: "Wallet & Earnings", path: "/teacher/wallet" },
+        { name: "Settings", path: "/teacher/settings" },
     ];
 
     return (
@@ -47,7 +35,7 @@ export default function SidebarTeacher() {
             <aside className={`teacher-sidebar ${isOpen ? "open" : ""}`}>
                 <div className="sidebar-header">
                     <div className="logo-icon">
-                        <BookOpen size={22} color="#ffffff" />
+                        <span style={{ color: "white", fontWeight: "900", fontSize: "1.2rem" }}>S</span>
                     </div>
                     <h2>SHIV ADDA</h2>
                 </div>
@@ -60,7 +48,10 @@ export default function SidebarTeacher() {
                             className={({ isActive }) => `menu-item ${isActive ? "active" : ""}`}
                             onClick={() => setIsOpen(false)} // Close on mobile after click
                         >
-                            <span className="icon-wrapper">{item.icon}</span>
+                            {/* Serial Number logic added here */}
+                            <span className="icon-wrapper" style={{ fontSize: '0.9rem', fontWeight: '800' }}>
+                                {index + 1}.
+                            </span>
                             <span className="menu-text">{item.name}</span>
                         </NavLink>
                     ))}
@@ -68,6 +59,7 @@ export default function SidebarTeacher() {
 
                 <div className="sidebar-footer">
                     <button className="logout-btn" onClick={handleLogout}>
+                        {/* Logout button ka icon chhod diya hai, chahein toh ise bhi hata sakte hain */}
                         <LogOut size={18} />
                         <span>Logout</span>
                     </button>
@@ -110,7 +102,8 @@ export default function SidebarTeacher() {
 
                 .logo-icon {
                     background: linear-gradient(135deg, #4f46e5, #3b82f6);
-                    padding: 8px;
+                    width: 38px;
+                    height: 38px;
                     border-radius: 10px;
                     display: flex;
                     align-items: center;
@@ -150,6 +143,7 @@ export default function SidebarTeacher() {
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                    min-width: 24px;
                     color: #94a3b8;
                     transition: color 0.2s ease;
                 }
@@ -175,7 +169,7 @@ export default function SidebarTeacher() {
                 }
 
                 .menu-item.active .icon-wrapper {
-                    color: #4f46e5; /* Indigo icon */
+                    color: #4f46e5; /* Indigo number */
                 }
 
                 /* Footer Area */

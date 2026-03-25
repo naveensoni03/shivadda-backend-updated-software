@@ -1,9 +1,10 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import (
+    EducationLevel, AcademicClass, SubClass, Subject, SyllabusUnit, Chapter, ExamBlueprint, # 🔥 NAYE HIERARCHY MODELS
     Exam, Question, QuestionBank, DescriptiveSubmission, 
     AIEvaluationLog, AnswerEvaluation, Assignment, AssignmentSubmission,
-    ExamAttempt, LiveQuizSession, QuizGroup, StudentAnswer # 🔥 NAYE MODELS ADD KIYE
+    ExamAttempt, LiveQuizSession, QuizGroup, StudentAnswer
 )
 
 User = get_user_model()
@@ -22,7 +23,7 @@ class QuestionSerializer(serializers.ModelSerializer):
         model = Question
         fields = [
             'id', 'q_type', 'text', 'image', 'options', 'correct_option_index', 
-            'marks', 'negative_marks', 'unattempted_marks', 'section', 'level',
+            'marks', 'section', 
             'option_a', 'option_b', 'option_c', 'option_d', 'option_e', 'option_f', 'option_g', 'option_h',
             'correct_option'
         ]
@@ -33,21 +34,28 @@ class QuestionSerializer(serializers.ModelSerializer):
 # ==========================================
 class ExamSerializer(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, required=False)
-    
-    subject = serializers.CharField(source='subject_name', required=False, allow_blank=True)
     date = serializers.DateField(source='exam_date', required=False, allow_null=True)
 
     class Meta:
         model = Exam
         fields = [
-            'id', 'title', 'subject', 'date', 'start_time', 'end_time', 
-            'duration_minutes', 'total_marks', 'negative_marks', 'status', 'questions',
-            'class_name', 'examinee_body', 'paper_set_number', 'place_of_exam', 'teacher_name',
+            'id', 'title', 'date', 'start_time', 'end_time', 
+            'duration_minutes', 'status', 'questions',
+            
+            # 🔥 Phase 1 & 2 Ke Naye Foreign Keys
+            'academic_class', 'subclass', 'subject', 'syllabus_unit', 'blueprint',
+            
+            # 🔥 Purane Metadata / Legacy Fields
+            'class_name', 'subject_name', 'examinee_body', 'paper_set_number', 'place_of_exam', 'teacher_name',
             'unit', 'chapter_name', 'paper_id', 'exam_password', 'validity', 'permission',
             'mode_of_exam', 'tools_allowed', 'exam_type', 'paper_type'
         ]
 
     def create(self, validated_data):
+        # Frontend agar abhi bhi purane marks bhej raha hai, toh unhe ignore karne ka safety check
+        validated_data.pop('total_marks', None)
+        validated_data.pop('negative_marks', None)
+
         questions_data = validated_data.pop('questions', [])
         exam = Exam.objects.create(**validated_data)
         
@@ -68,6 +76,10 @@ class ExamSerializer(serializers.ModelSerializer):
         return exam
 
     def update(self, instance, validated_data):
+        # Frontend safety check
+        validated_data.pop('total_marks', None)
+        validated_data.pop('negative_marks', None)
+
         questions_data = validated_data.pop('questions', None)
         
         for attr, value in validated_data.items():
@@ -94,7 +106,7 @@ class ExamSerializer(serializers.ModelSerializer):
 
 
 # ==========================================
-# 3. 🚀 QUESTION BANK SERIALIZER (WITH ALL META FIELDS)
+# 3. 🚀 QUESTION BANK SERIALIZER
 # ==========================================
 class QuestionBankSerializer(serializers.ModelSerializer):
     class Meta:
@@ -137,6 +149,7 @@ class ExamAttemptSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'exam', 'student_name', 'start_time', 'end_time', 
             'score', 'correct_count', 'incorrect_count', 'unattempted_count',
+            'negative_marks_deducted', # 🔥 Naya OMR Tracker Add Hua
             'percentage', 'grade', 'is_evaluated', 'omr_sheet_image'
         ]
 
@@ -175,7 +188,8 @@ class AssignmentSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Assignment
-        fields = ['id', 'title', 'subject', 'max_marks', 'deadline_date', 'deadline_time', 'instructions', 'reference_file', 'status', 'created_at', 'submitted_count']
+        # 🔥 'academic_class' and 'subject' FK added here
+        fields = ['id', 'title', 'academic_class', 'subject', 'max_marks', 'deadline_date', 'deadline_time', 'instructions', 'reference_file', 'status', 'created_at', 'submitted_count']
 
     def get_submitted_count(self, obj):
         return obj.submissions.count()

@@ -1,4 +1,4 @@
-from django.contrib import admin
+﻿from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
@@ -12,23 +12,23 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from chatbot.views import AIChatAPI
 from visitors.views import VisitorViewSet
-from accounts.views import UserManagementViewSet
+
+# ✨ NEW: Imported OTP Views from accounts
+from accounts.views import UserManagementViewSet, SendOTPView, VerifyOTPAndLoginView 
 
 from students.views import ChangePasswordView
 
 User = get_user_model()
 
 # ==========================================
-# 🚀 CUSTOM JWT SERIALIZER (100% FIXED FOR CUSTOM USER MODEL)
+# 🛑 OLD CUSTOM JWT SERIALIZER (Kept for backup, but not used for OTP Login)
 # ==========================================
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
-        # Frontend ab dono bhej raha hai, humein bas email chahiye
         email_input = attrs.get('email') or attrs.get('username')
         password = attrs.get('password')
 
         if email_input and password:
-            # 🛑 CRITICAL FIX: Only filter by email. DO NOT use username.
             user_obj = User.objects.filter(email=email_input).first()
 
             if user_obj:
@@ -39,13 +39,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                     data['refresh'] = str(refresh)
                     data['access'] = str(refresh.access_token)
 
-                    # Role Checking Logic using your actual database fields
                     if self.user.is_superuser:
                         data['role'] = "Super Admin"
                     else:
                         data['role'] = getattr(self.user, 'role', 'Student')
                         
-                    # Name sending logic using your actual 'full_name' field
                     data['name'] = getattr(self.user, 'full_name', email_input)
                     return data
                 else:
@@ -57,6 +55,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+
 
 # ==========================================
 # ROUTERS & VIEWS
@@ -71,7 +70,6 @@ def create_live_admin(request):
 
     if not User.objects.filter(email=email).exists():
         try:
-            # 🛑 Removed username from superuser creation
             user = User.objects.create_superuser(email=email, password=password)
             if hasattr(user, 'full_name'):
                 user.full_name = 'Super Admin'
@@ -85,16 +83,19 @@ def create_live_admin(request):
 def home(request):
     return HttpResponse("<h1 style='text-align:center; padding-top:50px;'>Backend is Running! 🚀</h1>")
 
-# ==========================================
-# URL PATTERNS
-# ==========================================
+
 # ==========================================
 # URL PATTERNS
 # ==========================================
 urlpatterns = [
+    path('api/interactions/', include('interactions.urls')),
     path("", home),
     path("admin/", admin.site.urls),
-    path('api/auth/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    
+    # 🔥 FIX: CONNECTED NEW 2-STEP OTP APIs HERE 🔥
+    path('api/auth/send-otp/', SendOTPView.as_view(), name='send_otp'),       # Step 1: Mail bhejega
+    path('api/auth/login/', VerifyOTPAndLoginView.as_view(), name='login'),   # Step 2: OTP verify karke token dega
+    
     path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('setup-live-admin/', create_live_admin), 
     path("api/", include(router.urls)), 
@@ -104,6 +105,10 @@ urlpatterns = [
     path("api/logs/", include("logs.urls")),
     path("api/students/", include("students.urls")),
     path("api/teachers/", include("teachers.urls")),
+    
+    # ✨ NEW: Added Parents API Route here! ✨
+    path("api/parents/", include("parents.urls")),
+    
     path("api/institutions/", include("institutions.urls")),
     path('api/locations/', include('locations.urls')),
     path('api/centers/', include('centers.urls')),  
@@ -121,12 +126,12 @@ urlpatterns = [
     path("api/transport/", include("transport.urls")), 
     path("api/payroll/", include("payroll.urls")),
     path('api/timetable/', include('timetable.urls')),
+    path("api/news/", include("news.urls")), 
     path('api/chat/', AIChatAPI.as_view()),
+    path("api/profiles/", include("profiles.urls")),
     
-    # 🔥 YAHAN FIX KIYA HAI ('api/' add kiya hai) 👇
     path('api/auth/change-password/', ChangePasswordView.as_view(), name='change-password'),
 ]
-
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

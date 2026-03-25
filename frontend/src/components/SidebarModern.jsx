@@ -1,7 +1,6 @@
 ﻿import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-// ✅ NEW ICONS ADDED (Settings, Trash2, Edit3 for Homework)
-import { Menu, X, Activity, Settings, Trash2, Edit3 } from "lucide-react";
+import { Menu, X } from "lucide-react"; // Zaroori icons rakhe hain toggle ke liye
 
 const SidebarModern = ({ forceOpen }) => {
   const navigate = useNavigate();
@@ -33,11 +32,14 @@ const SidebarModern = ({ forceOpen }) => {
   });
 
   const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
     localStorage.clear();
     navigate("/login");
   };
+
+  // Helper component for serial numbers to keep code clean
+  const SerialNo = ({ num }) => (
+    <span style={{ minWidth: '20px', fontSize: '0.85rem', opacity: 0.7 }}>{num}.</span>
+  );
 
   return (
     <>
@@ -58,12 +60,8 @@ const SidebarModern = ({ forceOpen }) => {
         </button>
       </div>
 
-      {/* 📱 MOBILE BLACK OVERLAY */}
-      {isMobileOpen && (
-        <div className="mobile-overlay" onClick={() => setIsMobileOpen(false)}></div>
-      )}
+      {isMobileOpen && <div className="mobile-overlay" onClick={() => setIsMobileOpen(false)}></div>}
 
-      {/* 🖥️ MAIN SIDEBAR */}
       <aside className={`custom-sidebar ${isMobileOpen ? "open" : ""}`} style={{
         width: "280px", background: "#ffffff", height: "100vh", position: "fixed",
         top: 0, display: "flex", flexDirection: "column", padding: "35px 25px",
@@ -86,71 +84,65 @@ const SidebarModern = ({ forceOpen }) => {
         </div>
 
         <nav style={{ flex: 1 }}>
-          <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', letterSpacing: '1.5px', paddingLeft: '8px' }}>Super Controls</p>
-          <NavLink to="/dashboard" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📊 Dashboard</NavLink>
+          <p style={sectionHeaderStyle}>Super Controls</p>
+          <NavLink to="/dashboard" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Dashboard</NavLink>
+          <NavLink to="/ai-brain" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> AI Brain</NavLink>
+          <NavLink to="/institutions" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Institutions</NavLink>
+          <NavLink to="/locations" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="4" /> Global Locations</NavLink>
 
-          {/* <NavLink to="/analytics" style={linkStyle} onClick={() => setIsMobileOpen(false)}>
-            <Activity size={18} /> Analytics & Logs
-          </NavLink> */}
+          <p style={sectionHeaderStyle}>Access & Logs</p>
+          <NavLink to="/users" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> User Manager</NavLink>
+          <NavLink to="/access-logs" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Audit Logs</NavLink>
+          <NavLink to="/virtual-space" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Virtual Space</NavLink>
 
-          <NavLink to="/ai-brain" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🧠 AI Brain</NavLink>
-          <NavLink to="/institutions" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🏢 Institutions</NavLink>
-          <NavLink to="/locations" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🌍 Global Locations</NavLink>
+          <p style={sectionHeaderStyle}>School Ops</p>
+          <NavLink to="/visitors" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Front Office</NavLink>
+          <NavLink to="/admissions" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Admissions</NavLink>
+          <NavLink to="/attendance" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Attendance</NavLink>
+          <NavLink to="/students" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="4" /> Student Base</NavLink>
+          <NavLink to="/teachers" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="5" /> Teachers</NavLink>
+          <NavLink to="/courses" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="6" /> Course Manager</NavLink>
+          <NavLink to="/exams" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="7" /> Exams & AI</NavLink>
+          <NavLink to="/homework" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="8" /> Homework & Tasks</NavLink>
 
-          <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', marginTop: '30px', letterSpacing: '1.5px', paddingLeft: '8px' }}>Access & Logs</p>
-          <NavLink to="/users" style={linkStyle} onClick={() => setIsMobileOpen(false)}>👥 User Manager</NavLink>
-          <NavLink to="/access-logs" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🔐 Audit Logs</NavLink>
-          <NavLink to="/virtual-space" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📹 Virtual Space</NavLink>
+          <p style={sectionHeaderStyle}>Finance & Assets</p>
+          <NavLink to="/fees" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Fees Ledger</NavLink>
+          <NavLink to="/payroll" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Payroll & Salary</NavLink>
+          <NavLink to="/inventory" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Inventory</NavLink>
+          <NavLink to="/timetable" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="4" /> Timetable & Routine</NavLink>
+          <NavLink to="/communication" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="5" /> Communication</NavLink>
 
-          <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', marginTop: '30px', letterSpacing: '1.5px', paddingLeft: '8px' }}>School Ops</p>
-          <NavLink to="/visitors" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🤝 Front Office</NavLink>
-          <NavLink to="/admissions" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📝 Admissions</NavLink>
-          <NavLink to="/attendance" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📅 Attendance</NavLink>
-          <NavLink to="/students" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🎓 Student Base</NavLink>
-          <NavLink to="/teachers" style={linkStyle} onClick={() => setIsMobileOpen(false)}>👨‍🏫 Teachers</NavLink>
-          <NavLink to="/courses" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📚 Course Manager</NavLink>
-          <NavLink to="/exams" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📝 Exams & AI</NavLink>
-          {/* 🔥 NEW: HOMEWORK LINK PROPERLY ADDED HERE */}
-          <NavLink to="/homework" style={linkStyle} onClick={() => setIsMobileOpen(false)}>
-            <Edit3 size={18} /> Homework & Tasks
-          </NavLink>
+          <p style={sectionHeaderStyle}>Facilities</p>
+          <NavLink to="/library" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Library</NavLink>
+          <NavLink to="/hostel" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Hostel</NavLink>
+          <NavLink to="/transport" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Transport</NavLink>
 
-          <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', marginTop: '30px', letterSpacing: '1.5px', paddingLeft: '8px' }}>Finance & Assets</p>
-          <NavLink to="/fees" style={linkStyle} onClick={() => setIsMobileOpen(false)}>💰 Fees Ledger</NavLink>
-          <NavLink to="/payroll" style={linkStyle} onClick={() => setIsMobileOpen(false)}>💸 Payroll & Salary</NavLink>
-          <NavLink to="/inventory" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📦 Inventory</NavLink>
-          <NavLink to="/timetable" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📅 Timetable & Routine</NavLink>
-          <NavLink to="/communication" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📢 Communication</NavLink>
-
-          <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', marginTop: '30px', letterSpacing: '1.5px', paddingLeft: '8px' }}>Facilities</p>
-          <NavLink to="/library" style={linkStyle} onClick={() => setIsMobileOpen(false)}>📖 Library</NavLink>
-          <NavLink to="/hostel" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🛏️ Hostel</NavLink>
-          <NavLink to="/transport" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🚌 Transport</NavLink>
-
-          <p style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px', marginTop: '30px', letterSpacing: '1.5px', paddingLeft: '8px' }}>System</p>
-          <NavLink to="/services" style={linkStyle} onClick={() => setIsMobileOpen(false)}>🛠️ Service Master</NavLink>
-          <NavLink to="/global-settings" style={linkStyle} onClick={() => setIsMobileOpen(false)}>
-            <Settings size={18} /> Global Config
-          </NavLink>
-          <NavLink to="/recycle-bin" style={linkStyle} onClick={() => setIsMobileOpen(false)}>
-            <Trash2 size={18} /> Recycle Bin
-          </NavLink>
-
+          <p style={sectionHeaderStyle}>System</p>
+          <NavLink to="/services" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Service Master</NavLink>
+          <NavLink to="/global-settings" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Global Config</NavLink>
+          <NavLink to="/recycle-bin" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Recycle Bin</NavLink>
         </nav>
 
-        <div
-          onClick={handleLogout}
-          style={{
-            color: "#ef4444", cursor: "pointer", padding: "16px", borderRadius: "16px",
-            display: "flex", alignItems: "center", gap: "12px", fontWeight: "700",
-            background: "#fff1f2", border: "1px solid #fee2e2", marginTop: '30px'
-          }}
-        >
-          🛰️ Terminate Session
+        <div onClick={handleLogout} style={logoutButtonStyle}>
+          Terminate Session
         </div>
       </aside>
     </>
   );
+};
+
+// Styles to keep the component clean
+const sectionHeaderStyle = {
+  color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800',
+  textTransform: 'uppercase', marginBottom: '15px', marginTop: '30px',
+  letterSpacing: '1.5px', paddingLeft: '8px'
+};
+
+const logoutButtonStyle = {
+  color: "#ef4444", cursor: "pointer", padding: "16px", borderRadius: "16px",
+  display: "flex", alignItems: "center", gap: "12px", fontWeight: "700",
+  background: "#fff1f2", border: "1px solid #fee2e2", marginTop: '30px',
+  justifyContent: 'center'
 };
 
 export default SidebarModern;

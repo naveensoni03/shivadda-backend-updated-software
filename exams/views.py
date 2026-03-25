@@ -6,17 +6,17 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
 
-from batches.models import Batch
-from courses.models import Course
+# 🔥 Purane imports (Batch, Course) hata diye gaye hain
 from .models import (
+    EducationLevel, AcademicClass, Subject, ExamBlueprint, # 🔥 NAYE HIERARCHY MODELS IMPORT KIYE
     Exam, Question, QuestionBank, DescriptiveSubmission, AIEvaluationLog, 
     AnswerEvaluation, ExamAttempt, StudentAnswer, Assignment, AssignmentSubmission,
-    LiveQuizSession, QuizGroup # 🔥 NAYE MODELS IMPORT KIYE
+    LiveQuizSession, QuizGroup
 )
 from .serializers import (
     ExamSerializer, QuestionSerializer, QuestionBankSerializer, 
     EvaluationSerializer, AssignmentSerializer, AssignmentSubmissionSerializer,
-    ExamAttemptSerializer, LiveQuizSessionSerializer, QuizGroupSerializer # 🔥 NAYE SERIALIZERS
+    ExamAttemptSerializer, LiveQuizSessionSerializer, QuizGroupSerializer 
 )
 
 User = get_user_model()
@@ -75,14 +75,13 @@ class QuestionAPI(APIView):
                 return Response({"error": "Question not found"}, status=status.HTTP_404_NOT_FOUND)
         else:
             questions = Question.objects.all().order_by('-id')
-            # Extracting metadata to match the frontend expected structure
             data = []
             for q in questions:
                 q_data = QuestionSerializer(q).data
                 q_data['exam_meta'] = {
                     'className': q.exam.class_name,
-                    'subClass': q.exam.batch.name if q.exam.batch else "",
-                    'subject': q.exam.subject_name,
+                    'subClass': q.exam.subclass.name if q.exam.subclass else "", # 🔥 FIXED: batch replaced by subclass
+                    'subject': q.exam.subject.name if q.exam.subject else q.exam.subject_name, # 🔥 Linked Hierarchy
                     'unit': q.exam.unit,
                     'chapter': q.exam.chapter_name,
                     'paperId': q.exam.paper_id,
@@ -216,7 +215,8 @@ class SubmitExamAPI(APIView):
                 exam=exam, 
                 student=student,
                 score=data.get('final_score', 0),
-                percentage=data.get('percentage', 0)
+                percentage=data.get('percentage', 0),
+                negative_marks_deducted=data.get('negative_marks_deducted', 0) # 🔥 NEW: Track negative marks
             )
 
             # Detail answer logging (if needed in future)
@@ -407,7 +407,7 @@ def generate_ai_quiz(request):
     return JsonResponse({"error": "Invalid request"}, status=400)
 
 
-# ---------------- SAVE AI QUIZ ----------------
+# ---------------- SAVE AI QUIZ (🔥 UPDATED TO USE HIERARCHY & BLUEPRINT) ----------------
 @csrf_exempt
 def save_ai_quiz(request):
     if request.method == 'POST':
@@ -419,15 +419,28 @@ def save_ai_quiz(request):
             if not topic or not questions:
                 return JsonResponse({"error": "Topic or questions missing"}, status=400)
 
-            batch_instance, _ = Batch.objects.get_or_create(name="AI Batch 2026")
-            course_instance, _ = Course.objects.get_or_create(name="General Science")
+            # 🔥 NEW HIERARCHY LOGIC 
+            ed_level, _ = EducationLevel.objects.get_or_create(name="Secondary Level")
+            class_instance, _ = AcademicClass.objects.get_or_create(name="AI Generation Class", level=ed_level)
+            subject_instance, _ = Subject.objects.get_or_create(name="General AI Topics")
+
+            # 🔥 NEW BLUEPRINT LOGIC
+            blueprint, _ = ExamBlueprint.objects.get_or_create(
+                name=f"Auto Blueprint: {topic}",
+                defaults={
+                    'total_questions': len(questions),
+                    'max_marks': len(questions) * 4.0,
+                    'positive_mark_per_q': 4.0,
+                    'negative_mark_per_q': 1.0,
+                    'passing_percentage': 33.0
+                }
+            )
 
             new_exam = Exam.objects.create(
                 title=f"AI Quiz: {topic}",
-                batch=batch_instance,
-                course=course_instance,
-                total_marks=len(questions) * 4,
-                passing_marks=len(questions) * 2,
+                academic_class=class_instance,
+                subject=subject_instance,
+                blueprint=blueprint,
                 duration_minutes=30,
                 is_active=True
             )

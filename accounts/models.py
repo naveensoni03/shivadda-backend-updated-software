@@ -69,6 +69,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     profile_photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True)
     national_identity = models.CharField(max_length=100, blank=True, null=True, help_text="Aadhar/PAN/Passport Number")
 
+    # ========================================================
+    # 🔐 NEW FIELDS ADDED FOR ADVANCED AUTHENTICATION
+    # ========================================================
+    otp = models.CharField(max_length=6, blank=True, null=True, help_text="Temporary OTP for Login")
+    temp_id_code = models.CharField(max_length=100, blank=True, null=True, unique=True, help_text="Code for Time-Limited Trial/Guest Access")
+    temp_id_expiry = models.DateTimeField(blank=True, null=True, help_text="Expiry Date & Time for Temporary ID")
+    # ========================================================
+
     groups = models.ManyToManyField("auth.Group", related_name="accounts_users", blank=True)
     user_permissions = models.ManyToManyField("auth.Permission", related_name="accounts_users_permissions", blank=True)
 

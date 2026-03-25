@@ -6,7 +6,7 @@ import {
     Users, UserPlus, Search, Edit3, Trash2, Eye,
     CheckCircle, XCircle, Mail, Shield, Lock, X, ChevronLeft, ChevronRight,
     Calendar, User, Phone, Sparkles, AlertTriangle, Power, Smartphone, HardDrive, Moon, Filter, MapPin, CalendarClock,
-    Briefcase, GraduationCap, Home
+    Briefcase, GraduationCap, Home, HeartPulse, Activity, Loader2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -53,6 +53,11 @@ export default function UserManager() {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(6);
 
+    // 🚀 MEGA PROFILE STATES FOR ADMIN VIEW
+    const [adminMegaProfile, setAdminMegaProfile] = useState(null);
+    const [isProfileLoading, setIsProfileLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState("medical");
+
     const initialFormState = {
         id: null, full_name: "", email: "", phone: "", role: "STAFF", password: "", account_status: "ACTIVE", location: "Global", validity_days: 365, is_disguised: false,
         dob: "", gender: "Male", marital_status: "Single",
@@ -61,8 +66,8 @@ export default function UserManager() {
         highest_qualification: "", qualification_type: "Academic", experience_years: 0,
         address_permanent: "",
         terms_accepted: false,
-        profile_photo: null, // ✨ NEW ADDED
-        national_identity: "" // ✨ NEW ADDED
+        profile_photo: null,
+        national_identity: ""
     };
     const [formData, setFormData] = useState(initialFormState);
 
@@ -81,6 +86,7 @@ export default function UserManager() {
         else setSelectedUserIds([]);
     };
     const handleSelectUser = (id) => setSelectedUserIds(prev => prev.includes(id) ? prev.filter(uId => uId !== id) : [...prev, id]);
+
     const handleBulkDelete = async () => {
         if (selectedUserIds.length === 0) return;
         const loadToast = toast.loading("Processing...");
@@ -92,7 +98,9 @@ export default function UserManager() {
             setIsBulkDeleteOpen(false);
         } catch (err) { toast.error("Bulk deletion failed.", { id: loadToast }); }
     };
+
     const initiateDelete = (id) => { setUserToDelete(id); setIsDeleteModalOpen(true); };
+
     const confirmDelete = async () => {
         try {
             await api.delete(`users/${userToDelete}/`);
@@ -101,10 +109,12 @@ export default function UserManager() {
             setIsDeleteModalOpen(false);
         } catch (err) { toast.error("Delete failed."); }
     };
+
     const handleStatusToggleClick = (user) => {
         const newStatus = user.account_status === 'HIBERNATE' ? 'ACTIVE' : 'HIBERNATE';
         setUserToToggle(user); setStatusAction(newStatus); setIsStatusModalOpen(true);
     };
+
     const confirmStatusToggle = async () => {
         const loadToast = toast.loading(`Marking as ${statusAction}...`);
         try {
@@ -115,27 +125,54 @@ export default function UserManager() {
         } catch (err) { toast.error("Update failed", { id: loadToast }); }
     };
 
+    // 🚀 THE MEGA FIX: FormData integration for file uploads
     const handleSave = async (e) => {
         e.preventDefault();
         if (!formData.terms_accepted) return toast.error("You must agree to the Terms & Conditions!");
 
         const loadToast = toast.loading("Processing...");
-        const payload = { ...formData };
-        if (formData.password && formData.password.trim() !== "") payload.password = formData.password;
-        else delete payload.password;
+
+        const submitData = new FormData();
+
+        Object.keys(formData).forEach(key => {
+            if (key === 'profile_photo') {
+                if (formData.profile_photo instanceof File) {
+                    submitData.append('profile_photo', formData.profile_photo);
+                }
+            } else if (key === 'password') {
+                if (formData.password && formData.password.trim() !== "") {
+                    submitData.append('password', formData.password);
+                }
+            } else if (key === 'id') {
+                // Do nothing
+            } else {
+                if (formData[key] !== null && formData[key] !== undefined) {
+                    submitData.append(key, formData[key]);
+                }
+            }
+        });
 
         try {
             if (editMode) {
-                await api.patch(`users/${formData.id}/`, payload);
+                await api.patch(`users/${formData.id}/`, submitData);
                 toast.success("User updated successfully!", { id: loadToast });
             } else {
-                await api.post("users/", payload);
+                await api.post("users/", submitData);
                 toast.success("User created successfully!", { id: loadToast });
             }
-            fetchUsers(); closeForm();
+            fetchUsers();
+            closeForm();
         } catch (err) {
             console.error("Save Error:", err.response?.data);
-            toast.error("Operation failed.", { id: loadToast });
+            let errorMsg = "Operation failed. Please check your data.";
+            if (err.response?.data) {
+                const keys = Object.keys(err.response.data);
+                if (keys.length > 0) {
+                    const firstError = err.response.data[keys[0]];
+                    errorMsg = Array.isArray(firstError) ? firstError[0] : firstError;
+                }
+            }
+            toast.error(errorMsg, { id: loadToast });
         }
     };
 
@@ -145,9 +182,25 @@ export default function UserManager() {
         setIsFormOpen(true);
     };
 
-    const openView = (user) => { setSelectedUser(user); setIsViewOpen(true); };
+    // 🚀 NEW: OPEN VIEW WITH MEGA PROFILE FETCH
+    const openView = async (user) => {
+        setSelectedUser(user);
+        setIsViewOpen(true);
+        setIsProfileLoading(true);
+        setActiveTab("medical"); // Reset tab
+        setAdminMegaProfile(null);
+        try {
+            const res = await api.get(`profiles/admin/${user.id}/`);
+            setAdminMegaProfile(res.data);
+        } catch (err) {
+            toast.error("No Mega Profile found or Unauthorized.");
+        } finally {
+            setIsProfileLoading(false);
+        }
+    };
+
     const closeForm = () => setIsFormOpen(false);
-    const closeView = () => setIsViewOpen(false);
+    const closeView = () => { setIsViewOpen(false); setAdminMegaProfile(null); };
 
     // Filters & Pagination
     const filteredUsers = users.filter(u => {
@@ -164,9 +217,7 @@ export default function UserManager() {
 
     return (
         <div style={{ display: "flex", background: "#f8fafc", height: "100vh", fontFamily: "'Inter', sans-serif", overflow: "hidden" }}>
-            {/* FIX 1: Sidebar z-index ensure */}
             <div style={{ zIndex: 50 }}><SidebarModern /></div>
-
             <Toaster position="top-center" toastOptions={{ style: { background: '#0f172a', color: 'white', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' } }} />
 
             <div className="user-main-view hide-scrollbar">
@@ -199,7 +250,6 @@ export default function UserManager() {
                         <div className="select-wrapper">
                             <Filter size={16} className="select-icon" />
                             <select style={filterSelect} value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
-                                {/* FIX 2: Explicit Color for Options */}
                                 <option value="ALL" style={{ color: '#1e293b' }}>All Roles</option>
                                 <option value="SUPER_ADMIN" style={{ color: '#1e293b' }}>Super Admin</option>
                                 <option value="STAFF" style={{ color: '#1e293b' }}>Staff</option>
@@ -210,12 +260,18 @@ export default function UserManager() {
                     </div>
                 </motion.div>
 
-                {/* TABLE AREA */}
+                {/* 🚀 TABLE AREA WITH SERIAL NUMBERS */}
                 <div className="table-responsive-wrapper hide-scrollbar" style={{ flex: 1 }}>
                     <table className="modern-table">
                         <thead>
                             <tr>
-                                <th style={{ width: '30%' }}><input type="checkbox" onChange={handleSelectAll} checked={currentUsers.length > 0 && selectedUserIds.length === currentUsers.length} style={checkboxStyle} /> User Profile</th>
+                                <th style={{ width: '5%', textAlign: 'center' }}>#</th>
+                                <th style={{ width: '25%' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <input type="checkbox" onChange={handleSelectAll} checked={currentUsers.length > 0 && selectedUserIds.length === currentUsers.length} style={checkboxStyle} />
+                                        User Profile
+                                    </div>
+                                </th>
                                 <th style={{ width: '15%' }}>Role</th>
                                 <th style={{ width: '25%' }}>Contact Info</th>
                                 <th style={{ width: '15%' }}>Status</th>
@@ -227,14 +283,19 @@ export default function UserManager() {
                                 const theme = ROLE_THEMES[user.role] || ROLE_THEMES.STAFF;
                                 const avatarBg = AVATAR_GRADIENTS[i % AVATAR_GRADIENTS.length];
                                 const isSelected = selectedUserIds.includes(user.id);
+                                const serialNumber = indexOfFirstItem + i + 1;
+
                                 return (
                                     <motion.tr key={user.id} whileHover={{ y: -4, scale: 1.005, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.1)' }} className="table-row">
-                                        <td style={{ borderLeft: theme.border, background: isSelected ? '#f8fafc' : 'white' }}>
+                                        <td style={{ borderLeft: theme.border, background: isSelected ? '#f8fafc' : 'white', textAlign: 'center', fontWeight: '800', color: '#94a3b8', fontSize: '0.95rem' }}>
+                                            {String(serialNumber).padStart(2, '0')}
+                                        </td>
+
+                                        <td style={{ background: isSelected ? '#f8fafc' : 'white' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                                                 <input type="checkbox" checked={isSelected} onChange={() => handleSelectUser(user.id)} style={checkboxStyle} />
                                                 <div style={{ ...avatar, background: avatarBg }}>{user.full_name?.charAt(0).toUpperCase()}</div>
                                                 <div style={{ maxWidth: '180px' }}>
-                                                    {/* FIX 3: Text Truncation */}
                                                     <div style={{ fontWeight: '800', color: '#1e293b', fontSize: '1.05rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={user.full_name}>{user.full_name}</div>
                                                     <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600' }}>ID: #{user.id}</div>
                                                 </div>
@@ -246,7 +307,6 @@ export default function UserManager() {
                                             </span>
                                         </td>
                                         <td style={{ background: isSelected ? '#f8fafc' : 'white' }}>
-                                            {/* FIX 4: Email truncation */}
                                             <div style={{ color: '#475569', fontWeight: '600', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '10px', maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={user.email}>
                                                 <Mail size={14} style={{ flexShrink: 0 }} /> {user.email}
                                             </div>
@@ -290,7 +350,6 @@ export default function UserManager() {
                                 <div><h2 style={{ fontSize: '1.8rem', fontWeight: '900', color: '#0f172a', margin: 0 }}>{editMode ? 'Edit User Profile' : 'Create New User'}</h2></div>
                                 <motion.button whileHover={{ rotate: 90 }} onClick={closeForm} style={closeBtn}><X size={22} /></motion.button>
                             </div>
-                            {/* FIX 5: Added paddingRight to scroll container */}
                             <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: '70vh', overflowY: 'auto', paddingRight: '10px' }} className="hide-scrollbar">
                                 <h4 style={sectionTitle}>Basic Information</h4>
                                 <div className="user-form-split">
@@ -306,7 +365,6 @@ export default function UserManager() {
                                     <div style={inputGroup}><label style={labelStyle}>Phone</label><input value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} style={input} /></div>
                                 </div>
 
-                                {/* ✨ NEW ADDED: Identity & Photo Section */}
                                 <h4 style={sectionTitle}>Identity & Photo</h4>
                                 <div className="user-form-split">
                                     <div style={inputGroup}>
@@ -360,7 +418,6 @@ export default function UserManager() {
                                     <div style={inputGroup}><label style={labelStyle}>Experience (Years)</label><input type="number" value={formData.experience_years} onChange={e => setFormData({ ...formData, experience_years: e.target.value })} style={input} /></div>
                                 </div>
 
-                                {/* FIX 6: Font Family inheritance for Textarea */}
                                 <div style={inputGroup}><label style={labelStyle}>Permanent Address</label><textarea value={formData.address_permanent} onChange={e => setFormData({ ...formData, address_permanent: e.target.value })} style={{ ...input, height: '80px', fontFamily: 'inherit' }} /></div>
 
                                 {!editMode && (
@@ -383,27 +440,76 @@ export default function UserManager() {
                 )}
             </AnimatePresence>
 
-            {/* VIEW MODAL */}
+            {/* 🚀 NEW MEGA VIEW MODAL */}
             <AnimatePresence>
                 {isViewOpen && selectedUser && (
                     <div style={overlay}>
-                        <motion.div initial={{ y: 50, opacity: 0, scale: 0.9 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 50, opacity: 0, scale: 0.9 }} style={{ ...modal, width: '500px', padding: '0', overflow: 'hidden', border: 'none' }} className="responsive-modal">
-                            <div style={{ background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)', padding: '40px 30px', textAlign: 'center', color: 'white', position: 'relative' }}>
-                                <motion.button whileHover={{ rotate: 90 }} onClick={closeView} style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', borderRadius: '50%', width: '36px', height: '36px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={20} /></motion.button>
-                                <div style={{ width: '90px', height: '90px', borderRadius: '24px', background: 'rgba(255,255,255,0.25)', margin: '0 auto 15px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: '800' }}>{selectedUser.full_name?.charAt(0).toUpperCase()}</div>
-                                <h2 style={{ fontSize: '1.8rem', margin: 0, fontWeight: '800', wordBreak: 'break-word' }}>{selectedUser.full_name}</h2>
-                                <p style={{ fontSize: '1rem', opacity: 0.9, marginTop: '5px', wordBreak: 'break-all' }}>{selectedUser.email}</p>
-                            </div>
-                            <div style={{ padding: '35px', maxHeight: '50vh', overflowY: 'auto' }} className="hide-scrollbar">
-                                {/* ✨ NEW ADDED: Identity Display */}
-                                <DetailRow icon={<Shield size={20} />} label="National Identity" value={selectedUser.national_identity || "N/A"} color="#6366f1" />
+                        <motion.div initial={{ y: 50, opacity: 0, scale: 0.9 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 50, opacity: 0, scale: 0.9 }} style={{ ...modal, width: '650px', padding: '0', overflow: 'hidden', border: 'none' }} className="responsive-modal">
 
-                                <DetailRow icon={<Shield size={20} />} label="Role" value={selectedUser.role} />
-                                <DetailRow icon={<Briefcase size={20} />} label="Post Type" value={selectedUser.post_nature || "N/A"} />
-                                <DetailRow icon={<Home size={20} />} label="Work Group" value={selectedUser.working_group || "N/A"} />
-                                <DetailRow icon={<GraduationCap size={20} />} label="Qualification" value={selectedUser.highest_qualification || "N/A"} />
-                                <DetailRow icon={<User size={20} />} label="Father's Name" value={selectedUser.father_name || "N/A"} />
+                            <div style={{ background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)', padding: '30px', textAlign: 'center', color: 'white', position: 'relative' }}>
+                                <motion.button whileHover={{ rotate: 90 }} onClick={closeView} style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', borderRadius: '50%', width: '36px', height: '36px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={20} /></motion.button>
+                                <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: 'rgba(255,255,255,0.25)', margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: '800' }}>{selectedUser.full_name?.charAt(0).toUpperCase()}</div>
+                                <h2 style={{ fontSize: '1.6rem', margin: 0, fontWeight: '800', wordBreak: 'break-word' }}>{selectedUser.full_name}</h2>
+                                <p style={{ fontSize: '0.95rem', opacity: 0.9, marginTop: '5px', wordBreak: 'break-all' }}>{selectedUser.email}</p>
+                            </div>
+
+                            <div style={{ padding: '25px 35px', maxHeight: '60vh', overflowY: 'auto', background: '#f8fafc' }} className="hide-scrollbar">
+
+                                <h4 style={sectionTitle}>Basic Identity</h4>
+                                <DetailRow icon={<Shield size={20} />} label="National Identity" value={selectedUser.national_identity || "N/A"} color="#6366f1" />
+                                <DetailRow icon={<Briefcase size={20} />} label="Role / Post" value={`${selectedUser.role} (${selectedUser.post_nature || "N/A"})`} />
                                 <DetailRow icon={<Phone size={20} />} label="Contact" value={selectedUser.phone || "N/A"} />
+
+                                {isProfileLoading ? (
+                                    <div style={{ textAlign: "center", padding: "40px" }}>
+                                        <Loader2 className="spinner" size={35} color="#6366f1" style={{ margin: "0 auto 10px", animation: "spin 1s linear infinite" }} />
+                                        <p style={{ color: "#64748b", fontWeight: '600' }}>Fetching Mega Profile...</p>
+                                    </div>
+                                ) : adminMegaProfile ? (
+                                    <div style={{ marginTop: '25px' }}>
+                                        <div className="mega-tabs-header">
+                                            <button className={`mega-tab ${activeTab === 'medical' ? 'active' : ''}`} onClick={() => setActiveTab('medical')}><HeartPulse size={16} /> Medical</button>
+                                            <button className={`mega-tab ${activeTab === 'academic' ? 'active' : ''}`} onClick={() => setActiveTab('academic')}><GraduationCap size={16} /> Academic</button>
+                                            <button className={`mega-tab ${activeTab === 'professional' ? 'active' : ''}`} onClick={() => setActiveTab('professional')}><Briefcase size={16} /> Professional</button>
+                                            <button className={`mega-tab ${activeTab === 'social' ? 'active' : ''}`} onClick={() => setActiveTab('social')}><Activity size={16} /> Social</button>
+                                        </div>
+
+                                        <div style={{ paddingTop: '15px' }}>
+                                            {activeTab === 'medical' && (
+                                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                                                    <DetailRow icon={<HeartPulse size={18} />} label="Blood Group" value={adminMegaProfile.medical?.blood_group || "---"} color="#ef4444" />
+                                                    <DetailRow icon={<User size={18} />} label="Height & Weight" value={`${adminMegaProfile.medical?.height_cm || '-'} cm / ${adminMegaProfile.medical?.weight_kg || '-'} kg`} />
+                                                    <DetailRow icon={<Phone size={18} />} label="Emergency Contact" value={`${adminMegaProfile.medical?.emergency_contact_name || "---"} (${adminMegaProfile.medical?.emergency_contact_number || "---"})`} />
+                                                    <DetailRow icon={<Shield size={18} />} label="Chronic Diseases" value={adminMegaProfile.medical?.chronic_diseases || "None recorded"} />
+                                                </motion.div>
+                                            )}
+                                            {activeTab === 'academic' && (
+                                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                                                    <DetailRow icon={<GraduationCap size={18} />} label="10th Standard" value={`${adminMegaProfile.academic?.tenth_school || '---'} (${adminMegaProfile.academic?.tenth_percentage || '-'}%)`} />
+                                                    <DetailRow icon={<GraduationCap size={18} />} label="12th Standard" value={`${adminMegaProfile.academic?.twelfth_school || '---'} (${adminMegaProfile.academic?.twelfth_percentage || '-'}%)`} />
+                                                    <DetailRow icon={<GraduationCap size={18} />} label="Graduation" value={`${adminMegaProfile.academic?.graduation_degree || '---'} (${adminMegaProfile.academic?.graduation_percentage || '-'}%)`} />
+                                                    <DetailRow icon={<HardDrive size={18} />} label="Tech Skills" value={adminMegaProfile.academic?.technical_skills || "---"} />
+                                                </motion.div>
+                                            )}
+                                            {activeTab === 'professional' && (
+                                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                                                    <DetailRow icon={<Briefcase size={18} />} label="Total Experience" value={`${adminMegaProfile.professional?.total_experience_years || 0} Yrs, ${adminMegaProfile.professional?.total_experience_months || 0} Mos`} />
+                                                    <DetailRow icon={<Briefcase size={18} />} label="Last Job" value={`${adminMegaProfile.professional?.last_job_title || '---'} at ${adminMegaProfile.professional?.last_company_name || '---'}`} />
+                                                    <DetailRow icon={<User size={18} />} label="Reason for Leaving" value={adminMegaProfile.professional?.reason_for_leaving || "---"} />
+                                                </motion.div>
+                                            )}
+                                            {activeTab === 'social' && (
+                                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                                                    <DetailRow icon={<HeartPulse size={18} />} label="Blood Donation" value={adminMegaProfile.social?.blood_donation_history || "---"} />
+                                                    <DetailRow icon={<Activity size={18} />} label="NGO Work" value={adminMegaProfile.social?.ngo_social_work || "---"} />
+                                                    <DetailRow icon={<Sparkles size={18} />} label="Awards" value={adminMegaProfile.social?.awards_achievements || "---"} />
+                                                </motion.div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p style={{ textAlign: 'center', color: '#94a3b8', marginTop: '20px', fontWeight: '600' }}>No Mega Profile Available.</p>
+                                )}
                             </div>
                         </motion.div>
                     </div>
@@ -413,7 +519,7 @@ export default function UserManager() {
             {/* STATUS MODAL */}
             <AnimatePresence>{isStatusModalOpen && userToToggle && (<div style={overlay}><motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ ...modal, width: '420px', textAlign: 'center', borderTop: `6px solid ${statusAction === 'HIBERNATE' ? '#8b5cf6' : '#10b981'}` }}><h2 style={{ fontSize: '1.6rem', fontWeight: '800', color: '#1e293b' }}>Confirm {statusAction === 'HIBERNATE' ? 'Hibernate' : 'Activate'}?</h2><div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '20px' }}><motion.button onClick={() => setIsStatusModalOpen(false)} style={secondaryBtn}>Cancel</motion.button><motion.button onClick={confirmStatusToggle} style={{ ...deleteBtnStyle, background: statusAction === 'HIBERNATE' ? '#8b5cf6' : '#10b981' }}>Confirm</motion.button></div></motion.div></div>)}</AnimatePresence>
 
-            {/* 🔴 FIX: DELETE MODAL VISIBILITY */}
+            {/* DELETE MODAL VISIBILITY */}
             <AnimatePresence>
                 {isDeleteModalOpen && (
                     <div style={overlay}>
@@ -421,7 +527,6 @@ export default function UserManager() {
                             <div style={{ width: '70px', height: '70px', background: '#fee2e2', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#ef4444' }}>
                                 <AlertTriangle size={32} />
                             </div>
-                            {/* Added explicit color here */}
                             <h2 style={{ fontSize: '1.6rem', fontWeight: '800', color: '#1e293b' }}>Delete User?</h2>
                             <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '20px' }}>
                                 <motion.button onClick={() => setIsDeleteModalOpen(false)} style={secondaryBtn}>Cancel</motion.button>
@@ -432,8 +537,7 @@ export default function UserManager() {
                 )}
             </AnimatePresence>
 
-
-            {/* ✨ NEW: BULK DELETE MODAL */}
+            {/* BULK DELETE MODAL */}
             <AnimatePresence>
                 {isBulkDeleteOpen && (
                     <div style={overlay}>
@@ -460,7 +564,6 @@ export default function UserManager() {
               .user-header-wrap { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 20px;}
               .responsive-title { font-size: 3rem; }
               .user-form-split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-              .user-form-split-flex { display: flex; gap: 20px; }
               .filter-group { display: flex; gap: 10px; flex-wrap: wrap; flex: 1;}
               .select-wrapper { position: relative; flex: 1; min-width: 150px; }
               .select-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none;}
@@ -471,6 +574,13 @@ export default function UserManager() {
               .table-row { transition: all 0.3s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); background: white; cursor: default; }
               .table-row td:first-child { border-top-left-radius: 24px; border-bottom-left-radius: 24px; }
               .table-row td:last-child { border-top-right-radius: 24px; border-bottom-right-radius: 24px; }
+
+              /* MEGA TABS CSS */
+              .mega-tabs-header { display: flex; gap: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; overflow-x: auto; }
+              .mega-tab { background: none; border: none; padding: 8px 16px; font-weight: 700; color: #64748b; cursor: pointer; border-radius: 10px; transition: 0.3s; display: flex; align-items: center; gap: 6px; font-size: 0.9rem;}
+              .mega-tab:hover { background: #f1f5f9; color: var(--primary); }
+              .mega-tab.active { background: #6366f1; color: white; box-shadow: 0 4px 10px rgba(99,102,241,0.3); }
+
               @media (max-width: 850px) {
                   .user-main-view { margin-left: 0 !important; padding: 15px !important; padding-top: 90px !important; width: 100% !important; }
                   .user-header-wrap { flex-direction: column; align-items: flex-start; gap: 15px; }
@@ -482,15 +592,14 @@ export default function UserManager() {
     );
 }
 
-// ✨ ULTRA PREMIUM STYLES (UPDATED FOR DEEP CHECK)
+// ✨ ULTRA PREMIUM STYLES
 const DetailRow = ({ icon, label, value, color }) => (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 0', borderBottom: '1px dashed #e2e8f0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', color: '#64748b', fontSize: '1rem', fontWeight: '600', flexShrink: 0 }}>
-            <div style={{ background: '#f8fafc', padding: '8px', borderRadius: '10px', color: '#94a3b8' }}>{icon}</div>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px dashed #e2e8f0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#64748b', fontSize: '0.95rem', fontWeight: '600', flexShrink: 0 }}>
+            <div style={{ background: 'white', padding: '6px', borderRadius: '8px', color: '#94a3b8', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>{icon}</div>
             {label}
         </div>
-        {/* FIX 7: Added text-align right, width constraint, and word-break to prevent text disappearing off screen or overlapping */}
-        <div style={{ fontWeight: '800', color: color || '#1e293b', fontSize: '1rem', textAlign: 'right', width: '60%', wordBreak: 'break-word' }}>{value}</div>
+        <div style={{ fontWeight: '800', color: color || '#1e293b', fontSize: '0.95rem', textAlign: 'right', width: '60%', wordBreak: 'break-word' }}>{value}</div>
     </div>
 );
 
@@ -508,11 +617,9 @@ const badge = { padding: '8px 16px', borderRadius: '12px', fontSize: '0.75rem', 
 const statusBadge = { padding: '6px 14px', borderRadius: '10px', fontSize: '0.8rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px', width: 'fit-content' };
 const actionBtn = { border: 'none', width: '42px', height: '42px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0 };
 const inputGroup = { display: 'flex', flexDirection: 'column', gap: '8px' };
-// FIX 8: Added box-sizing explicit and font-family inherit to inputs
 const input = { width: '100%', padding: '14px 20px', borderRadius: '14px', border: '2px solid #f1f5f9', background: '#f8fafc', fontSize: '1rem', outline: 'none', color: '#1e293b', fontWeight: '600', transition: 'all 0.3s', boxSizing: 'border-box', fontFamily: 'inherit' };
 const labelStyle = { fontSize: '0.9rem', color: '#64748b', fontWeight: '700', marginLeft: '5px' };
 const submitBtn = { width: '100%', padding: '18px', borderRadius: '18px', border: 'none', background: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)', color: 'white', fontWeight: '800', fontSize: '1.1rem', cursor: 'pointer', marginTop: '15px', boxShadow: '0 20px 40px -10px rgba(15, 23, 42, 0.4)' };
 const closeBtn = { background: '#f1f5f9', border: 'none', width: '40px', height: '40px', borderRadius: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' };
-const emptyState = { textAlign: 'center', padding: '80px', color: '#94a3b8', background: 'white', borderRadius: '30px', fontWeight: '600', border: '2px dashed #e2e8f0', fontSize: '1.1rem' };
 const pageBtn = { background: 'white', border: 'none', width: '45px', height: '45px', borderRadius: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' };
 const checkboxStyle = { width: '20px', height: '20px', borderRadius: '6px', cursor: 'pointer', accentColor: '#4f46e5' };
