@@ -16,10 +16,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # --------------------------------------------------
 # SECURITY
 # --------------------------------------------------
-SECRET_KEY = 'django-insecure-r3o(a=*ksfv+bpb3f%7fr3y8^_x%cb@+l+#tm4h@5+ge8)v!)m'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-r3o(a=*ksfv+bpb3f%7fr3y8^_x%cb@+l+#tm4h@5+ge8)v!)m')
 
 DEBUG = True 
-ALLOWED_HOSTS = ['*']
+
+# 🔥 UPDATED: Added specific hosts for production
+ALLOWED_HOSTS = [
+    'shivadda-backend-updated-software.onrender.com', 
+    'shivadda-backend-updated-software.vercel.app',
+    'localhost', 
+    '127.0.0.1',
+    '*' # Testing ke liye allow rakha hai
+]
 
 # --------------------------------------------------
 # APPLICATIONS
@@ -34,7 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     'rest_framework',
-    'corsheaders',
+    'corsheaders', # 🔥 CORS is important
     'django_filters',
     'django_cleanup.apps.CleanupConfig',
     'rest_framework_simplejwt',
@@ -52,7 +60,7 @@ INSTALLED_APPS = [
 # MIDDLEWARE
 # --------------------------------------------------
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware', # 🔥 Must be at the top
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -114,7 +122,25 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'accounts.User'
 
 # --------------------------------------------------
-# DRF + JWT SETTINGS (🔥 PAGINATION FIXED HERE)
+# 🔥 CORS & CSRF SETTINGS (FIXED FOR VERCEL ERROR)
+# --------------------------------------------------
+CORS_ALLOW_ALL_ORIGINS = True # Development ke liye easy rakha hai
+CORS_ALLOW_CREDENTIALS = True
+
+# Specific origins for safety
+CORS_ALLOWED_ORIGINS = [
+    "https://shivadda-backend-updated-software.vercel.app",
+    "http://localhost:5173",
+]
+
+# CSRF Trusted origins (Render needs this)
+CSRF_TRUSTED_ORIGINS = [
+    "https://shivadda-backend-updated-software.onrender.com",
+    "https://shivadda-backend-updated-software.vercel.app"
+]
+
+# --------------------------------------------------
+# DRF + JWT SETTINGS
 # --------------------------------------------------
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -124,7 +150,6 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny', 
     ],
-    # 🚀 DRF KO FORCE KIYA HAI KI KOI DATA NA KAATE
     'DEFAULT_PAGINATION_CLASS': None,
     'PAGE_SIZE': None,
 }
@@ -139,18 +164,9 @@ TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
 TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER')
 
-CORS_ALLOW_ALL_ORIGINS = True
-
-
-# Email Settings (Gmail)
 # --------------------------------------------------
 # 🔥 EMAIL SETTINGS (REAL MODE) 🔥
 # --------------------------------------------------
-
-# Console mode ko band kar diya hai
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' 
-
-# 👇 Asli SMTP settings ko chalu (uncomment) kar diya hai
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' 
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
@@ -158,3 +174,4 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER') 
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD') 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+EMAIL_TIMEOUT = 10 # Latency kam karne ke liye
