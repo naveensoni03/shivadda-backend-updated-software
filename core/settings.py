@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'inventory', 'hostel', 'transport', 'payroll',
     'services', 'classifieds', 'payments', 'profiles',
     'agents', 'timetable','news','parents',
+    'anymail', # 👈 Brevo API ke liye add kiya gaya hai
 ]
 
 # --------------------------------------------------
@@ -165,13 +166,14 @@ TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
 TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER')
 
 # --------------------------------------------------
-# 🔥 EMAIL SETTINGS (REAL MODE) 🔥
+# 🔥 EMAIL SETTINGS (PERMANENT API SOLUTION - BREVO) 🔥
 # --------------------------------------------------
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' 
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER') 
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD') 
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-EMAIL_TIMEOUT = 10 # Latency kam karne ke liye
+EMAIL_BACKEND = "anymail.backends.sendinblue.EmailBackend"
+
+ANYMAIL = {
+    # Render dashboard se API key uthayega
+    "SENDINBLUE_API_KEY": os.getenv('BREVO_API_KEY'),
+}
+
+# Jis email se tumne Brevo banaya hai, wahi default sender hogi
+DEFAULT_FROM_EMAIL = 'Soninaveen9756@gmail.com'
