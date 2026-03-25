@@ -61,6 +61,11 @@ class SendOTPView(APIView):
         user.save()
 
         if user.email:
+            # 🚀🚀🚀 JUGAAD: RENDER LOGS MEIN OTP DEKHNE KE LIYE 🚀🚀🚀
+            print(f"\n==========================================")
+            print(f"🚀🚀🚀 OTP FOR {user.email} IS: {otp} 🚀🚀🚀")
+            print(f"==========================================\n")
+            
             send_otp_email_async("Shivadda OTP", f"Your OTP: {otp}", user.email)
             return Response({"message": "OTP sent successfully! ✅"}, status=200)
         else:
