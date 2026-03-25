@@ -3,7 +3,7 @@ import random
 import razorpay
 from django.db.models import Q
 from django.contrib.auth import get_user_model, authenticate
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives # 👈 YEH CHANGE KIYA
 from django.conf import settings
 
 from rest_framework import viewsets, status, filters
@@ -21,12 +21,19 @@ from .serializers import AgentSerializer, AgentCreateSerializer, UserManagementS
 User = get_user_model()
 
 # ==========================================
-# 📧 ASYNC EMAIL HELPER (Instant Login Fix)
+# 📧 ASYNC EMAIL HELPER (ANYMAIL BREVO FIX)
 # ==========================================
 def send_otp_email_async(subject, message, recipient):
     def send():
         try:
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [recipient])
+            # 👈 YEH NAYA CODE ANYMAIL KE LIYE HAI
+            msg = EmailMultiAlternatives(
+                subject=subject,
+                body=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[recipient]
+            )
+            msg.send()
         except Exception as e:
             print(f"❌ Async Email Error: {e}")
     threading.Thread(target=send).start()
@@ -61,12 +68,12 @@ class SendOTPView(APIView):
         user.save()
 
         if user.email:
-            # 🚀🚀🚀 JUGAAD: RENDER LOGS MEIN OTP DEKHNE KE LIYE 🚀🚀🚀
+            # Console checking ke liye rakha hai
             print(f"\n==========================================")
             print(f"🚀🚀🚀 OTP FOR {user.email} IS: {otp} 🚀🚀🚀")
             print(f"==========================================\n")
             
-            send_otp_email_async("Shivadda OTP", f"Your OTP: {otp}", user.email)
+            send_otp_email_async("Shivadda Login OTP", f"Your verification code is: {otp}", user.email)
             return Response({"message": "OTP sent successfully! ✅"}, status=200)
         else:
             return Response({"message": f"OTP for phone: {otp} (Check Console)"}, status=200)
@@ -190,7 +197,6 @@ class MyChildrenProfileView(APIView):
 class MyChildrenProgressView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request):
-        # Implementation is preserved safely
         return Response([], status=200)
 
 class MyChildrenFeesView(APIView):
