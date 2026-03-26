@@ -330,14 +330,13 @@ class TeacherMailboxDetailAPI(APIView):
         
 
 # ==========================================
-# 7. 🔥 NAYA: GET & UPDATE CURRENT TEACHER PROFILE
+# 7. 🔥 NAYA: GET & UPDATE CURRENT TEACHER PROFILE (FIXED 500 ERROR)
 # ==========================================
 class TeacherProfileAPI(APIView):
-    permission_classes = [IsAuthenticated] # Sirf logged-in teacher access kar payega
+    permission_classes = [IsAuthenticated] 
 
     def get(self, request):
         try:
-            # Current logged-in user ke email se teacher dhundho
             teacher = Teacher.objects.get(email=request.user.email)
             serializer = TeacherSerializer(teacher)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -346,33 +345,44 @@ class TeacherProfileAPI(APIView):
 
     def patch(self, request):
         try:
-            teacher = Teacher.objects.get(email=request.user.email)
+            # Safely find teacher
+            teacher = Teacher.objects.filter(email__iexact=request.user.email).first()
+            if not teacher:
+                return Response({"error": "Teacher profile not found in DB."}, status=status.HTTP_404_NOT_FOUND)
             
-            # Request data se profile update karo
-            full_name = request.data.get('full_name')
-            phone = request.data.get('phone')
-            qualification = request.data.get('qualification') # Bio ki jagah
+            # Frontend se data nikalna (CamelCase aur SnakeCase dono handle karega)
+            full_name = request.data.get('full_name') or request.data.get('fullName')
+            phone = request.data.get('phone') or request.data.get('phoneNumber')
+            qualification = request.data.get('qualification')
 
+            # Update Teacher Table
             if full_name: teacher.full_name = full_name
             if phone: teacher.phone = phone
             if qualification: teacher.qualification = qualification
-            
             teacher.save()
 
-            # Sath hi User table me bhi name aur phone update kar do
+            # Safely update User Table (Bina crash kiye)
             user = request.user
             if full_name: 
-                user.full_name = full_name
-                user.first_name = full_name.split()[0] # Pehla naam
+                if hasattr(user, 'full_name'): user.full_name = full_name
+                elif hasattr(user, 'name'): user.name = full_name
+                
+                if hasattr(user, 'first_name') and full_name.strip():
+                    user.first_name = full_name.split()[0] 
+            
             if phone: 
-                user.phone = phone
+                if hasattr(user, 'phone'): user.phone = phone
+                elif hasattr(user, 'mobile'): user.mobile = phone
+            
             user.save()
 
             serializer = TeacherSerializer(teacher)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            import traceback
+            print("🔥 PROFILE SAVE ERROR:", traceback.format_exc()) 
+            return Response({"error": f"Server crash: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # ==========================================
