@@ -1,5 +1,6 @@
+from .models import AcademicLevel, AcademicClass
 from rest_framework import serializers
-from .models import Course, Batch, Subject, Lesson, Resource, VirtualClass
+from .models import AcademicLevel, Course, Batch, Subject, Lesson, Resource, VirtualClass
 
 class ResourceSerializer(serializers.ModelSerializer):
     class Meta:
@@ -41,4 +42,18 @@ class CourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
+        fields = '__all__'
+        
+        
+        
+
+class AcademicLevelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AcademicLevel
+        fields = '__all__'
+
+class AcademicClassSerializer(serializers.ModelSerializer):
+    level_name = serializers.CharField(source='level.name', read_only=True)
+    class Meta:
+        model = AcademicClass
         fields = '__all__'

@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../api/axios";
 import { PlayCircle, CheckCircle, Clock, Search, Loader2 } from "lucide-react";
-import StudentSidebar from "../../components/StudentSidebar"; // ✅ NAYA SIDEBAR IMPORT KIYA
+import StudentSidebar from "../../components/StudentSidebar";
 
 export default function MyCourses() {
   const navigate = useNavigate();
@@ -15,19 +15,52 @@ export default function MyCourses() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("All");
 
+  // 🔥 NEW: States to store Live Dropdown Data from Database
+  const [dbLevels, setDbLevels] = useState([]);
+  const [dbClasses, setDbClasses] = useState([]);
+
+  // Universal Selection States
+  const [placeFilter, setPlaceFilter] = useState("ALL_PLACES");
+  const [serviceFilter, setServiceFilter] = useState("ALL_SERVICES");
+  const [classFilter, setClassFilter] = useState("ALL_CLASSES");
+
+  // 🚀 FETCH DROPDOWN DATA ON LOAD
+  useEffect(() => {
+    const fetchDynamicFilters = async () => {
+      try {
+        const [lvlRes, clsRes] = await Promise.all([
+          api.get('courses/academic-levels/'),
+          api.get('courses/academic-classes/')
+        ]);
+        setDbLevels(Array.isArray(lvlRes.data) ? lvlRes.data : lvlRes.data.results || []);
+        setDbClasses(Array.isArray(clsRes.data) ? clsRes.data : clsRes.data.results || []);
+      } catch (err) {
+        console.error("Error fetching dynamic filters:", err);
+      }
+    };
+    fetchDynamicFilters();
+  }, []);
+
+  // 🚀 FETCH COURSES WHENEVER FILTERS CHANGE
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     if (!token) {
       // navigate("/student/login"); // Production me uncomment karein
     }
     fetchCourses();
-  }, [navigate]);
+  }, [navigate, placeFilter, serviceFilter, classFilter]);
 
-  // 🚀 API CALL TO FETCH COURSES
   const fetchCourses = async () => {
     setIsLoading(true);
     try {
-      const res = await api.get("/courses/list/");
+      const queryParams = new URLSearchParams();
+      if (placeFilter !== "ALL_PLACES") queryParams.append("place", placeFilter);
+      if (serviceFilter !== "ALL_SERVICES") queryParams.append("service", serviceFilter);
+      if (classFilter !== "ALL_CLASSES") queryParams.append("class", classFilter);
+
+      const url = `/courses/list/?${queryParams.toString()}`;
+      const res = await api.get(url);
+
       const data = Array.isArray(res.data) ? res.data : res.data.results || [];
       setCourses(data);
     } catch (error) {
@@ -37,7 +70,7 @@ export default function MyCourses() {
     }
   };
 
-  // Filter Logic
+  // Local Search & Status Filter Logic
   const filteredCourses = courses.filter(course => {
     const matchesSearch = course.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       course.code?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -59,13 +92,9 @@ export default function MyCourses() {
 
   return (
     <div className="student-layout">
-      {/* 🌪️ BACKGROUND */}
       <div className="ambient-bg"></div>
-
-      {/* ✅ SEPARATE SIDEBAR COMPONENT */}
       <StudentSidebar />
 
-      {/* 🖥️ MAIN CONTENT */}
       <main className="student-main-content">
         <div className="content-wrapper">
 
@@ -77,7 +106,7 @@ export default function MyCourses() {
             </div>
           </motion.header>
 
-          {/* Controls: Search & Filter */}
+          {/* Controls: Search & Universal Selection Filter */}
           <motion.div className="controls-bar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
             <div className="search-box glass-panel">
               <Search size={20} color="#64748b" />
@@ -88,7 +117,42 @@ export default function MyCourses() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div className="filter-tabs glass-panel">
+
+            {/* 🔥 NEW: LIVE Universal Selection Boxes from Database */}
+            <div className="universal-filters glass-panel">
+              {/* Place / Geography Filter */}
+              <select className="hierarchy-select" value={placeFilter} onChange={(e) => setPlaceFilter(e.target.value)}>
+                <option value="ALL_PLACES">🌍 All Places</option>
+                <option value="ASIA">Asia</option>
+                <option value="INDIA">India</option>
+                <option value="UP">Uttar Pradesh</option>
+                <option value="DELHI">Delhi</option>
+              </select>
+
+              {/* Service / Pillar Filter (LIVE) */}
+              <select className="hierarchy-select" value={serviceFilter} onChange={(e) => {
+                setServiceFilter(e.target.value);
+                setClassFilter("ALL_CLASSES"); // Reset class when pillar changes
+              }}>
+                <option value="ALL_SERVICES">📚 All Edu. Pillars</option>
+                {dbLevels.map((lvl) => (
+                  <option key={lvl.id} value={lvl.name}>{lvl.name}</option>
+                ))}
+              </select>
+
+              {/* Class / Group Filter (LIVE & SMART FILTERED) */}
+              <select className="hierarchy-select" value={classFilter} onChange={(e) => setClassFilter(e.target.value)}>
+                <option value="ALL_CLASSES">🎓 All Classes</option>
+                {dbClasses
+                  .filter(cls => serviceFilter === "ALL_SERVICES" || cls.level_name === serviceFilter || cls.level === serviceFilter)
+                  .map((cls) => (
+                    <option key={cls.id} value={cls.name}>{cls.name} {serviceFilter === "ALL_SERVICES" ? `(${cls.level_name})` : ""}</option>
+                  ))}
+              </select>
+            </div>
+
+            {/* Old Status Filter */}
+            <div className="filter-tabs glass-panel" style={{ marginTop: '10px' }}>
               {['All', 'Active', 'Inactive'].map(tab => (
                 <button
                   key={tab}
@@ -118,7 +182,7 @@ export default function MyCourses() {
                   <motion.div className="empty-state" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                     <div className="empty-icon">📚</div>
                     <h3>No courses found</h3>
-                    <p>You haven't been assigned any courses yet, or adjust your search.</p>
+                    <p>You haven't been assigned any courses yet, or adjust your search filters.</p>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -187,10 +251,39 @@ export default function MyCourses() {
         .page-subtitle { margin: 0; color: var(--text-muted); font-size: 1.05rem; font-weight: 500; }
 
         /* CONTROLS */
-        .controls-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; gap: 20px; flex-wrap: wrap; }
-        .search-box { display: flex; align-items: center; gap: 10px; padding: 12px 20px; border-radius: 16px; flex: 1; max-width: 400px; }
+        .controls-bar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; gap: 20px; flex-wrap: wrap; flex-direction: column;}
+        .search-box { display: flex; align-items: center; gap: 10px; padding: 12px 20px; border-radius: 16px; width: 100%; max-width: 500px; }
         .search-box input { border: none; background: transparent; outline: none; font-size: 1rem; width: 100%; color: var(--text-main); font-weight: 500; }
         
+        /* UNIVERSAL SELECTION CSS */
+        .universal-filters {
+            display: flex;
+            gap: 15px;
+            padding: 12px 20px;
+            border-radius: 16px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .hierarchy-select {
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex: 1;
+            min-width: 200px;
+        }
+        .hierarchy-select:hover, .hierarchy-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            background: white;
+        }
+
         .filter-tabs { display: flex; padding: 6px; border-radius: 16px; gap: 5px; flex-wrap: nowrap; overflow-x: auto;}
         .filter-tab { background: transparent; border: none; padding: 8px 20px; border-radius: 12px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: 0.3s; white-space: nowrap; }
         .filter-tab.active { background: white; color: var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
@@ -229,21 +322,15 @@ export default function MyCourses() {
 
         /* 📱 TABLET RESPONSIVENESS (1024px) */
         @media (max-width: 1024px) {
-            .student-main-content { 
-                margin-left: 0; 
-                width: 100%; 
-            }
-            .content-wrapper { padding: 110px 30px 100px 30px; } /* Header Space */
+            .student-main-content { margin-left: 0; width: 100%; }
+            .content-wrapper { padding: 110px 30px 100px 30px; }
         }
 
         /* 📱 MOBILE RESPONSIVENESS (768px) */
         @media (max-width: 768px) {
             .content-wrapper { padding: 95px 20px 80px 20px; }
-            
-            .controls-bar { flex-direction: column; align-items: stretch; gap: 15px; }
-            .search-box { max-width: 100%; }
-            .filter-tabs { width: 100%; overflow-x: auto; padding-bottom: 5px;}
-            
+            .universal-filters { flex-direction: column; gap: 10px; }
+            .hierarchy-select { width: 100%; }
             .course-grid { grid-template-columns: 1fr; }
         }
       `}</style>
@@ -252,9 +339,7 @@ export default function MyCourses() {
 }
 
 // --- SUB COMPONENTS ---
-
 const CourseCard = ({ course, variants, index }) => {
-  // 🔥 Navigation hook added here
   const navigate = useNavigate();
 
   // Dynamic Colors based on index
@@ -266,8 +351,7 @@ const CourseCard = ({ course, variants, index }) => {
   ];
   const theme = colorThemes[index % colorThemes.length];
 
-  // Default progress to 0 since it's not dynamic yet in DB
-  const progress = 0;
+  const progress = 0; // Default progress to 0
 
   return (
     <motion.div
@@ -316,7 +400,6 @@ const CourseCard = ({ course, variants, index }) => {
       </div>
 
       <div className="card-footer">
-        {/* 🔥 Yahan button par onClick set kar diya hai */}
         <button
           className="action-btn btn-primary"
           onClick={() => navigate(`/student/course-space/${course.id}`)}

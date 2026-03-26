@@ -73,8 +73,9 @@ export default function Login() {
 
     try {
       // 🚀 Hit the Real Login API with Email and OTP
-      const res = await api.post("auth/login/", { email, otp });
-
+      // 🚀 Hit the Real Login API with Email and OTP
+      // Yahan "email_or_phone" bhejenge kyunki backend ki VerifyOTPAndLoginView yahi demand karti hai
+      const res = await api.post("auth/verify-otp/", { email_or_phone: email, otp: otp });
       if (res.data && res.data.access) {
         // 1. Save Tokens
         localStorage.setItem("access_token", res.data.access);

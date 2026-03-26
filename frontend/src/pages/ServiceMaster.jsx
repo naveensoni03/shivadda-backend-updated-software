@@ -6,7 +6,7 @@ import {
     Briefcase, Layers, Cpu, Radio, Plus, Trash2,
     Sparkles, LayoutGrid, Eye, AlertTriangle, X, Shield, MapPin,
     Users, UserCheck, DollarSign, CheckSquare, Check, EyeOff,
-    ChevronLeft, ChevronRight // ✅ NEW: Added for pagination
+    ChevronLeft, ChevronRight, BookOpen // ✅ NEW: Added BookOpen for Classes Tab
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -33,43 +33,52 @@ const TabButton = ({ active, onClick, label, icon }) => (
 // --- MAIN COMPONENT ---
 export default function ServiceMaster() {
     const [activeTab, setActiveTab] = useState('levels');
-    const [data, setData] = useState({ levels: [], types: [], modes: [], management: [], place_codes: [], nature: [], seekers: [], providers: [], charges: [] });
+    // ✅ NEW: Added 'classes' to data state
+    const [data, setData] = useState({ levels: [], classes: [], types: [], modes: [], management: [], place_codes: [], nature: [], seekers: [], providers: [], charges: [] });
 
-    // ✅ NEW: Added Fields for Super Admin
+    // ✅ NEW: Added level_id for Classes form
     const [newItem, setNewItem] = useState({
         name: "", desc: "", code: "", icon: "", place_code: "", longitude: "", latitude: "", services_code: "", users_code: "",
-        amount: "", validity_months: "", status: "Active"
+        amount: "", validity_months: "", status: "Active", level_id: ""
     });
     const [loading, setLoading] = useState(false);
     const [selectedIds, setSelectedIds] = useState([]);
-
-    // ✅ NEW: Pagination State
     const [currentPage, setCurrentPage] = useState(1);
 
-    // API Endpoints Mapping
+    // 🚀 NEW: Updated API Endpoints for Phase 2 Engine
     const endpoints = {
-        levels: 'services/levels/',
+        levels: 'courses/academic-levels/',   // 🔥 Updated Backend Link
+        classes: 'courses/academic-classes/', // 🔥 New Backend Link
         types: 'services/types/',
         modes: 'services/modes/',
         management: 'services/management/',
         place_codes: 'services/place-codes/',
-        nature: 'services/nature/',      // NEW
-        seekers: 'services/seekers/',    // NEW
-        providers: 'services/providers/', // NEW
-        charges: 'services/charges/'      // NEW
+        nature: 'services/nature/',
+        seekers: 'services/seekers/',
+        providers: 'services/providers/',
+        charges: 'services/charges/'
     };
 
     useEffect(() => {
         fetchAllServices();
         setSelectedIds([]);
-        setCurrentPage(1); // ✅ Reset to page 1 on tab change
+        setCurrentPage(1);
     }, [activeTab]);
 
     const fetchAllServices = async () => {
         try {
             const res = await api.get(endpoints[activeTab]);
-            setData(prev => ({ ...prev, [activeTab]: Array.isArray(res.data) ? res.data : [] }));
+            // Handle pagination if backend sends { count, next, previous, results }
+            const resultData = Array.isArray(res.data) ? res.data : (res.data.results || []);
+            setData(prev => ({ ...prev, [activeTab]: resultData }));
             setSelectedIds([]);
+
+            // 🔥 NAYA: Agar hum classes tab par hain, toh levels bhi mangwa lo dropdown ke liye
+            if (activeTab === 'classes') {
+                const levelsRes = await api.get(endpoints.levels);
+                const levelsData = Array.isArray(levelsRes.data) ? levelsRes.data : (levelsRes.data.results || []);
+                setData(prev => ({ ...prev, levels: levelsData }));
+            }
         } catch (err) {
             setData(prev => ({ ...prev, [activeTab]: [] }));
         }
@@ -86,6 +95,9 @@ export default function ServiceMaster() {
         } else if (activeTab === 'charges') {
             if (!newItem.name || !newItem.amount) return toast.error("Name and Amount are required");
             payload = { ...payload, service_name: newItem.name, amount: newItem.amount, validity_months: newItem.validity_months || 1 };
+        } else if (activeTab === 'classes') {
+            if (!newItem.name || !newItem.level_id) return toast.error("Class Name and Level are required");
+            payload = { ...payload, name: newItem.name, code: newItem.code, level: newItem.level_id };
         } else {
             if (!newItem.name) return toast.error("Name is required");
             payload = { ...payload, name: newItem.name };
@@ -97,7 +109,7 @@ export default function ServiceMaster() {
         try {
             await api.post(endpoints[activeTab], payload);
             toast.success("Added Successfully! ✨");
-            setNewItem({ name: "", desc: "", code: "", icon: "", place_code: "", longitude: "", latitude: "", services_code: "", users_code: "", amount: "", validity_months: "", status: "Active" });
+            setNewItem({ name: "", desc: "", code: "", icon: "", place_code: "", longitude: "", latitude: "", services_code: "", users_code: "", amount: "", validity_months: "", status: "Active", level_id: "" });
             fetchAllServices();
         } catch (err) {
             toast.error("Creation Failed. Ensure Backend is updated.");
@@ -146,7 +158,8 @@ export default function ServiceMaster() {
 
     // Configuration for dynamic UI rendering
     const contentConfig = {
-        levels: { title: "Education Levels", subtitle: "Foundation, Middle, Secondary...", icon: <Layers size={24} />, color: '#6366f1' },
+        levels: { title: "Education Pillars", subtitle: "Foundation, Middle, Secondary...", icon: <Layers size={24} />, color: '#6366f1' },
+        classes: { title: "Academic Classes", subtitle: "LKG, UKG, Class 10...", icon: <BookOpen size={24} />, color: '#3b82f6' }, // 🔥 NEW
         types: { title: "Service Types", subtitle: "Academic, Unacademic...", icon: <Briefcase size={24} />, color: '#ec4899' },
         modes: { title: "Service Modes", subtitle: "Online, Offline, Hybrid...", icon: <Radio size={24} />, color: '#f59e0b' },
         management: { title: "Management Roles", subtitle: "Official, Unofficial...", icon: <Shield size={24} />, color: '#10b981' },
@@ -160,7 +173,7 @@ export default function ServiceMaster() {
     const currentConfig = contentConfig[activeTab];
     const currentData = data[activeTab] || [];
 
-    // ✅ NEW: Pagination Math (Strictly 6 items per page)
+    // Pagination Math (Strictly 6 items per page)
     const recordsPerPage = 6;
     const totalPages = Math.ceil(currentData.length / recordsPerPage);
     const indexOfLastRecord = currentPage * recordsPerPage;
@@ -186,7 +199,8 @@ export default function ServiceMaster() {
 
                 {/* --- TABS --- */}
                 <div className="tabs-container" style={{ position: 'relative', zIndex: 2 }}>
-                    <TabButton active={activeTab === 'levels'} onClick={() => setActiveTab('levels')} label="Edu. Levels" icon={<Layers size={18} />} />
+                    <TabButton active={activeTab === 'levels'} onClick={() => setActiveTab('levels')} label="Edu. Pillars" icon={<Layers size={18} />} />
+                    <TabButton active={activeTab === 'classes'} onClick={() => setActiveTab('classes')} label="Classes" icon={<BookOpen size={18} />} /> {/* 🔥 NEW TAB */}
                     <TabButton active={activeTab === 'types'} onClick={() => setActiveTab('types')} label="Service Types" icon={<Briefcase size={18} />} />
                     <TabButton active={activeTab === 'modes'} onClick={() => setActiveTab('modes')} label="Service Modes" icon={<Radio size={18} />} />
                     <TabButton active={activeTab === 'nature'} onClick={() => setActiveTab('nature')} label="Nature of Services" icon={<Sparkles size={18} />} />
@@ -211,12 +225,26 @@ export default function ServiceMaster() {
                                 </div>
 
                                 <form onSubmit={handleAdd} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+                                    {/* 🔥 NEW: Classes form Dropdown */}
+                                    {activeTab === 'classes' && (
+                                        <select value={newItem.level_id} onChange={e => setNewItem({ ...newItem, level_id: e.target.value })} style={inputStyle}>
+                                            <option value="">Select Education Pillar...</option>
+                                            {data.levels?.map(lvl => (
+                                                <option key={lvl.id} value={lvl.id}>{lvl.name || lvl.get_name_display}</option>
+                                            ))}
+                                        </select>
+                                    )}
+
                                     {activeTab !== 'place_codes' && (
-                                        <input placeholder="Name / Title" value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} style={inputStyle} />
+                                        <input placeholder={activeTab === 'classes' ? "Class Name (e.g. LKG)" : "Name / Title"} value={newItem.name} onChange={e => setNewItem({ ...newItem, name: e.target.value })} style={inputStyle} />
                                     )}
 
                                     {activeTab === 'levels' && <textarea rows="3" placeholder="Description (Optional)" value={newItem.desc} onChange={e => setNewItem({ ...newItem, desc: e.target.value })} style={{ ...inputStyle, resize: 'none' }} />}
-                                    {activeTab === 'types' && <input placeholder="Short Code (e.g. ACD)" value={newItem.code} onChange={e => setNewItem({ ...newItem, code: e.target.value })} style={{ ...inputStyle, textTransform: 'uppercase' }} />}
+
+                                    {/* Types and Classes dono mein Short code lagta hai */}
+                                    {(activeTab === 'types' || activeTab === 'classes') && <input placeholder="Short Code (Optional)" value={newItem.code} onChange={e => setNewItem({ ...newItem, code: e.target.value })} style={{ ...inputStyle, textTransform: 'uppercase' }} />}
+
                                     {activeTab === 'modes' && <input placeholder="Icon Name (e.g. wifi)" value={newItem.icon} onChange={e => setNewItem({ ...newItem, icon: e.target.value })} style={inputStyle} />}
 
                                     {activeTab === 'charges' && (
@@ -304,6 +332,12 @@ export default function ServiceMaster() {
                                                             <th>Service Name</th>
                                                             <th>Fee / Validity</th>
                                                         </>
+                                                    ) : activeTab === 'classes' ? (
+                                                        <>
+                                                            <th>Class Name</th>
+                                                            <th>Code</th>
+                                                            <th>Belongs To (Pillar)</th>
+                                                        </>
                                                     ) : (
                                                         <th style={{ width: '40%' }}>Name</th>
                                                     )}
@@ -313,7 +347,6 @@ export default function ServiceMaster() {
                                             </thead>
                                             <tbody>
                                                 <AnimatePresence>
-                                                    {/* ✅ Changed currentData.map to currentRecords.map */}
                                                     {currentRecords.map((item, idx) => (
                                                         <motion.tr key={item.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ delay: idx * 0.05 }} className="table-row-hover">
                                                             <td>
@@ -330,6 +363,12 @@ export default function ServiceMaster() {
                                                                 <>
                                                                     <td style={{ fontWeight: '800', color: '#1e293b' }}>{item.service_name || item.name}</td>
                                                                     <td style={{ fontWeight: '600', color: '#10b981' }}>₹{item.amount} / {item.validity_months} Mo.</td>
+                                                                </>
+                                                            ) : activeTab === 'classes' ? (
+                                                                <>
+                                                                    <td style={{ fontWeight: '800', color: '#1e293b' }}>{item.name}</td>
+                                                                    <td><span className="badge-code">{item.code || "N/A"}</span></td>
+                                                                    <td style={{ fontWeight: '600', color: '#6366f1' }}>{item.level_name || "Linked"}</td>
                                                                 </>
                                                             ) : (
                                                                 <td style={{ fontWeight: '800', color: '#1e293b' }}>{item.name}</td>
@@ -351,7 +390,7 @@ export default function ServiceMaster() {
                                         </table>
                                     </div>
 
-                                    {/* ✅ NEW: Pagination Controls UI */}
+                                    {/* Pagination Controls */}
                                     {totalPages > 1 && (
                                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px 20px', gap: '15px', borderTop: '1px solid #f1f5f9', background: 'white' }}>
                                             <button

@@ -23,22 +23,21 @@ export default function TeacherLogin() {
         const loadingToast = toast.loading("Verifying credentials...");
 
         try {
-            const response = await api.post("auth/login/", {
+            // 🔥 THE BULLETPROOF FIX: 
+            // Hum dono bhej rahe hain (email aur username) taaki backend confuse na ho.
+            const payload = {
                 email: email.toLowerCase().trim(),
+                username: email.toLowerCase().trim(),
                 password: password.trim()
-            });
+            };
+
+            const response = await api.post("auth/login/", payload);
 
             if (response.data && response.data.access) {
                 const { access, refresh, role, user_role, name, user_id } = response.data;
 
-                // 🚀 THE FIX: Agar backend se role na aaye, par login successful ho jaye, 
-                // toh use by default "Teacher" maan lo (kyunki ye teacher login page hi hai).
-                let actualRole = (role || user_role || "").toLowerCase().trim();
-
-                // Agar actualRole khali hai, toh hum forcefully usko "teacher" set kar rahe hain.
-                if (!actualRole) {
-                    actualRole = "teacher";
-                }
+                // Default fallback to "Teacher"
+                let actualRole = (role || user_role || "teacher").toLowerCase().trim();
 
                 if (actualRole !== "teacher" && actualRole !== "super admin") {
                     toast.error(`Access Denied! Your role is '${actualRole}'. Only Teachers can login here.`, { id: loadingToast });
@@ -48,7 +47,6 @@ export default function TeacherLogin() {
 
                 localStorage.setItem("access_token", access);
                 localStorage.setItem("refresh_token", refresh);
-                // Force save as Teacher if missing
                 localStorage.setItem("user_role", role || user_role || "Teacher");
                 localStorage.setItem("user_name", name || "Instructor");
                 if (user_id) localStorage.setItem("user_id", user_id);
@@ -219,36 +217,15 @@ export default function TeacherLogin() {
                 .spinner { animation: spin 1s linear infinite; }
                 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
                 
-                /* ✅ 100% FIXED FOR MOBILE KEYBOARD OVERFLOW */
                 @media (max-width: 900px) {
-                    .split-login-container { 
-                        flex-direction: column; 
-                        height: 100%; 
-                        min-height: 100vh;
-                        overflow-y: auto; 
-                    }
-                    .login-left-panel { 
-                        flex: none; 
-                        padding: 30px 20px; 
-                        border-bottom-left-radius: 30px; 
-                        border-bottom-right-radius: 30px; 
-                    }
+                    .split-login-container { flex-direction: column; height: 100%; min-height: 100vh; overflow-y: auto; }
+                    .login-left-panel { flex: none; padding: 30px 20px; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; }
                     .left-content { margin-top: 15px; }
                     .left-content h1 { font-size: 2rem; margin-bottom: 10px; }
                     .left-content p { font-size: 1rem; max-width: 100%; }
                     .footer-copyright { display: none; }
-                    
-                    .login-right-panel { 
-                        background: #f8fafc; 
-                        padding: 20px 15px; 
-                        align-items: flex-start; 
-                    }
-                    .login-card { 
-                        box-shadow: none; 
-                        background: transparent; 
-                        padding: 10px; 
-                        max-width: 100%;
-                    }
+                    .login-right-panel { background: #f8fafc; padding: 20px 15px; align-items: flex-start; }
+                    .login-card { box-shadow: none; background: transparent; padding: 10px; max-width: 100%; }
                     .form-header h2 { font-size: 1.5rem; }
                     .login-form { gap: 15px; }
                     .primary-submit-btn { margin-bottom: 20px; } 

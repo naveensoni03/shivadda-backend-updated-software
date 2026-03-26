@@ -21,7 +21,7 @@ from students.views import ChangePasswordView
 User = get_user_model()
 
 # ==========================================
-# 🛑 OLD CUSTOM JWT SERIALIZER (Kept for backup, but not used for OTP Login)
+# 🛑 OLD CUSTOM JWT SERIALIZER (Ab YAHI use hoga Standard Login ke liye)
 # ==========================================
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
@@ -92,9 +92,12 @@ urlpatterns = [
     path("", home),
     path("admin/", admin.site.urls),
     
-    # 🔥 FIX: CONNECTED NEW 2-STEP OTP APIs HERE 🔥
-    path('api/auth/send-otp/', SendOTPView.as_view(), name='send_otp'),       # Step 1: Mail bhejega
-    path('api/auth/login/', VerifyOTPAndLoginView.as_view(), name='login'),   # Step 2: OTP verify karke token dega
+    # 🔥 FIX: OTP wali API ka raasta alag kar diya, aur Login wali ka alag kar diya 🔥
+    path('api/auth/send-otp/', SendOTPView.as_view(), name='send_otp'),       
+    path('api/auth/verify-otp/', VerifyOTPAndLoginView.as_view(), name='verify_otp'), # Agar OTP se login karna ho
+    
+    # 🚀 YEH HAI AAPKA MAIN FIX 🚀 -> Ab /api/auth/login/ password accept karega!
+    path('api/auth/login/', CustomTokenObtainPairView.as_view(), name='login'), 
     
     path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('setup-live-admin/', create_live_admin), 
