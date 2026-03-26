@@ -170,9 +170,11 @@ TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER')
 # --------------------------------------------------
 EMAIL_BACKEND = "anymail.backends.sendinblue.EmailBackend"
 
+# settings.py ke sabse niche jao aur aise change karo:
+
 ANYMAIL = {
-    # Render dashboard se API key uthayega
-    "SENDINBLUE_API_KEY": os.getenv('BREVO_API_KEY'),
+    # screenshot se copy ki hui key yahan direct string me daal do
+    "SENDINBLUE_API_KEY": "xkeysib-30083e8ad07f3f8116278a5aafd3dacd98d3e05e2f1774352b2f676f45534234", 
 }
 
 # Jis email se tumne Brevo banaya hai, wahi default sender hogi
