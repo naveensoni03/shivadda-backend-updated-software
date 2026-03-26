@@ -178,4 +178,5 @@ ANYMAIL = {
 }
 
 # Jis email se tumne Brevo banaya hai, wahi default sender hogi
+EMAIL_FROM_USER = 'Soninaveen9756@gmail.com'
 DEFAULT_FROM_EMAIL = 'Soninaveen9756@gmail.com'
