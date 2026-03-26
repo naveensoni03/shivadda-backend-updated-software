@@ -31,16 +31,24 @@ export default function TeacherLogin() {
             if (response.data && response.data.access) {
                 const { access, refresh, role, user_role, name, user_id } = response.data;
 
-                const actualRole = (role || user_role || "").toLowerCase().trim();
+                // 🚀 THE FIX: Agar backend se role na aaye, par login successful ho jaye, 
+                // toh use by default "Teacher" maan lo (kyunki ye teacher login page hi hai).
+                let actualRole = (role || user_role || "").toLowerCase().trim();
+
+                // Agar actualRole khali hai, toh hum forcefully usko "teacher" set kar rahe hain.
+                if (!actualRole) {
+                    actualRole = "teacher";
+                }
 
                 if (actualRole !== "teacher" && actualRole !== "super admin") {
-                    toast.error("Access Denied! Only Teachers can login here.", { id: loadingToast });
+                    toast.error(`Access Denied! Your role is '${actualRole}'. Only Teachers can login here.`, { id: loadingToast });
                     setLoading(false);
                     return;
                 }
 
                 localStorage.setItem("access_token", access);
                 localStorage.setItem("refresh_token", refresh);
+                // Force save as Teacher if missing
                 localStorage.setItem("user_role", role || user_role || "Teacher");
                 localStorage.setItem("user_name", name || "Instructor");
                 if (user_id) localStorage.setItem("user_id", user_id);
@@ -217,7 +225,7 @@ export default function TeacherLogin() {
                         flex-direction: column; 
                         height: 100%; 
                         min-height: 100vh;
-                        overflow-y: auto; /* Allows scrolling if keyboard opens */
+                        overflow-y: auto; 
                     }
                     .login-left-panel { 
                         flex: none; 
@@ -233,7 +241,7 @@ export default function TeacherLogin() {
                     .login-right-panel { 
                         background: #f8fafc; 
                         padding: 20px 15px; 
-                        align-items: flex-start; /* Pushes content up */
+                        align-items: flex-start; 
                     }
                     .login-card { 
                         box-shadow: none; 
@@ -243,7 +251,7 @@ export default function TeacherLogin() {
                     }
                     .form-header h2 { font-size: 1.5rem; }
                     .login-form { gap: 15px; }
-                    .primary-submit-btn { margin-bottom: 20px; } /* Ensures button is visible */
+                    .primary-submit-btn { margin-bottom: 20px; } 
                 }
             `}</style>
         </div>

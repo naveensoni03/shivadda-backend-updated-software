@@ -38,7 +38,9 @@ class TeacherListCreateView(generics.ListCreateAPIView):
                 if User.objects.filter(email=email).exists():
                     return Response({"error": "User with this email already exists!"}, status=status.HTTP_400_BAD_REQUEST)
 
-                user = User.objects.create_user(email=email, password=default_password)
+                # 🚀 THE FIX: Use standard object creation then set_password explicitly
+                user = User(email=email)
+                user.set_password(default_password) # 🔥 YEH LINE PASSWORD KO HASH KARTI HAI
                 user.is_active = True 
                 
                 if hasattr(user, 'role'): user.role = 'Teacher'
@@ -48,6 +50,7 @@ class TeacherListCreateView(generics.ListCreateAPIView):
                 
                 user.save()
 
+                # Teacher model mein details save karna
                 serializer = self.get_serializer(data=data)
                 serializer.is_valid(raise_exception=True)
                 teacher_instance = serializer.save()
@@ -61,7 +64,6 @@ class TeacherListCreateView(generics.ListCreateAPIView):
             import traceback
             print(traceback.format_exc()) 
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 class TeacherDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Teacher.objects.all()
