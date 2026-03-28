@@ -10,7 +10,7 @@ export default function Login() {
   const navigate = useNavigate();
 
   // --- EXISTING STATES ---
-  const [email, setEmail] = useState("");
+  const [emailOrPhone, setEmailOrPhone] = useState(""); // 🚀 UPDATED: Email OR Phone
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -40,7 +40,7 @@ export default function Login() {
     e.preventDefault();
     setError("");
 
-    if (!email || !password) return setError("Please enter email and password");
+    if (!emailOrPhone || !password) return setError("Please enter your ID and password");
     if (captchaInput.toUpperCase() !== captchaCode) {
       generateCaptcha();
       setCaptchaInput("");
@@ -49,9 +49,9 @@ export default function Login() {
 
     setIsLoading(true);
     try {
-      // 🚀 Hit the Real API to Send OTP
-      const res = await api.post("auth/send-otp/", { email, password });
-      toast.success(res.data.message || "OTP sent securely to your email.");
+      // 🚀 Hit the Real API to Send OTP (Backend will decide SMS or Email)
+      const res = await api.post("auth/send-otp/", { email_or_phone: emailOrPhone, password: password });
+      toast.success(res.data.message || "OTP sent securely.");
       setAuthStep(2); // Move to OTP Step
     } catch (err) {
       setError(err.response?.data?.error || "Invalid Credentials. Try again.");
@@ -72,10 +72,8 @@ export default function Login() {
     setError("");
 
     try {
-      // 🚀 Hit the Real Login API with Email and OTP
-      // 🚀 Hit the Real Login API with Email and OTP
-      // Yahan "email_or_phone" bhejenge kyunki backend ki VerifyOTPAndLoginView yahi demand karti hai
-      const res = await api.post("auth/verify-otp/", { email_or_phone: email, otp: otp });
+      // 🚀 Hit the Real Login API with Email/Phone and OTP
+      const res = await api.post("auth/verify-otp/", { email_or_phone: emailOrPhone, otp: otp });
       if (res.data && res.data.access) {
         // 1. Save Tokens
         localStorage.setItem("access_token", res.data.access);
@@ -182,13 +180,14 @@ export default function Login() {
               <form onSubmit={verifyStepOne} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                 <div className="input-container" style={{ position: 'relative' }}>
                   <Mail className="input-icon" size={20} style={{ position: 'absolute', left: '12px', top: '12px', color: '#94a3b8' }} />
+                  {/* 🚀 FIXED: type="text" taaki number ya email dono accept kare */}
                   <input
-                    type="email"
-                    placeholder="Email Address"
+                    type="text"
+                    placeholder="Email or Mobile Number"
                     required
-                    autoComplete="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
+                    autoComplete="username"
+                    value={emailOrPhone}
+                    onChange={e => setEmailOrPhone(e.target.value)}
                     style={{ width: '100%', padding: '12px 12px 12px 40px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.2)', color: 'white', outline: 'none' }}
                   />
                 </div>

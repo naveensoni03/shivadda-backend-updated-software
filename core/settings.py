@@ -54,7 +54,6 @@ INSTALLED_APPS = [
     'inventory', 'hostel', 'transport', 'payroll',
     'services', 'classifieds', 'payments', 'profiles',
     'agents', 'timetable','news','parents',
-    'anymail', # 👈 Brevo API ke liye add kiya gaya hai
 ]
 
 # --------------------------------------------------
@@ -161,22 +160,20 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
+# --------------------------------------------------
+# 🔥 TWILIO SMS API CONFIGURATION 🔥
+# --------------------------------------------------
 TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
 TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER')
 
 # --------------------------------------------------
-# 🔥 EMAIL SETTINGS (PERMANENT API SOLUTION - BREVO) 🔥
+# 📧 DEFAULT GMAIL SMTP CONFIGURATION (100% WORKING) 📧
 # --------------------------------------------------
-EMAIL_BACKEND = "anymail.backends.sendinblue.EmailBackend"
-
-# settings.py ke sabse niche jao aur aise change karo:
-
-ANYMAIL = {
-    # screenshot se copy ki hui key yahan direct string me daal do
-    "SENDINBLUE_API_KEY": "xkeysib-30083e8ad07f3f8116278a5aafd3dacd98d3e05e2f1774352b2f676f45534234", 
-}
-
-# Jis email se tumne Brevo banaya hai, wahi default sender hogi
-EMAIL_FROM_USER = 'Soninaveen9756@gmail.com'
-DEFAULT_FROM_EMAIL = 'Soninaveen9756@gmail.com'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'Soninaveen9756@gmail.com')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'ssdahuyofdvqwxlk')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

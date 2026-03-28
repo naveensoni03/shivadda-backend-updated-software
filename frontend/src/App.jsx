@@ -45,6 +45,9 @@ import StudentTimetable from "./pages/student/Timetable";
 import StudentProfile from "./pages/student/Profile";
 import StudentCourseSpace from "./pages/student/StudentCourseSpace";
 
+// 🚀 NAYA TAKE EXAM COMPONENT IMPORT KIYA HAI YAHAN SE (Line delete kardi dummy wali)
+import TakeExam from "./pages/student/TakeExam";
+
 // 👩‍🏫 TEACHER PORTAL IMPORTS
 import TeacherLogin from "./pages/Teachers/TeacherLogin";
 import TeacherDashboard from "./pages/Teachers/Dashboard";
@@ -65,7 +68,7 @@ import ParentFees from "./pages/parent/ParentFees";
 import ParentChildren from "./pages/parent/ParentChildren";
 import ParentExams from "./pages/parent/ParentExams";
 import ParentCommunication from "./pages/parent/ParentCommunication";
-import ParentSettings from "./pages/parent/ParentSettings"; // 👈 Aakhri page import kar liya hai!
+import ParentSettings from "./pages/parent/ParentSettings";
 
 // Components
 import ChatWidget from "./components/ChatWidget";
@@ -107,7 +110,6 @@ export default function App() {
   const ADMIN_ONLY = ["Super Admin", "Admin"];
   const FINANCE_ROLES = ["Super Admin", "Admin", "Accountant"];
   const ACADEMIC_STAFF = ["Super Admin", "Admin", "Teacher"];
-
   const PARENT_ROLES = ["Parent", "Super Admin"];
 
   return (
@@ -121,8 +123,6 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/student/login" element={<StudentLogin />} />
           <Route path="/teacher/login" element={<TeacherLogin />} />
-
-          {/* ✨ Parent Login */}
           <Route path="/parent/login" element={<ParentLogin />} />
 
           {/* 🏠 Default Protected Route */}
@@ -132,7 +132,6 @@ export default function App() {
               🏢 MAIN ADMIN/STAFF PROTECTED ROUTES 
           ============================================= */}
           <Route path="/dashboard" element={<ProtectedRoute allowedRoles={STAFF_ALL}><Dashboard /></ProtectedRoute>} />
-
           <Route path="/institutions" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><Institutions /></ProtectedRoute>} />
           <Route path="/locations" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><Locations /></ProtectedRoute>} />
           <Route path="/services" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><ServiceMaster /></ProtectedRoute>} />
@@ -140,25 +139,19 @@ export default function App() {
           <Route path="/users" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><UserManager /></ProtectedRoute>} />
           <Route path="/system" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><SystemConfig /></ProtectedRoute>} />
           <Route path="/ai-brain" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><AIBrain /></ProtectedRoute>} />
-
           <Route path="/visitors" element={<ProtectedRoute allowedRoles={["Super Admin", "Admin", "Receptionist"]}><Visitors /></ProtectedRoute>} />
           <Route path="/teachers" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><Teachers /></ProtectedRoute>} />
           <Route path="/agents" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><Agents /></ProtectedRoute>} />
           <Route path="/students" element={<ProtectedRoute allowedRoles={ACADEMIC_STAFF}><Students /></ProtectedRoute>} />
           <Route path="/admissions" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><Enrollments /></ProtectedRoute>} />
           <Route path="/courses" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><Courses /></ProtectedRoute>} />
-
           <Route path="/virtual-space" element={<ProtectedRoute allowedRoles={ACADEMIC_STAFF}><VirtualSpace /></ProtectedRoute>} />
           <Route path="/attendance" element={<ProtectedRoute allowedRoles={ACADEMIC_STAFF}><Attendance /></ProtectedRoute>} />
-
           <Route path="/homework" element={<ProtectedRoute allowedRoles={ACADEMIC_STAFF}><Homework /></ProtectedRoute>} />
-
           <Route path="/exams" element={<ProtectedRoute allowedRoles={ACADEMIC_STAFF}><Exams /></ProtectedRoute>} />
           <Route path="/timetable" element={<ProtectedRoute allowedRoles={ACADEMIC_STAFF}><Timetable /></ProtectedRoute>} />
-
           <Route path="/fees" element={<ProtectedRoute allowedRoles={FINANCE_ROLES}><FeesLedger /></ProtectedRoute>} />
           <Route path="/payroll" element={<ProtectedRoute allowedRoles={FINANCE_ROLES}><Payroll /></ProtectedRoute>} />
-
           <Route path="/library" element={<ProtectedRoute allowedRoles={STAFF_ALL}><Library /></ProtectedRoute>} />
           <Route path="/transport" element={<ProtectedRoute allowedRoles={STAFF_ALL}><Transport /></ProtectedRoute>} />
           <Route path="/hostel" element={<ProtectedRoute allowedRoles={STAFF_ALL}><Hostel /></ProtectedRoute>} />
@@ -176,6 +169,9 @@ export default function App() {
           <Route path="/student/timetable" element={<ProtectedRoute allowedRoles={["Student", "Super Admin"]}><StudentTimetable /></ProtectedRoute>} />
           <Route path="/student/exams" element={<ProtectedRoute allowedRoles={["Student", "Super Admin"]}><StudentExams /></ProtectedRoute>} />
           <Route path="/student/profile" element={<ProtectedRoute allowedRoles={["Student", "Super Admin"]}><StudentProfile /></ProtectedRoute>} />
+
+          {/* 🚀 NAYA ROUTE: EXAM DENE KE LIYE */}
+          <Route path="/student/exam/:id" element={<TakeExam />} />
 
           {/* ==========================================
               👩‍🏫 TEACHER PORTAL PROTECTED ROUTES 
@@ -209,12 +205,9 @@ export default function App() {
           <Route path="/parent/fees" element={<ProtectedRoute allowedRoles={PARENT_ROLES}><ParentFees /></ProtectedRoute>} />
           <Route path="/parent/exams" element={<ProtectedRoute allowedRoles={PARENT_ROLES}><ParentExams /></ProtectedRoute>} />
           <Route path="/parent/messages" element={<ProtectedRoute allowedRoles={PARENT_ROLES}><ParentCommunication /></ProtectedRoute>} />
-
-          {/* 🚀 FIX: Aakhri Settings Route Set Kar Diya Naye Component Ke Sath */}
           <Route path="/parent/settings" element={<ProtectedRoute allowedRoles={PARENT_ROLES}><ParentSettings /></ProtectedRoute>} />
 
         </Routes>
-
         <ChatWidget />
       </div>
     </BrowserRouter>

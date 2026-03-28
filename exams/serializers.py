@@ -30,11 +30,18 @@ class QuestionSerializer(serializers.ModelSerializer):
 
 
 # ==========================================
-# 2. 🚀 EXAM SERIALIZER (NESTED SAVE LOGIC + METADATA)
+# 2. 🚀 EXAM SERIALIZER (NESTED SAVE LOGIC + CRASH FIX)
 # ==========================================
 class ExamSerializer(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, required=False)
     date = serializers.DateField(source='exam_date', required=False, allow_null=True)
+
+    # 🔥 THE CRASH FIX: Frontend purane naam use kar raha hai. 
+    # Inhe explicitly define kar diya taaki Django inko DB model mein na dhoonde aur crash na ho.
+    class_name = serializers.CharField(source='academic_class.name', read_only=True, default="")
+    subject_name = serializers.CharField(source='subject.name', read_only=True, default="")
+    unit = serializers.CharField(source='syllabus_unit.name', read_only=True, default="")
+    chapter_name = serializers.CharField(read_only=True, default="")
 
     class Meta:
         model = Exam
@@ -45,7 +52,7 @@ class ExamSerializer(serializers.ModelSerializer):
             # 🔥 Phase 1 & 2 Ke Naye Foreign Keys
             'academic_class', 'subclass', 'subject', 'syllabus_unit', 'blueprint',
             
-            # 🔥 Purane Metadata / Legacy Fields
+            # 🔥 Purane Metadata / Legacy Fields (Jo upar fix kiye hain)
             'class_name', 'subject_name', 'examinee_body', 'paper_set_number', 'place_of_exam', 'teacher_name',
             'unit', 'chapter_name', 'paper_id', 'exam_password', 'validity', 'permission',
             'mode_of_exam', 'tools_allowed', 'exam_type', 'paper_type'

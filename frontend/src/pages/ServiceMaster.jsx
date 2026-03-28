@@ -6,7 +6,7 @@ import {
     Briefcase, Layers, Cpu, Radio, Plus, Trash2,
     Sparkles, LayoutGrid, Eye, AlertTriangle, X, Shield, MapPin,
     Users, UserCheck, DollarSign, CheckSquare, Check, EyeOff,
-    ChevronLeft, ChevronRight, BookOpen // ✅ NEW: Added BookOpen for Classes Tab
+    ChevronLeft, ChevronRight, BookOpen
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -165,7 +165,8 @@ export default function ServiceMaster() {
         management: { title: "Management Roles", subtitle: "Official, Unofficial...", icon: <Shield size={24} />, color: '#10b981' },
         place_codes: { title: "Place Codes Mapping", subtitle: "Map Location with Codes", icon: <MapPin size={24} />, color: '#8b5cf6' },
         nature: { title: "Nature of Services", subtitle: "Permanent, Adhoc, Guest...", icon: <Sparkles size={24} />, color: '#0ea5e9' },
-        seekers: { title: "Seekers Groups", subtitle: "Students, Parents, Guests...", icon: <Users size={24} />, color: '#f43f5e' },
+        // 🔥 FIX: Title aur Subtitle change kiya Seekers se Users ke liye
+        seekers: { title: "Users", subtitle: "Students, Parents, Guests...", icon: <Users size={24} />, color: '#f43f5e' },
         providers: { title: "Providers Groups", subtitle: "Office, Field Working...", icon: <UserCheck size={24} />, color: '#84cc16' },
         charges: { title: "Service Charges", subtitle: "Fees & Validity Configuration", icon: <DollarSign size={24} />, color: '#eab308' }
     };
@@ -198,17 +199,19 @@ export default function ServiceMaster() {
                 </div>
 
                 {/* --- TABS --- */}
+                {/* 🔥 FIX: Yahan Tabs ka Order aur Naam update kar diya gaya hai */}
                 <div className="tabs-container" style={{ position: 'relative', zIndex: 2 }}>
                     <TabButton active={activeTab === 'levels'} onClick={() => setActiveTab('levels')} label="Edu. Pillars" icon={<Layers size={18} />} />
-                    <TabButton active={activeTab === 'classes'} onClick={() => setActiveTab('classes')} label="Classes" icon={<BookOpen size={18} />} /> {/* 🔥 NEW TAB */}
+                    <TabButton active={activeTab === 'classes'} onClick={() => setActiveTab('classes')} label="Classes" icon={<BookOpen size={18} />} />
+                    <TabButton active={activeTab === 'place_codes'} onClick={() => setActiveTab('place_codes')} label="Place Codes" icon={<MapPin size={18} />} />
+                    <TabButton active={activeTab === 'seekers'} onClick={() => setActiveTab('seekers')} label="Users" icon={<Users size={18} />} />
+
                     <TabButton active={activeTab === 'types'} onClick={() => setActiveTab('types')} label="Service Types" icon={<Briefcase size={18} />} />
                     <TabButton active={activeTab === 'modes'} onClick={() => setActiveTab('modes')} label="Service Modes" icon={<Radio size={18} />} />
                     <TabButton active={activeTab === 'nature'} onClick={() => setActiveTab('nature')} label="Nature of Services" icon={<Sparkles size={18} />} />
-                    <TabButton active={activeTab === 'seekers'} onClick={() => setActiveTab('seekers')} label="Seekers" icon={<Users size={18} />} />
                     <TabButton active={activeTab === 'providers'} onClick={() => setActiveTab('providers')} label="Providers" icon={<UserCheck size={18} />} />
                     <TabButton active={activeTab === 'charges'} onClick={() => setActiveTab('charges')} label="Charges/Validity" icon={<DollarSign size={18} />} />
                     <TabButton active={activeTab === 'management'} onClick={() => setActiveTab('management')} label="Management" icon={<Shield size={18} />} />
-                    <TabButton active={activeTab === 'place_codes'} onClick={() => setActiveTab('place_codes')} label="Place Codes" icon={<MapPin size={18} />} />
                 </div>
 
                 <div className="service-content-grid" style={{ position: 'relative', zIndex: 2 }}>
