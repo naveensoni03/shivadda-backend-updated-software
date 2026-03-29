@@ -1,12 +1,12 @@
 from django.urls import path
 from .views import (
     ExamAPI,
-    QuestionAPI,             # 🚀 ADDED MISSING IMPORT
+    QuestionAPI,             
     QuestionBankAPI,
     SubmitExamAPI,
-    EvaluationAPI,           # 🚀 ADDED MISSING IMPORT
-    LiveQuizSessionAPI,      # 🚀 ADDED MISSING IMPORT
-    UpdateQuizGroupScoreAPI, # 🚀 ADDED MISSING IMPORT
+    EvaluationAPI,           
+    LiveQuizSessionAPI,      
+    UpdateQuizGroupScoreAPI, 
     AIEvaluateAPI,
     AIStudyPlanAPI,
     NotifyParentsAPI,
@@ -15,8 +15,9 @@ from .views import (
     send_sms,
     receive_sms,
     get_incoming_messages,
-    AssignmentAPI,           # 🚀 ADDED MISSING IMPORT
-    AssignmentEvaluationAPI, # 🚀 ADDED MISSING IMPORT
+    AssignmentAPI,           
+    AssignmentEvaluationAPI, 
+    SubmitAssignmentAPI,     # 🚀 ADDED NEW SUBMIT API IMPORT
     StudentResultsAPI,
     TeacherExamResultsAPI,
     StudentAttemptDetailsAPI
@@ -48,15 +49,16 @@ urlpatterns = [
     path("evaluations/<int:pk>/", EvaluationAPI.as_view(), name='evaluation-detail'),
 
     # ==========================================
-    # 📚 ASSIGNMENTS (Missing in your code)
+    # 📚 ASSIGNMENTS 
     # ==========================================
     path("assignments/", AssignmentAPI.as_view(), name='assignment-list'),
+    path("assignments/submit/", SubmitAssignmentAPI.as_view(), name='assignment-submit'), # 🚀 ADDED NEW SUBMIT ROUTE (Frontend yahan call karega)
     path("assignments/<int:pk>/", AssignmentAPI.as_view(), name='assignment-detail'),
     path("assignments/<int:assignment_id>/evaluations/", AssignmentEvaluationAPI.as_view(), name='assignment-eval'),
     path("assignments/evaluations/<int:submission_id>/", AssignmentEvaluationAPI.as_view(), name='assignment-eval-update'),
 
     # ==========================================
-    # 🏆 LIVE QUIZ (Missing in your code)
+    # 🏆 LIVE QUIZ 
     # ==========================================
     path("live-quiz/", LiveQuizSessionAPI.as_view(), name='live-quiz-list'),
     path("live-quiz/group/<int:group_id>/update/", UpdateQuizGroupScoreAPI.as_view(), name='live-quiz-update'),

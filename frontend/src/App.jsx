@@ -45,7 +45,8 @@ import StudentTimetable from "./pages/student/Timetable";
 import StudentProfile from "./pages/student/Profile";
 import StudentCourseSpace from "./pages/student/StudentCourseSpace";
 
-// 🚀 NAYA TAKE EXAM COMPONENT IMPORT KIYA HAI YAHAN SE (Line delete kardi dummy wali)
+// 🚀 NAYA: Assignments page import kiya hai
+import StudentAssignments from "./pages/student/StudentAssignments";
 import TakeExam from "./pages/student/TakeExam";
 
 // 👩‍🏫 TEACHER PORTAL IMPORTS
@@ -170,7 +171,9 @@ export default function App() {
           <Route path="/student/exams" element={<ProtectedRoute allowedRoles={["Student", "Super Admin"]}><StudentExams /></ProtectedRoute>} />
           <Route path="/student/profile" element={<ProtectedRoute allowedRoles={["Student", "Super Admin"]}><StudentProfile /></ProtectedRoute>} />
 
-          {/* 🚀 NAYA ROUTE: EXAM DENE KE LIYE */}
+          {/* 🚀 NAYA ROUTE: ASSIGNMENTS KE LIYE (White screen iski wajah se thi!) */}
+          <Route path="/student/assignments" element={<ProtectedRoute allowedRoles={["Student", "Super Admin"]}><StudentAssignments /></ProtectedRoute>} />
+
           <Route path="/student/exam/:id" element={<TakeExam />} />
 
           {/* ==========================================

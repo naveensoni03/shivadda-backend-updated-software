@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
 
-# 🔥 NAYE HIERARCHY MODELS IMPORT KIYE
+# 🔥 SABHI MODELS KA IMPORT
 from .models import (
     EducationLevel, AcademicClass, Subject, ExamBlueprint, 
     Exam, Question, QuestionBank, DescriptiveSubmission, AIEvaluationLog, 
@@ -21,7 +21,9 @@ from .serializers import (
 
 User = get_user_model()
 
-# ---------------- EXAM CRUD API (🔥 CRASH PROOF UPDATED) ----------------
+# ==========================================
+# 📝 EXAM CRUD API (CRASH PROOF)
+# ==========================================
 class ExamAPI(APIView):
     def get(self, request, pk=None):
         if pk:
@@ -38,13 +40,12 @@ class ExamAPI(APIView):
     def post(self, request):
         data = request.data
         
-        # 🚀 SAFE HIERARCHY CREATION: Frontend se aane wale text ko DB FK mein convert karo
+        # Safe Hierarchy Creation
         subject_str = data.get('subject_string', 'General Subject')
         ed_level, _ = EducationLevel.objects.get_or_create(name="General Level")
         ac_class, _ = AcademicClass.objects.get_or_create(name="General Class", level=ed_level)
         subject_inst, _ = Subject.objects.get_or_create(name=subject_str)
 
-        # Handle empty times safely
         start_time = data.get('start_time')
         end_time = data.get('end_time')
         exam_date = data.get('exam_date')
@@ -68,7 +69,6 @@ class ExamAPI(APIView):
         except Exam.DoesNotExist:
             return Response({"error": "Exam not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        # Custom Update Logic
         data = request.data
         exam.title = data.get('title', exam.title)
         exam.status = data.get('status', exam.status)
@@ -90,7 +90,9 @@ class ExamAPI(APIView):
             return Response({"error": "Exam not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-# ---------------- QUESTION CRUD API (🔥 CRASH PROOF UPDATED) ----------------
+# ==========================================
+# ❓ QUESTION CRUD API
+# ==========================================
 class QuestionAPI(APIView):
     def get(self, request, pk=None):
         if pk:
@@ -105,7 +107,7 @@ class QuestionAPI(APIView):
             data = []
             for q in questions:
                 q_data = QuestionSerializer(q).data
-                # 🚀 SAFE ATTRIBUTE ACCESS: Prevent Crash if foreign key is null
+                # Extracting Exam Meta safely
                 q_data['exam_meta'] = {
                     'className': q.exam.academic_class.name if getattr(q.exam, 'academic_class', None) else "",
                     'subClass': q.exam.subclass.name if getattr(q.exam, 'subclass', None) else "", 
@@ -151,7 +153,9 @@ class QuestionAPI(APIView):
             return Response({"error": "Question not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-# ---------------- QUESTION BANK FULL CRUD API ----------------
+# ==========================================
+# 📚 QUESTION BANK API
+# ==========================================
 class QuestionBankAPI(APIView):
     def get(self, request, pk=None):
         if pk:
@@ -194,7 +198,9 @@ class QuestionBankAPI(APIView):
             return Response({"error": "Question not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-# ---------------- OMR / EXAM SUBMIT API ----------------
+# ==========================================
+# 💯 OMR / EXAM SUBMIT API
+# ==========================================
 class SubmitExamAPI(APIView):
     def post(self, request, exam_id):
         try:
@@ -237,7 +243,9 @@ class SubmitExamAPI(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-# ---------------- 3-TEACHER EVALUATION APIs ----------------
+# ==========================================
+# 👨‍🏫 3-TEACHER EVALUATION APIs
+# ==========================================
 class EvaluationAPI(APIView):
     def get(self, request):
         evaluations = DescriptiveSubmission.objects.all().order_by('-id')
@@ -278,7 +286,9 @@ class EvaluationAPI(APIView):
             return Response({"error": "Submission not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-# ---------------- LIVE QUIZ (KBC STYLE) APIs ----------------
+# ==========================================
+# ⚡ LIVE QUIZ (KBC STYLE) APIs
+# ==========================================
 class LiveQuizSessionAPI(APIView):
     def get(self, request):
         sessions = LiveQuizSession.objects.filter(is_active=True)
@@ -308,7 +318,9 @@ class UpdateQuizGroupScoreAPI(APIView):
             return Response({"error": "Group not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-# ---------------- AI EVALUATE ANSWER ----------------
+# ==========================================
+# 🤖 AI EVALUATE ANSWER
+# ==========================================
 class AIEvaluateAPI(APIView):
     def post(self, request):
         try:
@@ -346,7 +358,9 @@ class AIEvaluateAPI(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-# ---------------- AI STUDY PLAN ----------------
+# ==========================================
+# 🧠 AI STUDY PLAN & NOTIFICATIONS
+# ==========================================
 class AIStudyPlanAPI(APIView):
     def post(self, request):
         topic = request.data.get("topic")
@@ -356,13 +370,14 @@ class AIStudyPlanAPI(APIView):
         }, status=status.HTTP_200_OK)
 
 
-# ---------------- NOTIFY PARENTS ----------------
 class NotifyParentsAPI(APIView):
     def post(self, request):
         return Response({"status": "Notification sent!"}, status=status.HTTP_200_OK)
 
 
-# ---------------- GENERATE AI QUIZ ----------------
+# ==========================================
+# 📝 GENERATE & SAVE AI QUIZ
+# ==========================================
 @csrf_exempt
 def generate_ai_quiz(request):
     if request.method == "POST":
@@ -388,14 +403,11 @@ def generate_ai_quiz(request):
                 "topic": topic,
                 "questions": questions
             })
-
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
-
     return JsonResponse({"error": "Invalid request"}, status=400)
 
 
-# ---------------- SAVE AI QUIZ ----------------
 @csrf_exempt
 def save_ai_quiz(request):
     if request.method == 'POST':
@@ -442,16 +454,16 @@ def save_ai_quiz(request):
                     correct_option=q.get('correct', 'A'),
                     marks=4
                 )
-
             return JsonResponse({'message': 'Saved!', 'status': 'success'})
 
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
-
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
-# ---------------- SMS & DUMMY APIs ----------------
+# ==========================================
+# 📱 SMS & DUMMY APIs
+# ==========================================
 @csrf_exempt
 def send_sms(request):
     return JsonResponse({"status": "SMS sent successfully!"})
@@ -466,15 +478,17 @@ def get_incoming_messages(request):
 
 
 # ==========================================
-# 🔥 ASSIGNMENT APIs 🔥
+# 🔥 ASSIGNMENT APIs (NEW ADDITION) 🔥
 # ==========================================
 class AssignmentAPI(APIView):
     def get(self, request):
+        # Teacher fetch all assignments
         assignments = Assignment.objects.all().order_by('-created_at')
         serializer = AssignmentSerializer(assignments, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
+        # Teacher create new assignment
         serializer = AssignmentSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -489,13 +503,48 @@ class AssignmentAPI(APIView):
         except Assignment.DoesNotExist:
             return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
 
+# 🚀 NAYI API: STUDENT KE FILE SUBMIT KARNE KE LIYE
+class SubmitAssignmentAPI(APIView):
+    def post(self, request):
+        try:
+            # Frontend se data aur file nikalna
+            assignment_id = request.data.get('assignment')
+            file = request.FILES.get('file') or request.FILES.get('submission_file')
+            student = request.user if request.user.is_authenticated else User.objects.first()
+
+            if not assignment_id or not file:
+                return Response({"error": "File and Assignment ID are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+            assignment = Assignment.objects.get(id=assignment_id)
+
+            # Database me Submission Create Karna
+            submission = AssignmentSubmission.objects.create(
+                assignment=assignment,
+                student=student,
+                submitted_file=file,
+                status='submitted'
+            )
+
+            return Response({
+                "message": "Assignment Submitted Successfully!", 
+                "submission_id": submission.id
+            }, status=status.HTTP_201_CREATED)
+
+        except Assignment.DoesNotExist:
+            return Response({"error": "Assignment not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class AssignmentEvaluationAPI(APIView):
     def get(self, request, assignment_id):
+        # Get all submissions for a specific assignment (For Teacher)
         submissions = AssignmentSubmission.objects.filter(assignment_id=assignment_id)
         serializer = AssignmentSubmissionSerializer(submissions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, submission_id):
+        # Teacher grades the submission
         try:
             submission = AssignmentSubmission.objects.get(id=submission_id)
             submission.marks_awarded = request.data.get('marks_awarded')
