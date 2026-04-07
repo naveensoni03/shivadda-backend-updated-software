@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FileText, Calendar as CalendarIcon, Clock,
   PlusCircle, Search, Edit, Trash2, CheckCircle, Plus, X, AlertTriangle,
-  ChevronRight, LayoutGrid, CheckSquare, ArrowLeft, User, ImagePlus, Save, AlignLeft, Eye
+  ChevronRight, LayoutGrid, CheckSquare, ArrowLeft, User, ImagePlus, Save, AlignLeft, Eye,
+  UploadCloud, AlertCircle, Loader2 // 🔥 NEW ICONS ADDED FOR CSV UPLOAD
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import api from "../../api/axios";
@@ -19,7 +20,7 @@ export default function TeacherExams() {
   const [exams, setExams] = useState([]);
   const [examResults, setExamResults] = useState([]);
 
-  // 🚀 STATE: Detailed Student Result dekhne ke liye
+  // Detailed Student Result dekhne ke liye
   const [selectedStudentDetails, setSelectedStudentDetails] = useState(null);
   const [studentAnswers, setStudentAnswers] = useState([]);
   const [isDetailsLoading, setIsDetailsLoading] = useState(false);
@@ -31,6 +32,11 @@ export default function TeacherExams() {
   const [questions, setQuestions] = useState([
     { id: Date.now(), type: "mcq", text: "", image: null, options: ["", "", "", ""], correctOption: 0 }
   ]);
+
+  // 🔥 NEW STATE: For CSV Bulk Upload
+  const [csvFile, setCsvFile] = useState(null);
+  const [csvExamType, setCsvExamType] = useState("Objective");
+  const [isUploading, setIsUploading] = useState(false);
 
   const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
   const fadeIn = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.3 } } };
@@ -178,7 +184,6 @@ export default function TeacherExams() {
   const handleViewStudentDetails = async (studentAttempt) => {
     setSelectedStudentDetails(studentAttempt);
     setIsDetailsLoading(true);
-
     try {
       const res = await api.get(`exams/attempt/${studentAttempt.id}/details/`);
       setStudentAnswers(res.data.answers);
@@ -187,6 +192,41 @@ export default function TeacherExams() {
       toast.error("Could not fetch detailed exam sheet.");
     } finally {
       setIsDetailsLoading(false);
+    }
+  };
+
+  // 🔥 NEW FEATURE 4: CSV UPLOAD HANDLERS
+  const handleCsvFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile && selectedFile.name.endsWith('.csv')) {
+      setCsvFile(selectedFile);
+    } else {
+      toast.error("Please upload a valid .csv file.");
+    }
+  };
+
+  const handleCsvUpload = async () => {
+    if (!csvFile) return toast.error("Please select a CSV file first.");
+    const toastId = toast.loading("Uploading CSV data...");
+    setIsUploading(true);
+
+    const formData = new FormData();
+    formData.append("file", csvFile);
+    formData.append("exam_type", csvExamType);
+
+    try {
+      const token = sessionStorage.getItem("access_token") || localStorage.getItem("access_token");
+      await api.post("/exams/upload-csv/", formData, {
+        headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` }
+      });
+      toast.success("Exam data uploaded successfully! 🎉", { id: toastId });
+      setCsvFile(null);
+      fetchExams(); // Refresh records
+      setActiveTab('list');
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Upload failed. Check CSV format.", { id: toastId });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -217,10 +257,15 @@ export default function TeacherExams() {
               <button className={`segment-btn ${activeTab === 'create' ? 'active' : ''}`} onClick={() => setActiveTab('create')}>
                 <PlusCircle size={18} /> {editId ? "Editing Test" : "Create New"}
               </button>
+              {/* 🔥 NEW TAB FOR BULK CSV UPLOAD */}
+              <button className={`segment-btn ${activeTab === 'upload' ? 'active' : ''}`} onClick={() => setActiveTab('upload')}>
+                <UploadCloud size={18} /> Bulk CSV Upload
+              </button>
             </div>
           )}
         </motion.div>
 
+        {/* VIEW 1: LIST EXAMS */}
         {activeTab === "list" && (
           <motion.div initial="hidden" animate="show" variants={fadeIn}>
             <div className="search-wrapper">
@@ -278,6 +323,7 @@ export default function TeacherExams() {
           </motion.div>
         )}
 
+        {/* VIEW 2: CREATE/EDIT TEST */}
         {activeTab === "create" && (
           <motion.div initial="hidden" animate="show" variants={fadeUp} className="builder-wrapper">
             <form>
@@ -376,6 +422,68 @@ export default function TeacherExams() {
           </motion.div>
         )}
 
+        {/* 🔥 NEW VIEW: CSV BULK UPLOAD */}
+        {activeTab === "upload" && (
+          <motion.div initial="hidden" animate="show" variants={fadeUp} className="builder-wrapper">
+            <div className="builder-block" style={{ maxWidth: '750px', margin: '0 auto', width: '100%' }}>
+              <div className="block-header">
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><UploadCloud size={22} color="#8b5cf6" /> Bulk Exam Data Upload</h3>
+                <p style={{ color: '#64748b', fontSize: '0.9rem', marginTop: '5px' }}>Upload hundreds of questions instantly using a CSV file.</p>
+              </div>
+
+              <div style={{ marginBottom: '25px' }}>
+                <label style={{ display: 'block', fontWeight: '700', color: '#1e293b', marginBottom: '10px' }}>Select Question Format</label>
+                <select
+                  value={csvExamType}
+                  onChange={(e) => setCsvExamType(e.target.value)}
+                  style={{ width: '100%', padding: '15px', borderRadius: '12px', border: '2px solid #e2e8f0', outline: 'none', background: '#f8fafc', fontSize: '1rem', fontWeight: '600', color: '#0f172a' }}
+                >
+                  <option value="Objective">Objective Questions (MCQ)</option>
+                  <option value="Descriptive">Descriptive Questions</option>
+                  <option value="Mixed">Mixed Format</option>
+                </select>
+              </div>
+
+              <div style={{ border: `2px dashed ${csvFile ? '#10B981' : '#8b5cf6'}`, background: csvFile ? '#ecfdf5' : '#f5f3ff', padding: '50px 20px', borderRadius: '16px', textAlign: 'center', transition: '0.3s', position: 'relative' }}>
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleCsvFileChange}
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
+                />
+                {csvFile ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                    <CheckCircle size={48} color="#10B981" />
+                    <h3 style={{ margin: 0, color: '#065F46' }}>File Selected & Ready</h3>
+                    <p style={{ margin: 0, color: '#047857', fontWeight: '600' }}>{csvFile.name}</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                    <UploadCloud size={48} color="#8b5cf6" />
+                    <h3 style={{ margin: 0, color: '#6d28d9' }}>Drag & Drop your CSV file here</h3>
+                    <p style={{ margin: 0, color: '#64748b' }}>or click anywhere in this box to browse</p>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ marginTop: '20px', padding: '15px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                <AlertCircle size={20} color="#d97706" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <div style={{ fontSize: '0.85rem', color: '#92400e' }}>
+                  <strong>CSV Format Rule:</strong> For Objective, columns should be <code>Question, OptionA, OptionB, OptionC, OptionD, CorrectAnswer</code>. For Descriptive, columns should be <code>Question, MaxMarks</code>.
+                </div>
+              </div>
+
+              <button
+                onClick={handleCsvUpload}
+                disabled={!csvFile || isUploading}
+                style={{ width: '100%', marginTop: '25px', background: csvFile ? '#8b5cf6' : '#cbd5e1', color: 'white', padding: '16px', borderRadius: '12px', border: 'none', fontSize: '1.1rem', fontWeight: '700', cursor: csvFile ? 'pointer' : 'not-allowed', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', transition: '0.3s' }}
+              >
+                {isUploading ? <Loader2 size={24} className="animate-spin" /> : <><Save size={20} /> Upload Database</>}
+              </button>
+            </div>
+          </motion.div>
+        )}
+
         {/* VIEW 3: PREMIUM EXAM RESULTS */}
         {activeTab === "results" && selectedResultExam && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="results-wrapper">
@@ -441,6 +549,7 @@ export default function TeacherExams() {
         )}
       </div>
 
+      {/* MODALS */}
       <AnimatePresence>
         {deleteId && (
           <div className="modal-backdrop">
@@ -457,7 +566,6 @@ export default function TeacherExams() {
         )}
       </AnimatePresence>
 
-      {/* 🚀 TEACHER DETAILED EXAM SHEET VIEW MODAL (FIXED COLORS) */}
       <AnimatePresence>
         {selectedStudentDetails && (
           <div className="modal-backdrop" style={{ alignItems: 'flex-start', paddingTop: '50px' }}>
@@ -472,7 +580,7 @@ export default function TeacherExams() {
 
               <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto', padding: '20px' }}>
                 {isDetailsLoading ? (
-                  <div style={{ textAlign: 'center', padding: '40px' }}><Clock className="spinner" size={30} /> <p>Loading exam sheet...</p></div>
+                  <div style={{ textAlign: 'center', padding: '40px' }}><Clock className="animate-spin" size={30} /> <p>Loading exam sheet...</p></div>
                 ) : studentAnswers.length > 0 ? (
                   studentAnswers.map((ans, idx) => (
                     <div key={idx} style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', marginBottom: '15px', border: `1px solid ${ans.is_correct ? '#10b981' : '#e2e8f0'}` }}>
@@ -480,25 +588,15 @@ export default function TeacherExams() {
                         <strong style={{ color: '#0f172a' }}>Question {idx + 1}</strong>
                         <span style={{ color: ans.is_correct ? '#10b981' : '#64748b', fontWeight: 'bold' }}>{ans.is_correct ? 'Correct' : 'Pending/Incorrect'}</span>
                       </div>
-
-                      {/* 🔥 TEXT COLOR FIXED: Ab question saaf dikhega */}
-                      <p style={{ fontSize: '1.1rem', margin: '0 0 15px 0', color: '#1e293b', fontWeight: '500' }}>
-                        {ans.question_text || "No Question Text Found"}
-                      </p>
-
-                      {/* 🔥 FIX: RESPONSIVE GRID & WORD WRAP */}
+                      <p style={{ fontSize: '1.1rem', margin: '0 0 15px 0', color: '#1e293b', fontWeight: '500' }}>{ans.question_text || "No Question Text Found"}</p>
                       <div className="answer-review-grid">
                         <div className="answer-box student-ans">
                           <span className="ans-label">Student Selected/Wrote:</span>
-                          <strong className="ans-text">
-                            {(ans.selected_option && ans.selected_option.length === 1) ? `Option ${ans.selected_option}` : (ans.selected_option || 'Skipped')}
-                          </strong>
+                          <strong className="ans-text">{(ans.selected_option && ans.selected_option.length === 1) ? `Option ${ans.selected_option}` : (ans.selected_option || 'Skipped')}</strong>
                         </div>
                         <div className="answer-box correct-ans">
                           <span className="ans-label correct">Correct Answer:</span>
-                          <strong className="ans-text correct">
-                            {(ans.correct_option && ans.correct_option.length === 1) ? `Option ${ans.correct_option}` : (ans.correct_option || 'Subjective / Manual Check')}
-                          </strong>
+                          <strong className="ans-text correct">{(ans.correct_option && ans.correct_option.length === 1) ? `Option ${ans.correct_option}` : (ans.correct_option || 'Subjective / Manual Check')}</strong>
                         </div>
                       </div>
                     </div>
@@ -522,17 +620,21 @@ export default function TeacherExams() {
         .icon-box { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); padding: 10px; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);}
         .main-title { font-size: 2.2rem; font-weight: 800; color: #0f172a !important; margin: 0; line-height: 1; }
         .sub-title { color: #64748b; font-size: 1.05rem; margin: 0; }
+        
         .segmented-control { background: #f1f5f9; padding: 6px; border-radius: 14px; display: flex; gap: 5px; border: 1px solid #e2e8f0; flex-wrap: wrap;}
         .segment-btn { display: flex; align-items: center; gap: 8px; padding: 12px 24px; border: none; background: transparent; color: #64748b; font-weight: 600; font-size: 0.95rem; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; }
         .segment-btn:hover { color: #0f172a; }
         .segment-btn.active { background: white; color: #8b5cf6; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        
         .search-wrapper { position: relative; margin-bottom: 30px; width: 100%; max-width: 600px; }
         .search-icon { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
         .premium-search-input { width: 100%; padding: 18px 20px 18px 55px; border-radius: 16px; border: 2px solid #e2e8f0 !important; font-size: 1.05rem; outline: none; background-color: #ffffff !important; color: #0f172a !important; transition: all 0.3s; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
         .premium-search-input:focus { border-color: #8b5cf6 !important; box-shadow: 0 0 0 4px rgba(139,92,246,0.1); }
+        
         .premium-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 25px; }
         .premium-card { background: #ffffff !important; border-radius: 24px; padding: 25px; border: 1px solid #e2e8f0; transition: all 0.3s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.03); display: flex; flex-direction: column; }
         .premium-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); border-color: #cbd5e1; }
+        
         .card-top-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
         .status-pill { display: inline-flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: 800; padding: 6px 14px; border-radius: 50px; letter-spacing: 0.5px; width: max-content !important; height: max-content !important; }
         .pulsing-dot { width: 8px; height: 8px; border-radius: 50%; }
@@ -545,21 +647,26 @@ export default function TeacherExams() {
         .status-pill.draft { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
         .status-pill.draft .pulsing-dot { background: #d97706; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        
         .action-icons { display: flex; gap: 10px; }
         .icon-btn { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #64748b; transition: all 0.2s;}
         .icon-btn.edit:hover { background: #f5f3ff; color: #8b5cf6; border-color: #ddd6fe; }
         .icon-btn.delete:hover { background: #fef2f2; color: #ef4444; border-color: #fecaca; }
+        
         .card-middle { margin-bottom: 25px; }
         .exam-card-title { font-size: 1.4rem; font-weight: 800; color: #0f172a !important; margin: 0 0 10px 0; line-height: 1.3; }
         .exam-badge { display: inline-block; background: #f1f5f9; color: #334155; padding: 4px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; border: 1px solid #e2e8f0; }
+        
         .card-metrics { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px; }
         .metric-item { display: flex; align-items: center; gap: 6px; background: #f8fafc; border: 1px solid #f1f5f9; padding: 8px 12px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; color: #475569; }
+        
         .card-footer { margin-top: auto; }
         .btn-full { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; border-radius: 14px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.3s; border: none;}
         .btn-solid { background: #8b5cf6; color: white; box-shadow: 0 4px 15px rgba(139,92,246,0.2); }
         .btn-solid:hover { background: #7c3aed; box-shadow: 0 8px 25px rgba(139,92,246,0.3); transform: translateY(-2px); }
         .btn-outline { background: transparent; border: 2px solid #e2e8f0; color: #475569; }
         .btn-outline:hover { background: #f8fafc; color: #0f172a; border-color: #cbd5e1; }
+        
         .empty-state { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; background: white; border-radius: 24px; border: 2px dashed #e2e8f0; text-align: center; }
         .empty-state h3 { color: #1e293b; font-size: 1.5rem; margin: 15px 0 5px 0; }
         .empty-state p { color: #64748b; }
@@ -571,14 +678,17 @@ export default function TeacherExams() {
         .block-header.split { display: flex; justify-content: space-between; align-items: center; border-bottom: none; }
         .block-header h3 { font-size: 1.4rem; color: #0f172a !important; margin: 0; display: flex; align-items: center; gap: 10px; }
         .step-num { background: #8b5cf6; color: white; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 1rem; font-weight: 800; }
+        
         .premium-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .form-group { display: flex; flex-direction: column; gap: 8px; width: 100%; min-width: 0; }
         .form-group.full-span { grid-column: 1 / -1; }
         .form-group label { font-weight: 600; color: #475569; font-size: 0.9rem; }
         .form-group input, .form-group select { width: 100%; padding: 14px 16px; border: 2px solid #e2e8f0 !important; border-radius: 12px; font-size: 1rem; outline: none; background-color: #f8fafc !important; color: #0f172a !important; transition: 0.3s; }
         .form-group input:focus, .form-group select:focus { border-color: #8b5cf6 !important; background-color: white !important; box-shadow: 0 0 0 4px rgba(139,92,246,0.1); }
+        
         .btn-add { display: flex; align-items: center; gap: 8px; background: #f5f3ff; color: #8b5cf6; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s;}
         .btn-add:hover { background: #ede9fe; color: #7c3aed; transform: translateY(-2px); }
+        
         .questions-list { display: flex; flex-direction: column; gap: 25px; margin-bottom: 20px;}
         .q-card { background: #ffffff; border: 2px solid #f1f5f9; border-radius: 20px; padding: 25px; transition: 0.3s; position: relative; border-left: 6px solid #8b5cf6; }
         .q-card:hover { border-color: #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.03); }
@@ -594,6 +704,7 @@ export default function TeacherExams() {
         .hidden-file { display: none; }
         .img-upload-label { display: inline-flex; align-items: center; gap: 8px; color: #64748b; font-size: 0.9rem; font-weight: 600; cursor: pointer; background: #f1f5f9; padding: 8px 15px; border-radius: 8px; border: 1px dashed #cbd5e1; transition: 0.2s;}
         .img-upload-label:hover { background: #e2e8f0; color: #0f172a;}
+        
         .opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .opt-box { display: flex; align-items: center; gap: 12px; padding: 10px 15px; border: 2px solid #e2e8f0; border-radius: 14px; background: white; transition: 0.3s; position: relative; overflow: hidden;}
         .opt-box.is-correct { border-color: #10b981; background: #f0fdf4; }
@@ -602,7 +713,9 @@ export default function TeacherExams() {
         .radio-wrap input[type="radio"] { width: 22px; height: 22px; accent-color: #10b981; cursor: pointer; margin:0;}
         .opt-box input[type="text"] { flex: 1; border: none; background: transparent !important; outline: none; font-size: 1rem; color: #0f172a !important; padding: 8px 0; }
         .correct-icon { color: #10b981; margin-left: auto; }
+        
         .subjective-placeholder { background: #f8fafc; border: 2px dashed #e2e8f0; border-radius: 12px; padding: 30px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; color: #64748b;}
+        
         .sticky-bottom-bar { position: sticky; bottom: 20px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); padding: 20px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0; box-shadow: 0 15px 35px rgba(0,0,0,0.05); z-index: 10; margin-top: 30px;}
         .action-group { display: flex; gap: 15px; }
         .btn-outline-large { padding: 14px 30px; border: 2px solid #e2e8f0; background: white; color: #475569; font-weight: 700; border-radius: 14px; cursor: pointer; transition: 0.2s; font-size: 1rem;}
@@ -622,6 +735,7 @@ export default function TeacherExams() {
         .summary-box h4 { margin: 0 0 10px 0; color: #64748b; font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;}
         .summary-box h2 { margin: 0; font-size: 2.5rem; color: #0f172a; font-weight: 800; }
         .text-green { color: #10b981 !important; }
+        
         .student-results-list { background: white; border: 1px solid #e2e8f0; border-radius: 24px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
         .student-results-list h3 { margin: 0 0 25px 0; font-size: 1.4rem; color: #1e293b; font-weight: 800; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;}
         .student-result-card { display: grid; grid-template-columns: 2fr 3fr 1fr auto; align-items: center; padding: 20px; border: 1px solid #f1f5f9; border-radius: 16px; margin-bottom: 15px; transition: 0.2s; background: #fdfdfd;}
@@ -656,8 +770,6 @@ export default function TeacherExams() {
         .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 30px; border-bottom: 1px solid #e2e8f0;}
         .btn-close { background: transparent; border: none; color: #94a3b8; cursor: pointer; transition: 0.2s; padding: 5px;}
         .btn-close:hover { color: #0f172a; }
-
-        /* 🔥 FIX: ANSWER GRID CSS WITH WORD-WRAP */
         .answer-review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px; }
         .answer-box { padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; background: white; }
         .answer-box.student-ans { border-color: #cbd5e1; }
@@ -666,6 +778,9 @@ export default function TeacherExams() {
         .ans-label.correct { color: #059669; }
         .ans-text { display: block; color: #0f172a; font-size: 1.05rem; word-break: break-word; overflow-wrap: break-word; white-space: pre-wrap; line-height: 1.6; }
         .ans-text.correct { color: #065f46; }
+        
+        .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
 
         @media (max-width: 1024px) {
             .premium-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
@@ -676,24 +791,19 @@ export default function TeacherExams() {
             .segmented-control { width: 100%; display: flex; }
             .segment-btn { flex: 1; justify-content: center; }
             .premium-grid { grid-template-columns: 1fr; width: 100%; }
-            .premium-card { width: 100%; }
-            .builder-block { padding: 20px 15px; }
             .premium-form-grid { grid-template-columns: 1fr; }
             .block-header.split { flex-direction: column; align-items: flex-start; gap: 15px; }
             .btn-add { width: 100%; justify-content: center; }
             .q-top { flex-direction: column; align-items: flex-start; gap: 15px;}
-            .q-card { padding: 20px 15px; }
             .opt-grid { grid-template-columns: 1fr; }
             .sticky-bottom-bar { flex-direction: column; padding: 15px; gap: 10px;}
             .action-group { width: 100%; flex-direction: column; gap: 10px;}
             .btn-outline-large, .btn-solid-large { width: 100%; }
-            .modal-btns { flex-direction: column; }
             .student-result-card { grid-template-columns: 1fr; gap: 20px; text-align: center; }
             .student-info { flex-direction: column; }
             .score-text { text-align: center; }
             .result-badge { margin: 0 auto; width: 100%; }
             .results-top-bar { flex-direction: column; align-items: flex-start; }
-            .exam-sheet-modal { margin: 15px; }
             .answer-review-grid { grid-template-columns: 1fr; gap: 15px; }
         }
       `}</style>

@@ -37,7 +37,9 @@ export default function TeacherDashboard() {
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get('teachers/dashboard-stats/');
+
+      // 🔥 FIX: Added starting slash '/' so it becomes http://127.0.0.1:8000/api/teachers/dashboard-stats/
+      const response = await api.get('/teachers/dashboard-stats/');
 
       // Backend se aayi hui real values set karo
       setStats({
@@ -226,7 +228,6 @@ export default function TeacherDashboard() {
                     initial="hidden"
                     animate="show"
                   >
-                    {/* 🔥 ASLI BUTTON LINKS YAHAN HAIN 🔥 */}
                     <motion.button variants={itemVariants} whileHover={{ scale: 1.03, y: -5 }} whileTap={{ scale: 0.98 }} className="quick-action-btn" onClick={() => navigate('/teacher/classes')}>
                       <div className="action-icon live-icon"><Video size={24} /></div>
                       <span>Start Live Class</span>

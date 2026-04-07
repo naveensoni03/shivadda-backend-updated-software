@@ -158,18 +158,40 @@ class ChangePasswordView(APIView):
 # ==========================================
 # 6. STUDENT DASHBOARD SUMMARY VIEW
 # ==========================================
+# ==========================================
+# 6. STUDENT DASHBOARD SUMMARY VIEW
+# ==========================================
 class StudentDashboardSummaryView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         actual_enrolled_count = 0
+        current_student_user = request.user
         
-        # 1. Total Courses Count
+        # 1. Total Courses Count & Enrolled Batches Data Fetching
+        whatsapp_groups = []
         try:
-            Course = apps.get_model('courses', 'Course')
-            actual_enrolled_count = Course.objects.filter(is_active=True).count()
+            # 🚀 FIND ALL BATCHES THIS STUDENT IS IN 
+            Batch = apps.get_model('batches', 'Batch')
+            
+            # Agar real student object exist karta hai
+            if hasattr(current_student_user, 'student_profile'):
+                student_profile = current_student_user.student_profile
+                my_batches = Batch.objects.filter(students=student_profile, is_active=True)
+                
+                actual_enrolled_count = my_batches.count()
+                
+                # 🔥 WHATSAPP GROUPS FETCHING (Requirement 5)
+                for batch in my_batches:
+                    if batch.whatsapp_group_link:
+                        whatsapp_groups.append({
+                            "id": batch.id,
+                            "name": batch.name,
+                            "link": batch.whatsapp_group_link
+                        })
+                        
         except Exception as e:
-            print(f"❌ Dashboard Course Count Error: {e}")
+            print(f"❌ Dashboard Data Fetch Error: {e}")
             actual_enrolled_count = 0
 
         # 2. 🚀 REAL TIMETABLE FETCH (Today's Schedule)
@@ -222,6 +244,7 @@ class StudentDashboardSummaryView(APIView):
                     "urgent": True
                 }
             ],
+            "whatsapp_groups": whatsapp_groups, # 🔥 NEW: Database Se Nikala Hua WhatsApp Link (Req 5)
             "performance_chart": [
                 {"label": "M1", "value": 70},
                 {"label": "M2", "value": 50},

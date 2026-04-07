@@ -12,17 +12,11 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from chatbot.views import AIChatAPI
 from visitors.views import VisitorViewSet
-
-# ✨ NEW: Imported OTP Views from accounts
 from accounts.views import UserManagementViewSet, SendOTPView, VerifyOTPAndLoginView 
-
 from students.views import ChangePasswordView
 
 User = get_user_model()
 
-# ==========================================
-# 🛑 OLD CUSTOM JWT SERIALIZER (Ab YAHI use hoga Standard Login ke liye)
-# ==========================================
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         email_input = attrs.get('email') or attrs.get('username')
@@ -56,10 +50,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
-
-# ==========================================
-# ROUTERS & VIEWS
-# ==========================================
 router = DefaultRouter()
 router.register(r'visitors', VisitorViewSet, basename='visitors')
 router.register(r'users', UserManagementViewSet, basename='users')
@@ -83,35 +73,26 @@ def create_live_admin(request):
 def home(request):
     return HttpResponse("<h1 style='text-align:center; padding-top:50px;'>Backend is Running! 🚀</h1>")
 
-
-# ==========================================
-# URL PATTERNS
-# ==========================================
 urlpatterns = [
     path('api/interactions/', include('interactions.urls')),
     path("", home),
     path("admin/", admin.site.urls),
     
-    # 🔥 FIX: OTP wali API ka raasta alag kar diya, aur Login wali ka alag kar diya 🔥
     path('api/auth/send-otp/', SendOTPView.as_view(), name='send_otp'),       
-    path('api/auth/verify-otp/', VerifyOTPAndLoginView.as_view(), name='verify_otp'), # Agar OTP se login karna ho
-    
-    # 🚀 YEH HAI AAPKA MAIN FIX 🚀 -> Ab /api/auth/login/ password accept karega!
+    path('api/auth/verify-otp/', VerifyOTPAndLoginView.as_view(), name='verify_otp'), 
     path('api/auth/login/', CustomTokenObtainPairView.as_view(), name='login'), 
-    
     path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('setup-live-admin/', create_live_admin), 
-    path("api/", include(router.urls)), 
+    path('api/auth/change-password/', ChangePasswordView.as_view(), name='change-password'),
+
+    # 🔥 SAB SPECIFIC PATHS UPAR HONE CHAHIYE 🔥
     path("api/auth/", include("accounts.urls")), 
     path("api/dashboard/", include("dashboard.urls")),
     path("api/agents/", include("agents.urls")),
     path("api/logs/", include("logs.urls")),
     path("api/students/", include("students.urls")),
-    path("api/teachers/", include("teachers.urls")),
-    
-    # ✨ NEW: Added Parents API Route here! ✨
+    path("api/teachers/", include("teachers.urls")), # 👈 YAHAN AAYEGA REQUEST DIRECTLY
     path("api/parents/", include("parents.urls")),
-    
     path("api/institutions/", include("institutions.urls")),
     path('api/locations/', include('locations.urls')),
     path('api/centers/', include('centers.urls')),  
@@ -132,8 +113,9 @@ urlpatterns = [
     path("api/news/", include("news.urls")), 
     path('api/chat/', AIChatAPI.as_view()),
     path("api/profiles/", include("profiles.urls")),
-    
-    path('api/auth/change-password/', ChangePasswordView.as_view(), name='change-password'),
+
+    # 🛑 YEH WALA SABSE AAKHRI MEIN HONA CHAHIYE 🛑
+    path("api/", include(router.urls)), 
 ]
 
 if settings.DEBUG:

@@ -1,3 +1,5 @@
+import csv
+import io
 import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -5,6 +7,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
+from rest_framework.permissions import IsAuthenticated
 
 # 🔥 SABHI MODELS KA IMPORT
 from .models import (
@@ -611,3 +614,89 @@ class StudentAttemptDetailsAPI(APIView):
             return Response({"answers": data}, status=status.HTTP_200_OK)
         except ExamAttempt.DoesNotExist:
             return Response({"error": "Attempt not found"}, status=status.HTTP_404_NOT_FOUND)
+
+class StudentAttemptDetailsAPI(APIView):
+    def get(self, request, attempt_id):
+        try:
+            attempt = ExamAttempt.objects.get(id=attempt_id)
+            answers = StudentAnswer.objects.filter(attempt=attempt)
+            data = []
+            for ans in answers:
+                data.append({
+                    "question_text": ans.question.text,
+                    "selected_option": ans.selected_option,
+                    "correct_option": ans.question.correct_option,
+                    "is_correct": ans.is_correct
+                })
+            return Response({"answers": data}, status=status.HTTP_200_OK)
+        except ExamAttempt.DoesNotExist:
+            return Response({"error": "Attempt not found"}, status=status.HTTP_404_NOT_FOUND)
+
+# 🔥 NEW: CSV Bulk Upload API 🔥
+class BulkCSVUploadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # File check
+        if 'file' not in request.FILES:
+            return Response({"error": "No CSV file provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+        file = request.FILES['file']
+        exam_type = request.data.get('exam_type', 'Objective')
+
+        if not file.name.endswith('.csv'):
+            return Response({"error": "Please upload a valid .csv file."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # File ko read karna (Decode from bytes to string)
+            decoded_file = file.read().decode('utf-8')
+            io_string = io.StringIO(decoded_file)
+            reader = csv.DictReader(io_string)
+
+            questions_to_create = []
+
+            for row in reader:
+                # Column headers mein space ho toh remove karne ke liye
+                row = {k.strip(): v.strip() for k, v in row.items() if k and v}
+
+                question_text = row.get('Question', '')
+                if not question_text:
+                    continue # Agar question khali hai toh skip karo
+
+                # Marks mapping (Default 5 de rahe hain agar CSV me nahi hai)
+                marks = float(row.get('MaxMarks', 5.0))
+                negative_marks = float(row.get('NegativeMarks', 0.0))
+
+                # Logic: Agar Objective exam hai ya Mixed mein OptionA available hai
+                if exam_type == "Objective" or (exam_type == "Mixed" and row.get('OptionA')):
+                    questions_to_create.append(Question(
+                        text=question_text,
+                        q_type="MCQ",
+                        marks=marks,
+                        negative_marks=negative_marks,
+                        option_a=row.get('OptionA', ''),
+                        option_b=row.get('OptionB', ''),
+                        option_c=row.get('OptionC', ''),
+                        option_d=row.get('OptionD', ''),
+                        correct_option=row.get('CorrectAnswer', '')
+                    ))
+                else:
+                    # Descriptive Logic
+                    questions_to_create.append(Question(
+                        text=question_text,
+                        q_type="Descriptive",
+                        marks=marks,
+                        negative_marks=negative_marks
+                    ))
+
+            # Database me bulk entry (Ye loop chalane se 100x fast hota hai)
+            if questions_to_create:
+                Question.objects.bulk_create(questions_to_create)
+                return Response({
+                    "message": f"Successfully uploaded {len(questions_to_create)} questions! 🎉"
+                }, status=status.HTTP_201_CREATED)
+            else:
+                return Response({"error": "No valid questions found. Please check CSV format."}, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({"error": f"Error parsing CSV: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

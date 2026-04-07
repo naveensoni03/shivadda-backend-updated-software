@@ -15,7 +15,11 @@ from .views import (
     MyChildrenFeesView,
     MyChildrenExamsView,
     ParentSettingsView,
-    CreateRazorpayOrderView
+    CreateRazorpayOrderView,
+    VerifyRazorpayPaymentView, # 🔥 YEH NAYA VERIFICATION VIEW IMPORT KIYA
+    SuperAdminMasterGridView,
+    ToggleUserOTPView,
+    User360ViewAPI # 🔥 YEH NAYA 360 VIEW IMPORT KIYA
 )
 
 # Router Setup
@@ -43,8 +47,14 @@ urlpatterns = [
     path("parents/profile/exams/", MyChildrenExamsView.as_view(), name="parent-exams"),
     path("parents/profile/settings/", ParentSettingsView.as_view(), name="parent-settings"),
 
-    # Payments
+    # 💳 Payments (Razorpay)
     path("create-payment-order/", CreateRazorpayOrderView.as_view(), name="create-payment-order"),
+    path("verify-payment/", VerifyRazorpayPaymentView.as_view(), name="verify-payment"), # 🔥 YEH NAYA VERIFICATION ROUTE ADD KIYA
+    
+    # 👑 Super Admin Dashboard APIs
+    path("superadmin/master-grid/", SuperAdminMasterGridView.as_view(), name="master-grid"),
+    path("users/<int:pk>/", ToggleUserOTPView.as_view(), name="toggle-user-otp"),
+    path("users/<int:pk>/360-view/", User360ViewAPI.as_view(), name="user-360-view"), # 🔥 YEH NAYA ROUTE ADD KIYA
 
     path('', include(router.urls)),
 ]

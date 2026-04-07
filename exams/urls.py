@@ -17,10 +17,11 @@ from .views import (
     get_incoming_messages,
     AssignmentAPI,           
     AssignmentEvaluationAPI, 
-    SubmitAssignmentAPI,     # 🚀 ADDED NEW SUBMIT API IMPORT
+    SubmitAssignmentAPI,     
     StudentResultsAPI,
     TeacherExamResultsAPI,
-    StudentAttemptDetailsAPI
+    StudentAttemptDetailsAPI,
+    BulkCSVUploadView        # 🔥 NEW: CSV Upload API Import
 )
 
 urlpatterns = [
@@ -28,6 +29,7 @@ urlpatterns = [
     # 🚀 CORE EXAM & RESULTS ROUTES
     # ==========================================
     path("", ExamAPI.as_view(), name='exam-list'),
+    path("upload-csv/", BulkCSVUploadView.as_view(), name='exam-csv-upload'), # 🔥 NEW: CSV Bulk Upload Route
     path("<int:pk>/", ExamAPI.as_view(), name='exam-detail'),
     path("<int:exam_id>/submit/", SubmitExamAPI.as_view(), name='exam-submit'),
     path("my-results/", StudentResultsAPI.as_view(), name='student-results'),
@@ -52,7 +54,7 @@ urlpatterns = [
     # 📚 ASSIGNMENTS 
     # ==========================================
     path("assignments/", AssignmentAPI.as_view(), name='assignment-list'),
-    path("assignments/submit/", SubmitAssignmentAPI.as_view(), name='assignment-submit'), # 🚀 ADDED NEW SUBMIT ROUTE (Frontend yahan call karega)
+    path("assignments/submit/", SubmitAssignmentAPI.as_view(), name='assignment-submit'), 
     path("assignments/<int:pk>/", AssignmentAPI.as_view(), name='assignment-detail'),
     path("assignments/<int:assignment_id>/evaluations/", AssignmentEvaluationAPI.as_view(), name='assignment-eval'),
     path("assignments/evaluations/<int:submission_id>/", AssignmentEvaluationAPI.as_view(), name='assignment-eval-update'),

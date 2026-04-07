@@ -39,6 +39,11 @@ class FeeTransaction(models.Model):
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2)
     due_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     
+    # ✨ NEW: GST & Invoice Tracking
+    gst_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="e.g. 18.00 for 18% GST")
+    gst_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    invoice_number = models.CharField(max_length=100, blank=True, null=True, unique=True, help_text="Auto-generated GST Invoice No.")
+    
     # Metadata
     payment_mode = models.CharField(max_length=50, choices=PAYMENT_MODES, default='Cash')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Paid')

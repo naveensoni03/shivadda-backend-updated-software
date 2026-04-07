@@ -1,7 +1,7 @@
 ﻿import React, { useState, useEffect } from "react";
 import SidebarModern from "../components/SidebarModern";
-// ✅ NEW ICONS ADDED (Camera, Play, Pause, AlertCircle)
-import { Clock, CheckCircle, FileText, UserCheck, Brain, Plus, Trash, Save, FileOutput, Eye, Edit2, X, Sparkles, Zap, ChevronLeft, ChevronRight, RefreshCw, Layers, Award, BarChart2, Target, CheckSquare, ShoppingCart, List, Camera, Play, Pause, AlertCircle } from "lucide-react";
+// ✅ NEW ICONS ADDED (Camera, Play, Pause, AlertCircle, UploadCloud, Loader2)
+import { Clock, CheckCircle, FileText, UserCheck, Brain, Plus, Trash, Save, FileOutput, Eye, Edit2, X, Sparkles, Zap, ChevronLeft, ChevronRight, RefreshCw, Layers, Award, BarChart2, Target, CheckSquare, ShoppingCart, List, Camera, Play, Pause, AlertCircle, UploadCloud, Loader2 } from "lucide-react";
 import toast, { Toaster } from 'react-hot-toast';
 import api from "../api/axios";
 import jsPDF from "jspdf";
@@ -68,6 +68,11 @@ export default function Exams() {
     const [quizTimer, setQuizTimer] = useState(0);
     const [isTimerRunning, setIsTimerRunning] = useState(false);
     const [quizLight, setQuizLight] = useState('red');
+
+    // 🔥 NEW STATE: For CSV Bulk Upload
+    const [csvFile, setCsvFile] = useState(null);
+    const [csvExamType, setCsvExamType] = useState("Objective");
+    const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
         setLoaded(true);
@@ -418,6 +423,41 @@ export default function Exams() {
         setQuizTimer(0);
     };
 
+    // 🔥 NEW FEATURE 4: CSV UPLOAD HANDLERS
+    const handleCsvFileChange = (e) => {
+        const selectedFile = e.target.files[0];
+        if (selectedFile && selectedFile.name.endsWith('.csv')) {
+            setCsvFile(selectedFile);
+        } else {
+            toast.error("Please upload a valid .csv file.");
+        }
+    };
+
+    const handleCsvUpload = async () => {
+        if (!csvFile) return toast.error("Please select a CSV file first.");
+        const toastId = toast.loading("Uploading CSV data...");
+        setIsUploading(true);
+
+        const formData = new FormData();
+        formData.append("file", csvFile);
+        formData.append("exam_type", csvExamType);
+
+        try {
+            const token = sessionStorage.getItem("access_token") || localStorage.getItem("access_token");
+            await api.post("/exams/upload-csv/", formData, {
+                headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` }
+            });
+            toast.success("Exam data uploaded successfully! 🎉", { id: toastId });
+            setCsvFile(null);
+            fetchQuestions(); // Refresh records
+            setActiveTab('setter'); // Go back to table
+        } catch (error) {
+            toast.error(error.response?.data?.error || "Upload failed. Check CSV format.", { id: toastId });
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     return (
         <div className="exams-page-wrapper">
             <SidebarModern />
@@ -430,17 +470,21 @@ export default function Exams() {
                         <p className="page-subtitle">Connected to Live Database ⚡</p>
                     </div>
                     <div className="tab-switch">
-                        <button onClick={() => setActiveTab('setter')} className={`tab-btn ${activeTab === 'setter' ? 'active' : ''}`}>
+                        <button onClick={() => setActiveTab('setter')} className={`tab-btn ${activeTab === 'setter' ? 'active' : ''}`} style={{ border: 'none', background: activeTab === 'setter' ? '#eff6ff' : 'transparent', color: activeTab === 'setter' ? '#3b82f6' : '#64748b', padding: '10px 20px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Plus size={18} /> Paper Setter
                         </button>
-                        <button onClick={() => setActiveTab('omr')} className={`tab-btn ${activeTab === 'omr' ? 'active' : ''}`}>
+                        {/* 🔥 NEW TAB FOR BULK CSV UPLOAD */}
+                        <button onClick={() => setActiveTab('upload')} className={`tab-btn ${activeTab === 'upload' ? 'active' : ''}`} style={{ border: 'none', background: activeTab === 'upload' ? '#eff6ff' : 'transparent', color: activeTab === 'upload' ? '#3b82f6' : '#64748b', padding: '10px 20px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <UploadCloud size={18} /> Bulk CSV Upload
+                        </button>
+                        <button onClick={() => setActiveTab('omr')} className={`tab-btn ${activeTab === 'omr' ? 'active' : ''}`} style={{ border: 'none', background: activeTab === 'omr' ? '#eff6ff' : 'transparent', color: activeTab === 'omr' ? '#3b82f6' : '#64748b', padding: '10px 20px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Target size={18} /> Live OMR Exam
                         </button>
-                        <button onClick={() => setActiveTab('evaluation')} className={`tab-btn ${activeTab === 'evaluation' ? 'active' : ''}`}>
+                        <button onClick={() => setActiveTab('evaluation')} className={`tab-btn ${activeTab === 'evaluation' ? 'active' : ''}`} style={{ border: 'none', background: activeTab === 'evaluation' ? '#eff6ff' : 'transparent', color: activeTab === 'evaluation' ? '#3b82f6' : '#64748b', padding: '10px 20px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <CheckCircle size={18} /> Evaluation
                         </button>
                         {/* ✅ NEW TAB FOR LIVE QUIZ */}
-                        <button onClick={() => setActiveTab('quiz')} className={`tab-btn ${activeTab === 'quiz' ? 'active' : ''}`}>
+                        <button onClick={() => setActiveTab('quiz')} className={`tab-btn ${activeTab === 'quiz' ? 'active' : ''}`} style={{ border: 'none', background: activeTab === 'quiz' ? '#eff6ff' : 'transparent', color: activeTab === 'quiz' ? '#3b82f6' : '#64748b', padding: '10px 20px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <AlertCircle size={18} /> Live Quiz (KBC)
                         </button>
                     </div>
@@ -648,6 +692,68 @@ export default function Exams() {
                                     </>
                                 )}
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* 🔥 NEW VIEW: CSV BULK UPLOAD */}
+                {activeTab === "upload" && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        <div style={{ background: 'white', borderRadius: '16px', padding: '40px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', maxWidth: '750px', margin: '0 auto', width: '100%' }}>
+                            <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '15px', marginBottom: '25px' }}>
+                                <h3 style={{ margin: 0, fontSize: '1.4rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '10px' }}><UploadCloud size={24} color="#3b82f6" /> Bulk Exam Data Upload</h3>
+                                <p style={{ color: '#64748b', fontSize: '0.95rem', marginTop: '5px' }}>Upload hundreds of questions instantly using a CSV file.</p>
+                            </div>
+
+                            <div style={{ marginBottom: '25px' }}>
+                                <label style={{ display: 'block', fontWeight: '700', color: '#1e293b', marginBottom: '10px' }}>Select Question Format</label>
+                                <select
+                                    value={csvExamType}
+                                    onChange={(e) => setCsvExamType(e.target.value)}
+                                    style={{ width: '100%', padding: '15px', borderRadius: '12px', border: '2px solid #e2e8f0', outline: 'none', background: '#f8fafc', fontSize: '1rem', fontWeight: '600', color: '#0f172a' }}
+                                >
+                                    <option value="Objective">Objective Questions (MCQ)</option>
+                                    <option value="Descriptive">Descriptive Questions</option>
+                                    <option value="Mixed">Mixed Format</option>
+                                </select>
+                            </div>
+
+                            <div style={{ border: `2px dashed ${csvFile ? '#10B981' : '#3b82f6'}`, background: csvFile ? '#ecfdf5' : '#eff6ff', padding: '50px 20px', borderRadius: '16px', textAlign: 'center', transition: '0.3s', position: 'relative' }}>
+                                <input
+                                    type="file"
+                                    accept=".csv"
+                                    onChange={handleCsvFileChange}
+                                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
+                                />
+                                {csvFile ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                                        <CheckCircle size={48} color="#10B981" />
+                                        <h3 style={{ margin: 0, color: '#065F46' }}>File Selected & Ready</h3>
+                                        <p style={{ margin: 0, color: '#047857', fontWeight: '600' }}>{csvFile.name}</p>
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                                        <UploadCloud size={48} color="#3b82f6" />
+                                        <h3 style={{ margin: 0, color: '#3b82f6' }}>Drag & Drop your CSV file here</h3>
+                                        <p style={{ margin: 0, color: '#64748b' }}>or click anywhere in this box to browse</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div style={{ marginTop: '20px', padding: '15px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                                <AlertCircle size={20} color="#d97706" style={{ flexShrink: 0, marginTop: '2px' }} />
+                                <div style={{ fontSize: '0.85rem', color: '#92400e' }}>
+                                    <strong>CSV Format Rule:</strong> For Objective, columns should be <code>Question, OptionA, OptionB, OptionC, OptionD, CorrectAnswer</code>. For Descriptive, columns should be <code>Question, MaxMarks</code>.
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={handleCsvUpload}
+                                disabled={!csvFile || isUploading}
+                                style={{ width: '100%', marginTop: '25px', background: csvFile ? '#3b82f6' : '#cbd5e1', color: 'white', padding: '16px', borderRadius: '12px', border: 'none', fontSize: '1.1rem', fontWeight: '700', cursor: csvFile ? 'pointer' : 'not-allowed', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', transition: '0.3s' }}
+                            >
+                                {isUploading ? <Loader2 size={24} className="animate-spin" /> : <><Save size={20} /> Upload Database</>}
+                            </button>
                         </div>
                     </div>
                 )}
@@ -986,7 +1092,6 @@ export default function Exams() {
                         </div>
                     </div>
                 )}
-
 
                 {/* --- MODALS SECTION --- */}
                 {viewQ && (
@@ -1383,6 +1488,8 @@ export default function Exams() {
             @keyframes flickerLight { from { opacity: 1; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.5); } to { opacity: 0.8; box-shadow: none; } }
             
             .active-group-light { transform: scale(1.05); box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15); }
+
+            .animate-spin { animation: spin 1s linear infinite; }
 
             /* MOBILE RESPONSIVENESS FIXES */
             @media (max-width: 1024px) {

@@ -73,6 +73,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     # 🔐 NEW FIELDS ADDED FOR ADVANCED AUTHENTICATION
     # ========================================================
     otp = models.CharField(max_length=6, blank=True, null=True, help_text="Temporary OTP for Login")
+    is_otp_enabled = models.BooleanField(default=False, help_text="Admin control to enable/disable OTP for this user") # ✨ NAYA FIELD
     temp_id_code = models.CharField(max_length=100, blank=True, null=True, unique=True, help_text="Code for Time-Limited Trial/Guest Access")
     temp_id_expiry = models.DateTimeField(blank=True, null=True, help_text="Expiry Date & Time for Temporary ID")
     # ========================================================
@@ -121,3 +122,17 @@ class ParentProfile(models.Model):
 
     def __str__(self):
         return f"Parent: {self.user.full_name}"
+
+
+# ----------------------------------------------------------------
+# 5. System Configuration (Super Admin Settings) - ✨ NAYA MODEL
+# ----------------------------------------------------------------
+class SystemConfig(models.Model):
+    company_name = models.CharField(max_length=255, default="Shiv Adda")
+    gst_number = models.CharField(max_length=20, blank=True, null=True, help_text="Global GST Number for Invoices")
+    global_otp_login = models.BooleanField(default=False, help_text="Turn ON to force OTP for EVERYONE")
+    support_email = models.EmailField(default="support@shivadda.com")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Global Settings ({self.company_name})"

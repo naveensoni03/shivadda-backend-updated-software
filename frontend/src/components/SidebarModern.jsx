@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Menu, X } from "lucide-react"; // Zaroori icons rakhe hain toggle ke liye
+import { Menu, X } from "lucide-react";
 
 const SidebarModern = ({ forceOpen }) => {
   const navigate = useNavigate();
@@ -36,7 +36,6 @@ const SidebarModern = ({ forceOpen }) => {
     navigate("/login");
   };
 
-  // Helper component for serial numbers to keep code clean
   const SerialNo = ({ num }) => (
     <span style={{ minWidth: '20px', fontSize: '0.85rem', opacity: 0.7 }}>{num}.</span>
   );
@@ -86,9 +85,13 @@ const SidebarModern = ({ forceOpen }) => {
         <nav style={{ flex: 1 }}>
           <p style={sectionHeaderStyle}>Super Controls</p>
           <NavLink to="/dashboard" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Dashboard</NavLink>
-          <NavLink to="/ai-brain" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> AI Brain</NavLink>
-          <NavLink to="/institutions" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Institutions</NavLink>
-          <NavLink to="/locations" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="4" /> Global Locations</NavLink>
+
+          {/* 🔥 NEW MASTER GRID LINK ADDED HERE 🔥 */}
+          <NavLink to="/superadmin/master-data" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Master Data Grid</NavLink>
+
+          <NavLink to="/ai-brain" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> AI Brain</NavLink>
+          <NavLink to="/institutions" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="4" /> Institutions</NavLink>
+          <NavLink to="/locations" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="5" /> Global Locations</NavLink>
 
           <p style={sectionHeaderStyle}>Access & Logs</p>
           <NavLink to="/users" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> User Manager</NavLink>
@@ -131,7 +134,6 @@ const SidebarModern = ({ forceOpen }) => {
   );
 };
 
-// Styles to keep the component clean
 const sectionHeaderStyle = {
   color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800',
   textTransform: 'uppercase', marginBottom: '15px', marginTop: '30px',

@@ -34,10 +34,8 @@ export default function StudentLogin() {
             });
 
             if (res.data && res.data.access) {
-                // Backend role ko standard format me laate hain (e.g. "Student" ya "Teacher")
                 let userRole = res.data.role || "Student";
 
-                // 🔥 THE FIX: Blocking Teacher as well as Admins from entering Student Portal
                 if (userRole === "Super Admin" || userRole === "Admin" || userRole === "Staff" || userRole === "Teacher") {
                     toast.error(`Access Denied! You are a ${userRole}. Redirecting to your portal...`);
 
@@ -45,27 +43,31 @@ export default function StudentLogin() {
                         if (userRole === "Teacher") {
                             navigate("/teacher/dashboard");
                         } else {
-                            navigate("/dashboard"); // Admin dashboard
+                            navigate("/dashboard");
                         }
                     }, 1500);
-                    return; // Login process yahin rok do
+                    return;
                 }
 
-                // ✅ Agar real student hai tabhi aage badhne do
+                // 🔥 STEP 1: Purana saara data clear karo
+                sessionStorage.clear();
+                localStorage.clear();
+
+                // 🔥 STEP 2: Ab naya data strictly localStorage mein save karo (Taki loop na bane)
                 localStorage.setItem("access_token", res.data.access);
                 if (res.data.refresh) {
                     localStorage.setItem("refresh_token", res.data.refresh);
                 }
 
-                // Hamesha ensure karo ki role cleanly set ho
                 localStorage.setItem("user_role", userRole.trim());
                 localStorage.setItem("user_email", res.data.email || email);
                 localStorage.setItem("user_name", res.data.name || res.data.full_name || "Student");
 
                 toast.success("Welcome to your Learning Portal! 🎓");
 
+                // Dashboard par redirect
                 setTimeout(() => {
-                    navigate("/student/profile");
+                    navigate("/student/dashboard");
                 }, 500);
             } else {
                 toast.error("Invalid server response. Token missing.");
@@ -110,7 +112,6 @@ export default function StudentLogin() {
         <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Inter', sans-serif", background: "#f8fafc" }}>
             <Toaster position="top-right" />
 
-            {/* LEFT PANEL */}
             <div className="login-left-panel" style={leftPanelStyle}>
                 <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "white" }}>
@@ -143,7 +144,6 @@ export default function StudentLogin() {
                 <div style={{ position: "absolute", bottom: "-10%", left: "-10%", width: "300px", height: "300px", background: "radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)", borderRadius: "50%" }} />
             </div>
 
-            {/* RIGHT PANEL - LOGIN FORM */}
             <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px", position: "relative" }}>
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}

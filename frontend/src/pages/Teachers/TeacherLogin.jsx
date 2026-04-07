@@ -23,8 +23,6 @@ export default function TeacherLogin() {
         const loadingToast = toast.loading("Verifying credentials...");
 
         try {
-            // 🔥 THE BULLETPROOF FIX: 
-            // Hum dono bhej rahe hain (email aur username) taaki backend confuse na ho.
             const payload = {
                 email: email.toLowerCase().trim(),
                 username: email.toLowerCase().trim(),
@@ -36,7 +34,6 @@ export default function TeacherLogin() {
             if (response.data && response.data.access) {
                 const { access, refresh, role, user_role, name, user_id } = response.data;
 
-                // Default fallback to "Teacher"
                 let actualRole = (role || user_role || "teacher").toLowerCase().trim();
 
                 if (actualRole !== "teacher" && actualRole !== "super admin") {
@@ -45,11 +42,12 @@ export default function TeacherLogin() {
                     return;
                 }
 
-                localStorage.setItem("access_token", access);
-                localStorage.setItem("refresh_token", refresh);
-                localStorage.setItem("user_role", role || user_role || "Teacher");
-                localStorage.setItem("user_name", name || "Instructor");
-                if (user_id) localStorage.setItem("user_id", user_id);
+                // 🚀 THE FIX: Changed localStorage to sessionStorage
+                sessionStorage.setItem("access_token", access);
+                sessionStorage.setItem("refresh_token", refresh);
+                sessionStorage.setItem("user_role", role || user_role || "Teacher");
+                sessionStorage.setItem("user_name", name || "Instructor");
+                if (user_id) sessionStorage.setItem("user_id", user_id);
 
                 toast.success(`Welcome back, ${name || "Instructor"}!`, { id: loadingToast });
 
@@ -67,7 +65,6 @@ export default function TeacherLogin() {
                 toast.error("Incorrect email or password!", { id: loadingToast });
             } else if (err.response?.status === 400) {
                 toast.error("Data error! Check if account is active.", { id: loadingToast });
-                console.log("Payload error: ", err.response?.data);
             } else {
                 const errMsg = err.response?.data?.error || err.response?.data?.detail || "Server Error. Please try again.";
                 toast.error(errMsg, { id: loadingToast });
@@ -79,10 +76,7 @@ export default function TeacherLogin() {
 
     const containerVariants = {
         hidden: { opacity: 0 },
-        show: {
-            opacity: 1,
-            transition: { staggerChildren: 0.15, delayChildren: 0.3 },
-        },
+        show: { opacity: 1, transition: { staggerChildren: 0.15, delayChildren: 0.3 } },
     };
 
     const itemVariants = {

@@ -5,7 +5,8 @@ import api from "../../api/axios";
 import toast, { Toaster } from "react-hot-toast";
 import {
   Search, Bell, CloudSun, Clock, Calendar as CalendarIcon,
-  BookOpen, Target, CheckCircle, TrendingUp, PlayCircle, FileText, ChevronRight, Loader2
+  BookOpen, Target, CheckCircle, TrendingUp, PlayCircle, FileText, ChevronRight, Loader2,
+  MessageCircle // 🔥 NEW ICON ADDED FOR WHATSAPP
 } from "lucide-react";
 import StudentSidebar from "../../components/StudentSidebar";
 
@@ -42,7 +43,14 @@ export default function StudentDashboard() {
     setIsLoading(true);
     try {
       const res = await api.get("/students/dashboard-summary/");
-      setDashData(res.data);
+      // 💡 TEMPORARY MOCK DATA FOR WHATSAPP GROUPS (Until backend sends real data)
+      const dataWithWhatsApp = {
+        ...res.data,
+        whatsapp_groups: res.data.whatsapp_groups || [
+          { id: 1, name: "Physics Class 12 - Morning Batch", link: "https://chat.whatsapp.com/dummy123" }
+        ]
+      };
+      setDashData(dataWithWhatsApp);
     } catch (error) {
       console.error("Dashboard API Error:", error);
       toast.error("Could not fetch latest data from server.");
@@ -194,8 +202,10 @@ export default function StudentDashboard() {
                 </div>
               </motion.div>
 
-              {/* 🌟 PENDING TASKS & EXAMS (Connected to API) */}
+              {/* 🌟 RIGHT COLUMN (Tasks, WhatsApp & Graphs) */}
               <div className="right-col-widgets">
+
+                {/* Pending Tasks */}
                 <motion.div className="widget-card glass-panel" variants={fadeUp}>
                   <div className="section-header">
                     <h2>Pending Tasks</h2>
@@ -215,6 +225,37 @@ export default function StudentDashboard() {
                     ))}
                     {(!dashData?.tasks || dashData.tasks.length === 0) && (
                       <p style={{ textAlign: 'center', color: '#64748b', fontSize: '0.85rem' }}>All caught up! 🎉</p>
+                    )}
+                  </div>
+                </motion.div>
+
+                {/* 🔥 NEW FEATURE: WHATSAPP GROUPS (Req 5) */}
+                <motion.div className="widget-card glass-panel" variants={fadeUp} style={{ background: 'linear-gradient(135deg, #ecfdf5, #ffffff)', border: '1px solid #10b981' }}>
+                  <div className="section-header" style={{ borderBottomColor: '#a7f3d0' }}>
+                    <h2 style={{ color: '#065f46', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <MessageCircle size={20} color="#10b981" fill="#10b981" /> My WhatsApp Groups
+                    </h2>
+                  </div>
+                  <div className="task-list">
+                    {dashData?.whatsapp_groups?.length > 0 ? (
+                      dashData.whatsapp_groups.map((group) => (
+                        <div key={group.id} className="task-item" style={{ border: '1px solid #a7f3d0', background: 'white' }}>
+                          <div className="task-details">
+                            <h5 style={{ color: '#1f2937', fontWeight: '700' }}>{group.name}</h5>
+                            <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: '600' }}>Official Batch Group</span>
+                          </div>
+                          <button
+                            onClick={() => window.open(group.link, "_blank")}
+                            style={{ background: '#10b981', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.85rem', transition: '0.2s', boxShadow: '0 4px 10px rgba(16, 185, 129, 0.3)' }}
+                            onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                            onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                          >
+                            <MessageCircle size={16} /> Join
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <p style={{ textAlign: 'center', color: '#047857', fontSize: '0.85rem' }}>No WhatsApp groups assigned yet.</p>
                     )}
                   </div>
                 </motion.div>

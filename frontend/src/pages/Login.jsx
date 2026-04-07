@@ -89,9 +89,9 @@ export default function Login() {
 
         toast.success("Welcome Back! 🚀");
 
+        // 🚀 FIXED: Removed navigate() and reload(). Using window.location.href for proper hard redirect.
         setTimeout(() => {
-          navigate("/dashboard");
-          window.location.reload();
+          window.location.href = "/dashboard";
         }, 500);
       } else {
         setError("Invalid server response");
@@ -180,7 +180,6 @@ export default function Login() {
               <form onSubmit={verifyStepOne} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                 <div className="input-container" style={{ position: 'relative' }}>
                   <Mail className="input-icon" size={20} style={{ position: 'absolute', left: '12px', top: '12px', color: '#94a3b8' }} />
-                  {/* 🚀 FIXED: type="text" taaki number ya email dono accept kare */}
                   <input
                     type="text"
                     placeholder="Email or Mobile Number"

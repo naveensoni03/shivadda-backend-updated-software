@@ -26,6 +26,9 @@ export default function Courses() {
 
     const [newBatchName, setNewBatchName] = useState("");
     const [newBatchDate, setNewBatchDate] = useState("");
+    // 🔥 NEW STATE FOR WHATSAPP LINK
+    const [newWhatsAppLink, setNewWhatsAppLink] = useState("");
+
     const [courseBatches, setCourseBatches] = useState([]);
     const [viewingBatch, setViewingBatch] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
@@ -202,11 +205,13 @@ export default function Courses() {
                 name: newBatchName,
                 course: selectedCourse.id,
                 start_date: newBatchDate,
+                whatsapp_group_link: newWhatsAppLink, // 🔥 WHATSAPP LINK ADDED HERE
                 is_active: true
             });
             toast.success("Batch created successfully! 🚀", { id: loadToast });
             setNewBatchName("");
             setNewBatchDate("");
+            setNewWhatsAppLink(""); // 🔥 RESET WHATSAPP LINK
             fetchBatches(selectedCourse.id);
         } catch (error) {
             console.error("Batch Creation Error:", error);
@@ -238,7 +243,6 @@ export default function Courses() {
             <SidebarModern />
             <Toaster position="top-center" />
 
-            {/* ✅ YAHAN CLASS KO UPDATE KIYA HAI JISSE OVERLAP FIX HOGA */}
             <div className="courses-main-content">
 
                 <header className="slide-in-down courses-header">
@@ -427,6 +431,10 @@ export default function Courses() {
                                                     <input type="text" placeholder="Batch Name (e.g. Morning 2026)" value={newBatchName} onChange={(e) => setNewBatchName(e.target.value)} style={inputStyleLight} />
                                                     <input type="date" value={newBatchDate} onChange={(e) => setNewBatchDate(e.target.value)} style={inputStyleLight} />
                                                 </div>
+                                                {/* 🔥 NEW WHATSAPP LINK INPUT */}
+                                                <div style={{ marginTop: '10px' }}>
+                                                    <input type="url" placeholder="WhatsApp Group Link (Optional)" value={newWhatsAppLink} onChange={(e) => setNewWhatsAppLink(e.target.value)} style={inputStyleLight} />
+                                                </div>
                                                 <button onClick={handleCreateBatch} className="btn-confirm-gradient hover-lift" style={{ width: '100%', padding: '10px', marginTop: '10px', borderRadius: '10px' }}>+ Add Batch</button>
                                             </div>
 
@@ -440,6 +448,9 @@ export default function Courses() {
                                                     </div>
 
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                        {/* 🔥 Quick WhatsApp Badge Indicator */}
+                                                        {b.whatsapp_group_link && <span style={{ color: '#10b981', fontSize: '1.2rem' }} title="WhatsApp Group Linked">💬</span>}
+
                                                         <span style={{ background: '#e0e7ff', color: '#4f46e5', padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '700' }}>Active</span>
 
                                                         <button
@@ -487,10 +498,19 @@ export default function Courses() {
                                     <span style={{ color: '#64748b', fontWeight: '600', fontSize: '0.9rem' }}>Start Date</span>
                                     <span style={{ color: '#0f172a', fontWeight: '800', fontSize: '0.95rem' }}>{viewingBatch.start_date}</span>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: viewingBatch.whatsapp_group_link ? '15px' : '0', borderBottom: viewingBatch.whatsapp_group_link ? '1px dashed #cbd5e1' : 'none', paddingBottom: viewingBatch.whatsapp_group_link ? '12px' : '0' }}>
                                     <span style={{ color: '#64748b', fontWeight: '600', fontSize: '0.9rem' }}>Course Code</span>
                                     <span style={{ color: '#0f172a', fontWeight: '800', fontSize: '0.95rem' }}>{selectedCourse?.code}</span>
                                 </div>
+                                {/* 🔥 DISPLAY WHATSAPP LINK IF EXISTS */}
+                                {viewingBatch.whatsapp_group_link && (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                        <span style={{ color: '#64748b', fontWeight: '600', fontSize: '0.9rem' }}>WhatsApp Group</span>
+                                        <a href={viewingBatch.whatsapp_group_link} target="_blank" rel="noreferrer" style={{ color: '#10b981', fontWeight: '800', fontSize: '0.85rem', wordBreak: 'break-all' }}>
+                                            {viewingBatch.whatsapp_group_link}
+                                        </a>
+                                    </div>
+                                )}
                             </div>
 
                             <button className="btn-confirm-gradient hover-lift" style={{ width: '100%', padding: '14px', marginTop: '25px', borderRadius: '14px', fontSize: '1rem' }} onClick={() => setViewingBatch(null)}>

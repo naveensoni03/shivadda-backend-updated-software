@@ -40,12 +40,24 @@ class CourseSerializer(serializers.ModelSerializer):
     subjects = SubjectSerializer(many=True, read_only=True)
     # lessons = LessonSerializer(many=True, read_only=True) # Commented to avoid heavy load on list view
 
+    # 🔥 NAYA UPDATE: Faculty ki details frontend pe bhejne ke liye custom field
+    faculty = serializers.SerializerMethodField()
+
     class Meta:
         model = Course
         fields = '__all__'
         
-        
-        
+    # 🔥 NAYA UPDATE: Ye function automatically teacher ka data nikal kar set karega
+    def get_faculty(self, obj):
+        user = getattr(obj, 'created_by', None)
+        if user:
+            return {
+                "name": getattr(user, 'full_name', getattr(user, 'username', 'Unknown Teacher')),
+                "username": getattr(user, 'username', 'N/A'),
+                "email": getattr(user, 'email', 'N/A'),
+                "specialization": getattr(user, 'post_nature', 'Expert Faculty') # Ensure 'post_nature' is the right field in your User model
+            }
+        return None
 
 class AcademicLevelSerializer(serializers.ModelSerializer):
     class Meta:

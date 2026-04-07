@@ -14,6 +14,7 @@ from rest_framework.views import APIView
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateAPIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.pagination import PageNumberPagination
 
 from .models import Agent
 from .serializers import AgentSerializer, AgentCreateSerializer, UserManagementSerializer
@@ -141,13 +142,56 @@ class MeView(APIView):
 class CreateRazorpayOrderView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
-        client = razorpay.Client(auth=('rzp_test_1DP5mmOlF5G5ag', '5c3gK2pBz2YgG5d4A9Y9hZ3X'))
+        # ⚠️ Yahan aapko apne asli Razorpay Test Keys daalne hain agar setting.py me nahi hain
+        client = razorpay.Client(auth=(
+            getattr(settings, 'RAZORPAY_KEY_ID', 'rzp_test_1DP5mmOlF5G5ag'), 
+            getattr(settings, 'RAZORPAY_KEY_SECRET', '5c3gK2pBz2YgG5d4A9Y9hZ3X')
+        ))
         amount = request.data.get('amount')
+        
+        if not amount:
+             return Response({"error": "Amount is required"}, status=status.HTTP_400_BAD_REQUEST)
+             
         try:
             order = client.order.create({"amount": int(amount)*100, "currency": "INR", "payment_capture": "0"})
+            order['key'] = getattr(settings, 'RAZORPAY_KEY_ID', 'rzp_test_1DP5mmOlF5G5ag')
             return Response(order, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+# 🔥 YEH NAYA VERIFICATION VIEW ADD KIYA HAI 🔥
+class VerifyRazorpayPaymentView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        client = razorpay.Client(auth=(
+            getattr(settings, 'RAZORPAY_KEY_ID', 'rzp_test_1DP5mmOlF5G5ag'), 
+            getattr(settings, 'RAZORPAY_KEY_SECRET', '5c3gK2pBz2YgG5d4A9Y9hZ3X')
+        ))
+
+        try:
+            payment_id = request.data.get('razorpay_payment_id')
+            order_id = request.data.get('razorpay_order_id')
+            signature = request.data.get('razorpay_signature')
+            fee_id = request.data.get('fee_id')
+
+            params_dict = {
+                'razorpay_order_id': order_id,
+                'razorpay_payment_id': payment_id,
+                'razorpay_signature': signature
+            }
+
+            # 🛡️ Yahan Razorpay verify karega ki payment asli hai ya fake
+            client.utility.verify_payment_signature(params_dict)
+
+            # Agar verify ho gaya, tab database mein status update karo
+            # Example: StudentFee.objects.filter(id=fee_id).update(status='Paid')
+
+            return Response({"message": "Payment verified securely! ✅"}, status=status.HTTP_200_OK)
+
+        except razorpay.errors.SignatureVerificationError:
+            return Response({"error": "Payment verification failed. Fake signature detected! ❌"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # ==========================================
 # 👨‍👩‍👦 PARENT DASHBOARD APIs
@@ -239,3 +283,172 @@ class ParentSettingsView(APIView):
             return Response({"message": "Profile Updated Successfully! ✅"})
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+        
+        
+# ==========================================
+# 👑 SUPER ADMIN: MASTER DATA & 360 VIEW
+# ==========================================
+
+class MasterGridPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'limit' # Frontend se ?limit=50 bhej sakte hain
+    max_page_size = 100
+
+class SuperAdminMasterGridView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role not in ['SUPER_ADMIN', 'ADMIN']:
+            return Response({"error": "Unauthorized Access"}, status=status.HTTP_403_FORBIDDEN)
+
+        role_filter = request.query_params.get('role', None)
+        status_filter = request.query_params.get('status', None)
+        search_query = request.query_params.get('search', None)
+        # Naye Filters
+        location_filter = request.query_params.get('location', None)
+        service_filter = request.query_params.get('service', None)
+
+        users_query = User.objects.all().order_by('-date_joined')
+
+        if role_filter:
+            users_query = users_query.filter(role__iexact=role_filter)
+        if status_filter:
+            users_query = users_query.filter(account_status__iexact=status_filter)
+        if search_query:
+            users_query = users_query.filter(
+                Q(full_name__icontains=search_query) | 
+                Q(email__icontains=search_query) | 
+                Q(phone__icontains=search_query)
+            )
+
+        paginator = MasterGridPagination()
+        paginated_users = paginator.paginate_queryset(users_query, request)
+        
+        master_data = []
+        for user in paginated_users:
+            base_info = {
+                "id": user.id,
+                "name": user.full_name,
+                "email": user.email,
+                "phone": user.phone,
+                "role": user.role,
+                "status": user.account_status,
+                "date_joined": user.date_joined.strftime("%Y-%m-%d"),
+                "is_otp_enabled": getattr(user, 'is_otp_enabled', False)
+            }
+
+            # Related data extract karna (Student/Teacher models se)
+            try:
+                if user.role == 'STUDENT' and hasattr(user, 'student_profile'):
+                    base_info["student_id"] = user.student_profile.admission_number
+                    base_info["fee_status"] = user.student_profile.fee_status
+                    base_info["location"] = user.student_profile.city # Example location mapping
+                    base_info["service"] = user.student_profile.user_group # Example service mapping
+            except Exception:
+                pass
+
+            master_data.append(base_info)
+
+        return paginator.get_paginated_response(master_data)
+    
+class ToggleUserOTPView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        # Security: Sirf Super Admin ya Admin hi OTP change kar sakte hain
+        if request.user.role not in ['SUPER_ADMIN', 'ADMIN']:
+            return Response({"error": "Unauthorized Access"}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            user = User.objects.get(pk=pk)
+            is_otp_enabled = request.data.get('is_otp_enabled')
+            
+            if is_otp_enabled is not None:
+                user.is_otp_enabled = is_otp_enabled
+                user.save()
+                return Response({"message": f"OTP status updated to {is_otp_enabled} for {user.email}"}, status=200)
+            return Response({"error": "Invalid data"}, status=400)
+            
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+
+# ==========================================
+# 🔍 360-DEGREE USER PROFILE API
+# ==========================================
+class User360ViewAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        if request.user.role not in ['SUPER_ADMIN', 'ADMIN']:
+            return Response({"error": "Unauthorized Access"}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            user = User.objects.get(pk=pk)
+            
+            # Base Data (Jo har user ke paas hoga)
+            data = {
+                "id": user.id,
+                "name": user.full_name,
+                "email": user.email,
+                "phone": user.phone or "Not Provided",
+                "role": user.role,
+                "status": user.account_status,
+                "date_joined": user.date_joined.strftime("%B %d, %Y"),
+                "financial_status": "N/A",
+                "academic_status": "N/A",
+                "location": "Global System",
+                "service": "Platform Access",
+                "recent_activity": []
+            }
+
+            # 🎓 Agar User STUDENT hai
+            if user.role == 'STUDENT':
+                try:
+                    student = getattr(user, 'student_profile', None)
+                    if student:
+                        data["location"] = getattr(student, 'city', 'N/A')
+                        data["service"] = getattr(student, 'user_group', 'N/A')
+                        
+                        # 💰 Finance Check
+                        data["financial_status"] = f"{student.fee_status}"
+                        if student.fee_status == 'Pending':
+                            data["recent_activity"].append("⚠️ Fee is pending.")
+                        
+                        # 📝 Attendance Check
+                        try:
+                            total_days = student.attendances.count()
+                            if total_days > 0:
+                                present_days = student.attendances.filter(status__iexact='Present').count()
+                                data["academic_status"] = f"Attendance: {int((present_days / total_days) * 100)}%"
+                            else:
+                                data["academic_status"] = "Attendance: No Data"
+                        except Exception:
+                            data["academic_status"] = "Attendance: Pending Sync"
+                            
+                        # 📊 Exam Check
+                        try:
+                            from exams.models import ExamAttempt
+                            latest_exam = ExamAttempt.objects.filter(student=user, is_evaluated=True).order_by('-end_time').first()
+                            if latest_exam:
+                                grade = latest_exam.grade if latest_exam.grade else f"{latest_exam.percentage}%"
+                                data["recent_activity"].append(f"🎓 Last Exam Scored: {grade}")
+                        except Exception:
+                            pass
+                except Exception as e:
+                    print(f"360 View Student Error: {e}")
+
+            # 👩‍🏫 Agar User TEACHER hai
+            elif user.role == 'TEACHER':
+                data["financial_status"] = "Salary Active (Payroll Linked)"
+                data["academic_status"] = "Assigned Batches: Syncing..."
+                data["recent_activity"].append("📚 Teacher Dashboard Active")
+
+            # 👨‍👩‍👦 Agar User PARENT hai
+            elif user.role == 'PARENT':
+                data["financial_status"] = "Checking Child Fee Ledger..."
+                data["academic_status"] = "Tracking Child Progress"
+
+            return Response(data, status=200)
+
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
