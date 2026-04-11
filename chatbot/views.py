@@ -1,12 +1,12 @@
-﻿from rest_framework.views import APIView
+from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny  # 🚀 Chatbot ko 401 error se bachane ke liye
+from rest_framework.permissions import AllowAny
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.conf import settings
 from google import genai
 
-# 🛑 YAHAN APNI NAYI WALI API KEY DAALIYE (Quotes ke andar)
-API_KEY = "AIzaSyDU1H-hSM8Mu8SS1dxJv9yJtMMR-KoEd2o" 
+API_KEY = settings.GEMINI_API_KEY
 
 try:
     client = genai.Client(api_key=API_KEY)

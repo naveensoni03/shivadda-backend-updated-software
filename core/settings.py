@@ -1,4 +1,4 @@
-﻿"""
+"""
 Django settings for core project.
 """
 import os
@@ -174,6 +174,17 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'Soninaveen9756@gmail.com')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'ssdahuyofdvqwxlk')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# --------------------------------------------------
+# 💳 RAZORPAY PAYMENT GATEWAY
+# --------------------------------------------------
+RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID', '')
+RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET', '')
+
+# --------------------------------------------------
+# 🤖 GOOGLE GEMINI AI
+# --------------------------------------------------
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')

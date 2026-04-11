@@ -35,6 +35,13 @@ import RecycleBin from "./pages/RecycleBin";
 // 👑 SUPER ADMIN PORTAL IMPORT
 import SuperAdminDashboard from "./pages/SuperAdmin/SuperAdminDashboard";
 
+// 💳 PAYMENT MODULE IMPORTS
+import ServiceCatalog from "./pages/ServiceCatalog";
+import PaymentAccounts from "./pages/PaymentAccounts";
+import TeacherSalaryAdmin from "./pages/TeacherSalaryAdmin";
+import StudentAccount from "./pages/student/StudentAccount";
+import TeacherAccount from "./pages/Teachers/TeacherAccount";
+
 // 📰 PUBLIC PORTAL IMPORTS
 import NewsPortal from "./pages/NewsPortal";
 
@@ -160,6 +167,11 @@ export default function App() {
           <Route path="/global-settings" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><GlobalSettings /></ProtectedRoute>} />
           <Route path="/recycle-bin" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><RecycleBin /></ProtectedRoute>} />
 
+          {/* 💳 PAYMENT MODULE ROUTES */}
+          <Route path="/service-catalog" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><ServiceCatalog /></ProtectedRoute>} />
+          <Route path="/payment-accounts" element={<ProtectedRoute allowedRoles={FINANCE_ROLES}><PaymentAccounts /></ProtectedRoute>} />
+          <Route path="/teacher-salary" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><TeacherSalaryAdmin /></ProtectedRoute>} />
+
           {/* ==========================================
               🎓 STUDENT PORTAL PROTECTED ROUTES (STRICTLY FOR STUDENTS)
           ============================================= */}
@@ -174,6 +186,9 @@ export default function App() {
 
           {/* 🔥 NAYA ROUTE: Student Fees */}
           <Route path="/student/fees" element={<ProtectedRoute allowedRoles={["Student"]}><StudentFees /></ProtectedRoute>} />
+
+          {/* 💳 Student Account & Payments */}
+          <Route path="/student/account" element={<ProtectedRoute allowedRoles={["Student"]}><StudentAccount /></ProtectedRoute>} />
 
           {/* ==========================================
               👩‍🏫 TEACHER PORTAL PROTECTED ROUTES (STRICTLY FOR TEACHERS)
@@ -196,6 +211,7 @@ export default function App() {
             <Route path="messages" element={<TeacherMailbox />} />
             <Route path="fees" element={<TeacherFees />} />
             <Route path="wallet" element={<TeacherFees />} />
+            <Route path="account" element={<TeacherAccount />} />
             <Route path="settings" element={<TeacherSettings />} />
           </Route>
 

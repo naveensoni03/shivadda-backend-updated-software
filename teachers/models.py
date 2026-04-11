@@ -1,11 +1,20 @@
 from django.db import models
-from django.utils import timezone # Naya import StudyMaterial aur Mail ke time ke liye
+from django.conf import settings
+from django.utils import timezone
 
 # ==========================================
 # 1. TEACHER MODEL
 # ==========================================
 class Teacher(models.Model):
     GENDER_CHOICES = (('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other'))
+
+    # --- User Account Link (for teacher login) ---
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='teacher_profile'
+    )
 
     # --- Identity ---
     employee_id = models.CharField(max_length=20, unique=True)

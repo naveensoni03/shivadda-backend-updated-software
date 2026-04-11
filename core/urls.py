@@ -1,4 +1,4 @@
-﻿from django.contrib import admin
+from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
@@ -113,6 +113,7 @@ urlpatterns = [
     path("api/news/", include("news.urls")), 
     path('api/chat/', AIChatAPI.as_view()),
     path("api/profiles/", include("profiles.urls")),
+    path("api/payments/", include("payments.urls")),
 
     # 🛑 YEH WALA SABSE AAKHRI MEIN HONA CHAHIYE 🛑
     path("api/", include(router.urls)), 

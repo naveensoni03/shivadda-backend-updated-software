@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 
@@ -111,9 +111,12 @@ const SidebarModern = ({ forceOpen }) => {
           <p style={sectionHeaderStyle}>Finance & Assets</p>
           <NavLink to="/fees" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Fees Ledger</NavLink>
           <NavLink to="/payroll" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Payroll & Salary</NavLink>
-          <NavLink to="/inventory" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Inventory</NavLink>
-          <NavLink to="/timetable" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="4" /> Timetable & Routine</NavLink>
-          <NavLink to="/communication" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="5" /> Communication</NavLink>
+          <NavLink to="/service-catalog" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> 💳 Service Catalog</NavLink>
+          <NavLink to="/payment-accounts" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="4" /> 📊 Payment Accounts</NavLink>
+          <NavLink to="/teacher-salary" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="5" /> 👩‍🏫 Teacher Salary</NavLink>
+          <NavLink to="/inventory" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="6" /> Inventory</NavLink>
+          <NavLink to="/timetable" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="7" /> Timetable & Routine</NavLink>
+          <NavLink to="/communication" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="8" /> Communication</NavLink>
 
           <p style={sectionHeaderStyle}>Facilities</p>
           <NavLink to="/library" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Library</NavLink>

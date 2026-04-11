@@ -21,6 +21,7 @@ export default function SidebarTeacher() {
         { name: "My Students", path: "/teacher/students" },
         { name: "Mailbox/Chat", path: "/teacher/messages" },
         { name: "Wallet & Earnings", path: "/teacher/wallet" },
+        { name: "💳 My Account", path: "/teacher/account" },
         { name: "Settings", path: "/teacher/settings" },
     ];
 

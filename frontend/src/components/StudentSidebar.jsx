@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     LayoutDashboard, BookOpen, Calendar, FileText,
-    User, LogOut, Menu, X, ClipboardList, Wallet // 🔥 NAYA IMPORT: Wallet icon for Fees
+    User, LogOut, Menu, X, ClipboardList, Wallet, CreditCard
 } from "lucide-react";
 
 export default function StudentSidebar() {
@@ -85,8 +85,8 @@ export default function StudentSidebar() {
                     <NavButton icon={Calendar} label="Timetable" path="/student/timetable" />
                     <NavButton icon={ClipboardList} label="Assignments" path="/student/assignments" />
                     <NavButton icon={FileText} label="Exams & Results" path="/student/exams" />
-                    {/* 🔥 NAYA BUTTON: My Fees */}
                     <NavButton icon={Wallet} label="My Fees" path="/student/fees" />
+                    <NavButton icon={CreditCard} label="My Account" path="/student/account" />
                     <NavButton icon={User} label="Profile" path="/student/profile" />
                 </nav>
 
