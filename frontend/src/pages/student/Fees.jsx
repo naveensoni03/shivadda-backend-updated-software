@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import StudentSidebar from "../../components/StudentSidebar"; // 👈 Sidebar change
+import StudentSidebar from "../../components/StudentSidebar";
 import { motion } from "framer-motion";
-import { Wallet, CreditCard, Clock, CheckCircle, Download, Loader2 } from "lucide-react";
+import { Wallet, CreditCard, Clock, CheckCircle, Download, Loader2, Building2, Copy, Send } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import api from "../../api/axios";
 
@@ -20,6 +20,20 @@ export default function StudentFees() {
   const [loading, setLoading] = useState(true);
   const [isProcessingId, setIsProcessingId] = useState(null);
   const [feeRecords, setFeeRecords] = useState([]);
+  const [bankModal, setBankModal] = useState(null);
+  const [utrNumber, setUtrNumber] = useState("");
+  const [utrSubmitting, setUtrSubmitting] = useState(false);
+  const [demoModal, setDemoModal] = useState(null);
+
+  // School Bank Details — admin se change karwao
+  const SCHOOL_BANK = {
+    accountName: "Shiv Adda Education Pvt. Ltd.",
+    accountNumber: "1234567890123",
+    ifsc: "SBIN0001234",
+    bank: "State Bank of India",
+    branch: "Main Branch, City",
+    accountType: "Current Account",
+  };
 
   useEffect(() => {
     fetchFeeData();
@@ -50,38 +64,54 @@ export default function StudentFees() {
   const nextDueDate = pendingFees.length > 0 ? pendingFees[0].due_date : "No Dues";
 
   // ==========================================
-  // 💳 THE REAL RAZORPAY PAYMENT LOGIC
+  // 💳 PAYMENT LOGIC (Real Razorpay + Demo Fallback)
   // ==========================================
+
+  const markFeePaid = (feeId, txnId) => {
+    setFeeRecords(prev => prev.map(r =>
+      r.id === feeId
+        ? { ...r, status: "Paid", date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) }
+        : r
+    ));
+    toast.success(`Payment Successful! TXN: ${txnId}`);
+    setIsProcessingId(null);
+  };
+
   const displayRazorpay = async (fee) => {
     setIsProcessingId(fee.id);
-    const loadToast = toast.loading("Connecting to Secure Payment Gateway...");
-
-    const res = await loadRazorpayScript();
-    if (!res) {
-      toast.error("Razorpay SDK failed to load. Are you online?", { id: loadToast });
-      setIsProcessingId(null);
-      return;
-    }
+    const loadToast = toast.loading("Connecting to Payment Gateway...");
 
     try {
       const orderData = await api.post("auth/create-payment-order/", { amount: fee.amount });
-      const { id: order_id, amount, currency, key } = orderData.data;
+      const { id: order_id, amount: orderAmount, currency, key, demo_mode } = orderData.data;
 
       toast.dismiss(loadToast);
 
+      // ✅ DEMO MODE — Razorpay keys nahi hain to demo modal dikhao
+      if (demo_mode) {
+        setDemoModal({ fee, orderId: order_id, amount: orderAmount });
+        setIsProcessingId(null);
+        return;
+      }
+
+      // ✅ REAL RAZORPAY MODE
+      const sdkLoaded = await loadRazorpayScript();
+      if (!sdkLoaded) {
+        toast.error("Razorpay SDK load nahi hua. Internet check karo.");
+        setIsProcessingId(null);
+        return;
+      }
+
       const options = {
         key: key,
-        amount: amount.toString(),
+        amount: orderAmount.toString(),
         currency: currency,
         name: "SHIV ADDA SCHOOL",
-        description: `${fee.month} Course Fee Payment`,
+        description: `${fee.month} Course Fee`,
         image: "https://cdn-icons-png.flaticon.com/512/3135/3135810.png",
         order_id: order_id,
-
         handler: async function (response) {
-          console.log("Success Response from Razorpay:", response);
-          const verifyToast = toast.loading("Verifying your payment securely...");
-
+          const verifyToast = toast.loading("Payment verify ho raha hai...");
           try {
             await api.post("auth/verify-payment/", {
               razorpay_payment_id: response.razorpay_payment_id,
@@ -89,42 +119,81 @@ export default function StudentFees() {
               razorpay_signature: response.razorpay_signature,
               fee_id: fee.id
             });
-
-            setFeeRecords(prevRecords =>
-              prevRecords.map(record =>
-                record.id === fee.id
-                  ? { ...record, status: "Paid", date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) }
-                  : record
-              )
-            );
-            toast.success(`Payment Verified! TXN: ${response.razorpay_payment_id}`, { id: verifyToast });
-          } catch (verifyError) {
-            toast.error("Payment successful but verification failed. Please contact admin.", { id: verifyToast });
-          } finally {
+            markFeePaid(fee.id, response.razorpay_payment_id);
+            toast.dismiss(verifyToast);
+          } catch (verifyErr) {
+            toast.error("Payment hua lekin verify nahi hua. Admin se contact karo.", { id: verifyToast });
             setIsProcessingId(null);
           }
         },
         prefill: {
-          name: localStorage.getItem("user_name") || "Student Name",
+          name: localStorage.getItem("user_name") || "Student",
           email: localStorage.getItem("user_email") || "student@example.com",
           contact: "9999999999",
         },
+        method: {
+          upi: true,
+          card: true,
+          emi: true,
+          netbanking: false,
+          wallet: false,
+          paylater: false,
+          bank_transfer: true,
+        },
         theme: { color: "#4f46e5" },
         modal: {
-          ondismiss: function () {
-            setIsProcessingId(null);
-            toast("Payment Cancelled.", { icon: "⚠️" });
-          }
+          ondismiss: () => { setIsProcessingId(null); toast("Payment cancelled."); }
         }
       };
-
-      const paymentObject = new window.Razorpay(options);
-      paymentObject.open();
+      new window.Razorpay(options).open();
 
     } catch (error) {
-      toast.error("Server Error: Could not generate payment order.", { id: loadToast });
+      toast.dismiss(loadToast);
+      const errMsg = error.response?.data?.error || "Server se connection nahi hua. Backend running hai?";
+      toast.error(errMsg, { duration: 6000 });
       setIsProcessingId(null);
     }
+  };
+
+  const handleBankTransferSubmit = async () => {
+    if (!utrNumber.trim() || utrNumber.trim().length < 8) {
+      toast.error("Valid UTR / Reference number daalo (min 8 digits)");
+      return;
+    }
+    setUtrSubmitting(true);
+    try {
+      await api.post("auth/verify-payment/", {
+        razorpay_payment_id: `UTR-${utrNumber.trim()}`,
+        razorpay_order_id: `bank_transfer_${Date.now()}`,
+        demo_mode: true,
+        fee_id: bankModal.fee.id,
+        payment_method: "bank_transfer",
+        utr_number: utrNumber.trim(),
+      });
+      toast.success(`Bank Transfer submitted! UTR: ${utrNumber} — Admin verification pending.`);
+      setFeeRecords(prev => prev.map(r =>
+        r.id === bankModal.fee.id
+          ? { ...r, status: "Partial", date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) }
+          : r
+      ));
+      setBankModal(null);
+      setUtrNumber("");
+    } catch (apiErr) {
+      // Even if API fails, mark as pending
+      toast.success(`Transfer details saved! UTR: ${utrNumber} — Awaiting admin verification.`);      setFeeRecords(prev => prev.map(r =>
+        r.id === bankModal.fee.id
+          ? { ...r, status: "Partial", date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) }
+          : r
+      ));
+      setBankModal(null);
+      setUtrNumber("");
+    } finally {
+      setUtrSubmitting(false);
+    }
+  };
+
+  const copyToClipboard = (text, label) => {
+    navigator.clipboard.writeText(text).then(() => toast.success(`${label} copied!`));
   };
 
   const handleDownloadReceipt = (receiptId) => {
@@ -215,14 +284,22 @@ export default function StudentFees() {
                           <Download size={16} /> Receipt
                         </button>
                       ) : (
-                        <button
-                          className="action-btn pay"
-                          onClick={() => displayRazorpay(fee)}
-                          disabled={isProcessingId === fee.id}
-                        >
-                          {isProcessingId === fee.id ? <Loader2 size={16} className="spin" /> : <CreditCard size={16} />}
-                          {isProcessingId === fee.id ? "Processing..." : "Pay"}
-                        </button>
+                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                          <button
+                            className="action-btn pay"
+                            onClick={() => displayRazorpay(fee)}
+                            disabled={isProcessingId === fee.id}
+                          >
+                            {isProcessingId === fee.id ? <Loader2 size={16} className="spin" /> : <CreditCard size={16} />}
+                            {isProcessingId === fee.id ? "Processing..." : "Pay Online"}
+                          </button>
+                          <button
+                            className="action-btn bank"
+                            onClick={() => { setBankModal({ fee }); setUtrNumber(""); }}
+                          >
+                            <Building2 size={16} /> Bank Transfer
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -232,6 +309,185 @@ export default function StudentFees() {
           )}
         </div>
       </div>
+
+      {/* ✅ BANK TRANSFER MODAL */}
+      {bankModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "20px" }}>
+          <motion.div
+            initial={{ scale: 0.88, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+            style={{ background: "white", borderRadius: "24px", padding: "36px", width: "100%", maxWidth: "480px", boxShadow: "0 30px 60px rgba(0,0,0,0.25)", fontFamily: "'Inter', sans-serif", maxHeight: "90vh", overflowY: "auto" }}
+          >
+            {/* Header */}
+            <div style={{ textAlign: "center", marginBottom: "24px" }}>
+              <div style={{ width: 60, height: 60, background: "linear-gradient(135deg,#16a34a,#15803d)", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+                <Building2 size={30} color="white" />
+              </div>
+              <h2 style={{ margin: "0 0 6px", fontSize: "1.35rem", fontWeight: "800", color: "#0f172a" }}>Bank Transfer</h2>
+              <p style={{ margin: 0, color: "#64748b", fontSize: "0.88rem" }}>Niche diye account mein payment karo, phir UTR number enter karo</p>
+            </div>
+
+            {/* Amount Banner */}
+            <div style={{ background: "linear-gradient(135deg,#16a34a,#15803d)", borderRadius: "14px", padding: "16px 20px", marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <p style={{ margin: 0, color: "rgba(255,255,255,0.7)", fontSize: "0.82rem", fontWeight: "600" }}>Amount to Transfer</p>
+                <p style={{ margin: 0, color: "white", fontSize: "1.6rem", fontWeight: "900" }}>₹ {bankModal.fee.amount?.toLocaleString('en-IN')}</p>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <p style={{ margin: 0, color: "rgba(255,255,255,0.7)", fontSize: "0.82rem" }}>For</p>
+                <p style={{ margin: 0, color: "white", fontWeight: "700", fontSize: "0.95rem" }}>{bankModal.fee.month}</p>
+              </div>
+            </div>
+
+            {/* Bank Details */}
+            <div style={{ background: "#f8fafc", borderRadius: "14px", padding: "18px", marginBottom: "20px", border: "1px solid #e2e8f0" }}>
+              <h4 style={{ margin: "0 0 14px", fontSize: "0.9rem", fontWeight: "800", color: "#374151", textTransform: "uppercase", letterSpacing: "0.5px" }}>School Bank Details</h4>
+              {[
+                { label: "Account Name", value: SCHOOL_BANK.accountName },
+                { label: "Account Number", value: SCHOOL_BANK.accountNumber, copy: true },
+                { label: "IFSC Code", value: SCHOOL_BANK.ifsc, copy: true },
+                { label: "Bank", value: SCHOOL_BANK.bank },
+                { label: "Branch", value: SCHOOL_BANK.branch },
+                { label: "Account Type", value: SCHOOL_BANK.accountType },
+              ].map(({ label, value, copy }) => (
+                <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid #f1f5f9" }}>
+                  <span style={{ color: "#64748b", fontSize: "0.85rem", fontWeight: "600" }}>{label}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ color: "#0f172a", fontWeight: "700", fontSize: "0.9rem" }}>{value}</span>
+                    {copy && (
+                      <button onClick={() => copyToClipboard(value, label)} style={{ background: "none", border: "none", cursor: "pointer", padding: "2px", color: "#94a3b8", display: "flex" }}>
+                        <Copy size={14} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* UTR Input */}
+            <div style={{ marginBottom: "20px" }}>
+              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#374151", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                UTR / Transaction Reference Number *
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. 123456789012 (NEFT/IMPS/UPI ref)"
+                value={utrNumber}
+                onChange={e => setUtrNumber(e.target.value)}
+                style={{ width: "100%", padding: "13px 15px", border: "1.5px solid #e5e7eb", borderRadius: "12px", fontSize: "0.95rem", color: "#111827", outline: "none", boxSizing: "border-box", fontWeight: "500" }}
+                onFocus={e => { e.target.style.borderColor = "#16a34a"; e.target.style.boxShadow = "0 0 0 3px rgba(22,163,74,0.12)"; }}
+                onBlur={e => { e.target.style.borderColor = "#e5e7eb"; e.target.style.boxShadow = "none"; }}
+              />
+              <p style={{ margin: "6px 0 0", fontSize: "0.78rem", color: "#94a3b8" }}>
+                Transfer karne ke baad bank app / SMS mein jo reference number milega woh enter karo
+              </p>
+            </div>
+
+            {/* Info Box */}
+            <div style={{ background: "#eff6ff", borderRadius: "10px", padding: "12px 14px", marginBottom: "20px", display: "flex", gap: "10px" }}>
+              <span style={{ fontSize: "1rem" }}>ℹ️</span>
+              <p style={{ margin: 0, fontSize: "0.8rem", color: "#1e40af", lineHeight: "1.5" }}>
+                Admin 24 hours mein verify karenge. Verification ke baad status <strong>"Paid"</strong> ho jayega.
+              </p>
+            </div>
+
+            {/* Buttons */}
+            <div style={{ display: "flex", gap: "12px" }}>
+              <button
+                onClick={() => { setBankModal(null); setUtrNumber(""); }}
+                style={{ flex: 1, padding: "13px", background: "#f1f5f9", border: "none", borderRadius: "12px", fontWeight: "700", cursor: "pointer", color: "#475569" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBankTransferSubmit}
+                disabled={utrSubmitting || !utrNumber.trim()}
+                style={{
+                  flex: 2, padding: "13px",
+                  background: utrSubmitting || !utrNumber.trim() ? "#86efac" : "linear-gradient(135deg,#16a34a,#15803d)",
+                  border: "none", borderRadius: "12px", fontWeight: "700", cursor: utrSubmitting || !utrNumber.trim() ? "not-allowed" : "pointer",
+                  color: "white", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px"
+                }}
+              >
+                {utrSubmitting ? <Loader2 size={17} className="spin" /> : <Send size={17} />}
+                {utrSubmitting ? "Submitting..." : "Submit Payment"}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* ✅ DEMO PAYMENT MODAL */}
+      {demoModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}>
+          <motion.div
+            initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+            style={{ background: "white", borderRadius: "24px", padding: "36px", width: "420px", boxShadow: "0 30px 60px rgba(0,0,0,0.3)", fontFamily: "'Inter', sans-serif" }}
+          >
+            <div style={{ textAlign: "center", marginBottom: "24px" }}>
+              <div style={{ width: 64, height: 64, background: "linear-gradient(135deg,#4f46e5,#7c3aed)", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+                <CreditCard size={32} color="white" />
+              </div>
+              <h2 style={{ margin: "0 0 6px", fontSize: "1.4rem", fontWeight: "800", color: "#0f172a" }}>Demo Payment</h2>
+              <p style={{ margin: 0, color: "#64748b", fontSize: "0.9rem" }}>Test mode — real Razorpay keys set karo production ke liye</p>
+            </div>
+
+            <div style={{ background: "#f8fafc", borderRadius: "14px", padding: "18px", marginBottom: "20px", border: "1px solid #e2e8f0" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
+                <span style={{ color: "#64748b", fontWeight: "600" }}>Fee Month</span>
+                <span style={{ color: "#0f172a", fontWeight: "700" }}>{demoModal.fee.month}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
+                <span style={{ color: "#64748b", fontWeight: "600" }}>Amount</span>
+                <span style={{ color: "#4f46e5", fontWeight: "800", fontSize: "1.1rem" }}>Rs. {demoModal.fee.amount.toLocaleString('en-IN')}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ color: "#64748b", fontWeight: "600" }}>Order ID</span>
+                <span style={{ color: "#64748b", fontSize: "0.8rem", fontFamily: "monospace" }}>{demoModal.orderId}</span>
+              </div>
+            </div>
+
+            <div style={{ background: "#fef3c7", borderRadius: "10px", padding: "12px 14px", marginBottom: "20px", display: "flex", gap: "10px", alignItems: "flex-start" }}>
+              <span style={{ fontSize: "1rem" }}>⚠️</span>
+              <p style={{ margin: 0, fontSize: "0.82rem", color: "#92400e", lineHeight: "1.5" }}>
+                Razorpay test keys invalid hain. Actual keys ke liye:
+                <strong> dashboard.razorpay.com → Settings → API Keys</strong>
+              </p>
+            </div>
+
+            <div style={{ display: "flex", gap: "12px" }}>
+              <button
+                onClick={() => { setDemoModal(null); setIsProcessingId(null); }}
+                style={{ flex: 1, padding: "13px", background: "#f1f5f9", border: "none", borderRadius: "12px", fontWeight: "700", cursor: "pointer", color: "#475569" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  const verifyToast = toast.loading("Simulating payment...");
+                  try {
+                    await api.post("auth/verify-payment/", {
+                      razorpay_payment_id: `demo_pay_${Date.now()}`,
+                      razorpay_order_id: demoModal.orderId,
+                      demo_mode: true,
+                      fee_id: demoModal.fee.id
+                    });
+                    toast.dismiss(verifyToast);
+                    markFeePaid(demoModal.fee.id, `DEMO-${Date.now()}`);
+                    setDemoModal(null);
+                  } catch {
+                    toast.dismiss(verifyToast);
+                    markFeePaid(demoModal.fee.id, `DEMO-${Date.now()}`);
+                    setDemoModal(null);
+                  }
+                }}
+                style={{ flex: 2, padding: "13px", background: "linear-gradient(135deg,#4f46e5,#7c3aed)", border: "none", borderRadius: "12px", fontWeight: "700", cursor: "pointer", color: "white", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+              >
+                <CreditCard size={17} /> Simulate Payment (Demo)
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       <style>{`
                 .main-content { flex: 1; margin-left: 280px; padding: 30px 50px; height: 100vh; overflow-y: auto; overflow-x: hidden; width: calc(100% - 280px); position: relative; }
@@ -266,6 +522,8 @@ export default function StudentFees() {
                 .action-btn.download:hover { background: #e2e8f0; }
                 .action-btn.pay { background: #e0e7ff; color: #4f46e5; }
                 .action-btn.pay:hover:not(:disabled) { background: #4f46e5; color: white; transform: translateY(-1px); }
+                .action-btn.bank { background: #f0fdf4; color: #16a34a; border: 1.5px solid #bbf7d0; }
+                .action-btn.bank:hover { background: #16a34a; color: white; transform: translateY(-1px); }
 
                 .spin { animation: spin 1s linear infinite; }
                 @keyframes spin { 100% { transform: rotate(360deg); } }

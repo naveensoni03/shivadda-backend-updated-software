@@ -1,291 +1,632 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
-import toast from "react-hot-toast";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { AgGridReact } from "ag-grid-react";
+import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-alpine.css";
 import {
-  BookOpen, FlaskConical, Home, Bus, Library, Settings,
-  Plus, Pencil, Trash2, ToggleLeft, ToggleRight, IndianRupee, X
+  Plus, X, Edit2, Trash2, ToggleLeft, ToggleRight, LayoutGrid, Table2,
+  Star, CheckCircle, Loader2, GraduationCap, PlusCircle, Minus,
+  Download, RefreshCw, Filter
 } from "lucide-react";
+import api from "../api/axios";
+import toast, { Toaster } from "react-hot-toast";
+import SidebarModern from "../components/SidebarModern";
 
-const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
-const token = () => localStorage.getItem("access");
+// Register AG Grid modules ONCE at module level
+ModuleRegistry.registerModules([AllCommunityModule]);
 
-const SERVICE_ICONS = {
-  exam: FlaskConical, course: BookOpen, hostel: Home,
-  transport: Bus, library: Library, custom: Settings,
+const SERVICE_TYPE_OPTIONS = [
+  { value: "course_access",        label: "Course Access" },
+  { value: "assignment_exam_access",label: "Assignment & Exam Access" },
+  { value: "exam",                 label: "Exam Access" },
+  { value: "hostel",               label: "Hostel Fee" },
+  { value: "library",              label: "Library Access" },
+  { value: "transport",            label: "Transport Fee" },
+  { value: "custom",               label: "Custom Service" },
+];
+
+const COLOR_PRESETS = [
+  "#4f46e5","#7c3aed","#0ea5e9","#10b981","#f59e0b","#ef4444","#ec4899","#0f172a"
+];
+
+const emptyForm = {
+  name:"", description:"", service_type:"custom",
+  price:"", original_price:"", gst_percentage:"0",
+  validity_days:"365", icon:"BookOpen", color:"#4f46e5",
+  badge_text:"", is_popular:false, is_active:true, features:[""],
 };
 
-const SERVICE_TYPE_LABELS = {
-  exam: "Exam Access", course: "Course Access", hostel: "Hostel Fee",
-  transport: "Transport Fee", library: "Library Access", custom: "Custom",
+// ── Cell Renderers (defined OUTSIDE component for AG Grid v35 stability) ──────
+
+const StatusCellRenderer = ({ value }) => (
+  <span style={{display:"inline-flex",alignItems:"center",padding:"3px 10px",borderRadius:20,fontSize:"0.74rem",fontWeight:700,background:value?"#dcfce7":"#fee2e2",color:value?"#16a34a":"#ef4444"}}>
+    {value ? "Active" : "Inactive"}
+  </span>
+);
+
+const PopularCellRenderer = ({ value }) => value
+  ? <span style={{display:"inline-flex",alignItems:"center",gap:4,background:"#eef2ff",color:"#4f46e5",padding:"3px 9px",borderRadius:20,fontSize:"0.74rem",fontWeight:800}}>⭐ Popular</span>
+  : <span style={{color:"#cbd5e1",fontSize:"0.82rem"}}>—</span>;
+
+const PriceCellRenderer = ({ value }) =>
+  value ? <span style={{fontWeight:800,color:"#0f172a"}}>₹{parseFloat(value).toLocaleString("en-IN")}</span>
+        : <span style={{color:"#cbd5e1"}}>—</span>;
+
+const OrigPriceCellRenderer = ({ value }) =>
+  value ? <span style={{color:"#94a3b8",textDecoration:"line-through"}}>₹{parseFloat(value).toLocaleString("en-IN")}</span>
+        : <span style={{color:"#cbd5e1"}}>—</span>;
+
+const ColorCellRenderer = ({ data }) => (
+  <div style={{display:"flex",alignItems:"center",gap:7,height:"100%"}}>
+    <div style={{width:16,height:16,borderRadius:4,background:data?.color||"#4f46e5",border:"1px solid rgba(0,0,0,0.1)",flexShrink:0}}/>
+    <span style={{fontSize:"0.79rem",fontFamily:"monospace",color:"#64748b"}}>{data?.color||"#4f46e5"}</span>
+  </div>
+);
+
+const BadgeCellRenderer = ({ value }) =>
+  value ? <span style={{background:"#fef3c7",color:"#d97706",borderRadius:20,padding:"3px 9px",fontSize:"0.72rem",fontWeight:800}}>{value}</span>
+        : <span style={{color:"#cbd5e1"}}>—</span>;
+
+const FeaturesCellRenderer = ({ value }) => (
+  <span style={{color:"#475569",fontSize:"0.82rem"}}>{Array.isArray(value)?`${value.length} feature(s)`:"—"}</span>
+);
+
+const TypeCellRenderer = ({ value }) => {
+  const label = SERVICE_TYPE_OPTIONS.find(o=>o.value===value)?.label || value;
+  return <span style={{background:"#f1f5f9",color:"#334155",borderRadius:8,padding:"2px 8px",fontSize:"0.78rem",fontWeight:600}}>{label}</span>;
 };
 
-const EMPTY_FORM = {
-  name: "", description: "", service_type: "custom",
-  price: "", gst_percentage: "0", is_chargeable: true,
-  is_active: true, validity_days: "365", icon: "BookOpen",
+// Actions cell reads callbacks from AG Grid context
+const ActionsCellRenderer = ({ data, context }) => {
+  if (!data || !context) return null;
+  const { onEdit, onToggle, onDelete } = context;
+  return (
+    <div style={{display:"flex",gap:5,alignItems:"center",height:"100%"}}>
+      <button onClick={() => onEdit(data)}
+        style={{display:"flex",alignItems:"center",gap:4,background:"#f1f5f9",border:"none",borderRadius:7,padding:"5px 10px",cursor:"pointer",fontWeight:700,fontSize:"0.76rem",color:"#475569"}}>
+        <Edit2 size={11}/> Edit
+      </button>
+      <button onClick={() => onToggle(data)}
+        style={{display:"flex",alignItems:"center",gap:4,background:data.is_active?"#dcfce7":"#fee2e2",border:"none",borderRadius:7,padding:"5px 10px",cursor:"pointer",fontWeight:700,fontSize:"0.76rem",color:data.is_active?"#16a34a":"#ef4444"}}>
+        {data.is_active ? <ToggleRight size={11}/> : <ToggleLeft size={11}/>}
+        {data.is_active ? "Active" : "Inactive"}
+      </button>
+      <button onClick={() => onDelete(data)}
+        style={{background:"#fff1f2",border:"none",borderRadius:7,padding:"6px 8px",cursor:"pointer",display:"flex",alignItems:"center"}}>
+        <Trash2 size={11} color="#ef4444"/>
+      </button>
+    </div>
+  );
 };
 
+// ── Styles ─────────────────────────────────────────────────────────────────────
+const labelStyle = {
+  display:"block",fontSize:"0.78rem",fontWeight:700,color:"#374151",
+  marginBottom:6,textTransform:"uppercase",letterSpacing:"0.4px"
+};
+const inputStyle = {
+  width:"100%",padding:"11px 14px",border:"1.5px solid #e5e7eb",borderRadius:11,
+  fontSize:"0.93rem",color:"#111827",background:"white",outline:"none",
+  fontWeight:500,boxSizing:"border-box",transition:"border-color 0.2s, box-shadow 0.2s"
+};
+const focusIn  = e => { e.target.style.borderColor="#4f46e5"; e.target.style.boxShadow="0 0 0 3px rgba(79,70,229,0.12)"; };
+const focusOut = e => { e.target.style.borderColor="#e5e7eb"; e.target.style.boxShadow="none"; };
+
+// ── Main Component ─────────────────────────────────────────────────────────────
 export default function ServiceCatalog() {
   const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [editItem, setEditItem] = useState(null);
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
+  const [loading, setLoading]   = useState(true);
+  const [viewMode, setViewMode] = useState("cards");
+  const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId]     = useState(null);
+  const [form, setForm]         = useState(emptyForm);
+  const [saving, setSaving]     = useState(false);
+  const gridRef = useRef(null);
+
+  useEffect(() => { fetchServices(); }, []);
 
   const fetchServices = async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get(`${API}/api/payments/services/`, {
-        headers: { Authorization: `Bearer ${token()}` },
-      });
-      setServices(data);
-    } catch {
-      toast.error("Failed to load services.");
-    } finally {
-      setLoading(false);
-    }
+      const res = await api.get("payments/services/");
+      setServices(Array.isArray(res.data) ? res.data : []);
+    } catch { toast.error("Services load nahi huye."); setServices([]); }
+    finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchServices(); }, []);
-
-  const openCreate = () => { setEditItem(null); setForm(EMPTY_FORM); setShowModal(true); };
-  const openEdit = (svc) => {
-    setEditItem(svc);
+  const openAdd  = () => { setForm(emptyForm); setEditId(null); setShowForm(true); };
+  const openEdit = svc => {
     setForm({
-      name: svc.name, description: svc.description || "",
+      name: svc.name, description: svc.description||"",
       service_type: svc.service_type, price: svc.price,
-      gst_percentage: svc.gst_percentage, is_chargeable: svc.is_chargeable,
-      is_active: svc.is_active, validity_days: svc.validity_days, icon: svc.icon,
+      original_price: svc.original_price||"", gst_percentage: svc.gst_percentage||"0",
+      validity_days: svc.validity_days||"365", icon: svc.icon||"BookOpen",
+      color: svc.color||"#4f46e5", badge_text: svc.badge_text||"",
+      is_popular: svc.is_popular||false, is_active: svc.is_active!==false,
+      features: svc.features?.length ? svc.features : [""],
     });
-    setShowModal(true);
+    setEditId(svc.id); setShowForm(true);
   };
 
   const handleSave = async () => {
-    if (!form.name || !form.price) return toast.error("Name and Price are required.");
+    if (!form.name.trim() || !form.price) { toast.error("Name aur Price required hain."); return; }
     setSaving(true);
+    const payload = {
+      ...form,
+      price: parseFloat(form.price),
+      original_price: form.original_price ? parseFloat(form.original_price) : null,
+      gst_percentage: parseFloat(form.gst_percentage)||0,
+      validity_days: parseInt(form.validity_days)||365,
+      features: form.features.filter(f=>f.trim()!==""),
+    };
     try {
-      if (editItem) {
-        await axios.put(`${API}/api/payments/services/${editItem.id}/`, form, {
-          headers: { Authorization: `Bearer ${token()}` },
-        });
-        toast.success("Service updated!");
-      } else {
-        await axios.post(`${API}/api/payments/services/`, form, {
-          headers: { Authorization: `Bearer ${token()}` },
-        });
-        toast.success("Service created!");
-      }
-      setShowModal(false);
-      fetchServices();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Save failed.");
-    } finally {
-      setSaving(false);
-    }
+      if (editId) { await api.put(`payments/services/${editId}/`, payload); toast.success("Updated!"); }
+      else        { await api.post("payments/services/", payload);          toast.success("Created!"); }
+      setShowForm(false); fetchServices();
+    } catch(e) { toast.error(e.response?.data?.detail||"Save failed."); }
+    finally { setSaving(false); }
   };
 
-  const handleToggle = async (svc) => {
-    try {
-      const { data } = await axios.post(
-        `${API}/api/payments/services/${svc.id}/toggle/`, {},
-        { headers: { Authorization: `Bearer ${token()}` } }
-      );
-      toast.success(data.message);
-      fetchServices();
-    } catch {
-      toast.error("Toggle failed.");
-    }
+  const handleToggle = async svc => {
+    try { await api.post(`payments/services/${svc.id}/toggle/`); fetchServices(); toast.success(`${svc.name} toggled`); }
+    catch { toast.error("Toggle failed."); }
   };
 
-  const handleDelete = async (svc) => {
-    if (!confirm(`Delete "${svc.name}"? This cannot be undone.`)) return;
-    try {
-      await axios.delete(`${API}/api/payments/services/${svc.id}/`, {
-        headers: { Authorization: `Bearer ${token()}` },
-      });
-      toast.success("Service deleted.");
-      fetchServices();
-    } catch {
-      toast.error("Delete failed.");
-    }
+  const handleDelete = async svc => {
+    if (!window.confirm(`"${svc.name}" delete karna chahte ho?`)) return;
+    try { await api.delete(`payments/services/${svc.id}/`); toast.success("Deleted!"); fetchServices(); }
+    catch { toast.error("Delete failed."); }
   };
 
-  const totalRevenue = services.reduce((s, sv) => s + parseFloat(sv.price || 0), 0);
-  const activeCount = services.filter(s => s.is_active).length;
+  const addFeature    = () => setForm(f=>({...f, features:[...f.features,""]}));
+  const removeFeature = i  => setForm(f=>({...f, features:f.features.filter((_,idx)=>idx!==i)}));
+  const updateFeature = (i,v) => setForm(f=>({...f, features:f.features.map((x,idx)=>idx===i?v:x)}));
+
+  const discPct = svc => (svc.original_price && parseFloat(svc.original_price)>parseFloat(svc.price))
+    ? Math.round((1-parseFloat(svc.price)/parseFloat(svc.original_price))*100) : null;
+
+  // Pass callbacks via AG Grid context (stable reference via useMemo)
+  const gridContext = useMemo(() => ({
+    onEdit:   openEdit,
+    onToggle: handleToggle,
+    onDelete: handleDelete,
+  }), []);
+
+  // Column definitions — stable (useMemo)
+  const columnDefs = useMemo(() => [
+    {
+      headerName:"#",
+      valueGetter: params => params.node.rowIndex + 1,
+      width:55, sortable:false, filter:false, pinned:"left",
+      cellStyle:{ color:"#94a3b8", fontWeight:700, fontSize:"0.8rem" }
+    },
+    {
+      field:"name", headerName:"Plan Name",
+      flex:1.5, minWidth:160,
+      filter:"agTextColumnFilter", floatingFilter:true,
+      cellStyle:{ fontWeight:700, color:"#0f172a" }
+    },
+    {
+      field:"service_type", headerName:"Type",
+      flex:1, minWidth:150,
+      filter:"agTextColumnFilter", floatingFilter:true,
+      cellRenderer: TypeCellRenderer,
+    },
+    {
+      field:"price", headerName:"Price (₹)",
+      flex:0.8, minWidth:110,
+      filter:"agNumberColumnFilter", floatingFilter:true,
+      cellRenderer: PriceCellRenderer,
+    },
+    {
+      field:"original_price", headerName:"Orig. Price",
+      flex:0.8, minWidth:110,
+      filter:"agNumberColumnFilter", floatingFilter:true,
+      cellRenderer: OrigPriceCellRenderer,
+    },
+    {
+      field:"gst_percentage", headerName:"GST %",
+      width:90,
+      filter:"agNumberColumnFilter", floatingFilter:true,
+      cellStyle:{ color:"#64748b" }
+    },
+    {
+      field:"validity_days", headerName:"Validity (d)",
+      width:110,
+      filter:"agNumberColumnFilter", floatingFilter:true,
+      cellStyle:{ color:"#64748b" }
+    },
+    {
+      field:"is_active", headerName:"Status",
+      width:115,
+      filter:"agSetColumnFilter",
+      filterParams:{ values:[true,false] },
+      floatingFilter:true,
+      cellRenderer: StatusCellRenderer,
+    },
+    {
+      field:"is_popular", headerName:"Popular",
+      width:115,
+      filter:"agSetColumnFilter",
+      filterParams:{ values:[true,false] },
+      floatingFilter:true,
+      cellRenderer: PopularCellRenderer,
+    },
+    {
+      field:"badge_text", headerName:"Badge",
+      flex:0.9, minWidth:100,
+      filter:"agTextColumnFilter", floatingFilter:true,
+      cellRenderer: BadgeCellRenderer,
+    },
+    {
+      field:"color", headerName:"Color",
+      width:150, filter:false,
+      cellRenderer: ColorCellRenderer,
+    },
+    {
+      field:"features", headerName:"Features",
+      width:110, filter:false,
+      cellRenderer: FeaturesCellRenderer,
+    },
+    {
+      headerName:"Actions",
+      width:250, filter:false, sortable:false,
+      pinned:"right",
+      cellRenderer: ActionsCellRenderer,
+    },
+  ], []);
+
+  const defaultColDef = useMemo(() => ({
+    sortable: true,
+    resizable: true,
+    filterParams: { buttons:["reset","apply"], closeOnApply:true },
+  }), []);
+
+  const onExportCSV    = () => gridRef.current?.api?.exportDataAsCsv({ fileName:"service-catalog.csv" });
+  const onResetFilters = () => gridRef.current?.api?.setFilterModel(null);
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Service Catalog</h1>
-          <p className="text-gray-500 text-sm mt-1">Manage chargeable services — students pay to access these.</p>
-        </div>
-        <button onClick={openCreate} className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-indigo-700 transition">
-          <Plus size={18} /> Add Service
-        </button>
-      </div>
+    <div style={{display:"flex",background:"#f8fafc",minHeight:"100vh",fontFamily:"'Inter',sans-serif"}}>
+      <SidebarModern />
+      <Toaster position="top-right"/>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: "Total Services", value: services.length, color: "indigo" },
-          { label: "Active", value: activeCount, color: "green" },
-          { label: "Inactive", value: services.length - activeCount, color: "red" },
-          { label: "Avg Price", value: services.length ? `₹${(totalRevenue / services.length).toFixed(0)}` : "₹0", color: "amber" },
-        ].map(s => (
-          <div key={s.label} className={`bg-white rounded-xl border border-gray-100 shadow-sm p-4`}>
-            <p className="text-xs text-gray-500 uppercase tracking-wide">{s.label}</p>
-            <p className={`text-2xl font-bold text-${s.color}-600 mt-1`}>{s.value}</p>
+      <div style={{flex:1,marginLeft:280,padding:"32px 40px"}}>
+
+        {/* ── Header ── */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24,flexWrap:"wrap",gap:12}}>
+          <div>
+            <h1 style={{margin:0,fontSize:"1.55rem",fontWeight:900,color:"#0f172a",display:"flex",alignItems:"center",gap:10}}>
+              <span style={{background:"linear-gradient(135deg,#4f46e5,#7c3aed)",padding:"6px 10px",borderRadius:12,display:"inline-flex"}}>💳</span>
+              Service Catalog
+            </h1>
+            <p style={{margin:"4px 0 0",color:"#64748b",fontSize:"0.88rem"}}>
+              Student subscription plans — price, features, badge sab yahan se manage karo
+            </p>
           </div>
-        ))}
-      </div>
 
-      {/* Service Cards */}
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-gray-100 rounded-2xl h-48 animate-pulse" />
+          <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+            {/* Cards / Table toggle */}
+            <div style={{display:"flex",background:"white",borderRadius:12,padding:4,border:"1px solid #e2e8f0",gap:2}}>
+              {[
+                { id:"cards", icon:<LayoutGrid size={14}/>, label:"Cards" },
+                { id:"table", icon:<Table2 size={14}/>,    label:"Table" },
+              ].map(v=>(
+                <button key={v.id} onClick={()=>setViewMode(v.id)}
+                  style={{display:"flex",alignItems:"center",gap:5,padding:"8px 14px",borderRadius:9,border:"none",cursor:"pointer",fontWeight:700,fontSize:"0.82rem",background:viewMode===v.id?"#4f46e5":"transparent",color:viewMode===v.id?"white":"#64748b",transition:"all 0.2s"}}>
+                  {v.icon} {v.label}
+                </button>
+              ))}
+            </div>
+
+            {viewMode==="table" && (
+              <>
+                <button onClick={onResetFilters}
+                  style={{display:"flex",alignItems:"center",gap:6,background:"white",border:"1.5px solid #e2e8f0",borderRadius:10,padding:"9px 14px",cursor:"pointer",fontWeight:700,fontSize:"0.82rem",color:"#64748b"}}>
+                  <Filter size={14}/> Reset Filters
+                </button>
+                <button onClick={onExportCSV}
+                  style={{display:"flex",alignItems:"center",gap:6,background:"white",border:"1.5px solid #e2e8f0",borderRadius:10,padding:"9px 14px",cursor:"pointer",fontWeight:700,fontSize:"0.82rem",color:"#64748b"}}>
+                  <Download size={14}/> Export CSV
+                </button>
+              </>
+            )}
+
+            <button onClick={fetchServices}
+              style={{background:"white",border:"1.5px solid #e2e8f0",borderRadius:10,padding:"9px 12px",cursor:"pointer",display:"flex",alignItems:"center"}}>
+              <RefreshCw size={16} color="#64748b"/>
+            </button>
+
+            <motion.button whileTap={{scale:0.96}} onClick={openAdd}
+              style={{display:"flex",alignItems:"center",gap:8,background:"linear-gradient(135deg,#4f46e5,#7c3aed)",color:"white",border:"none",borderRadius:12,padding:"11px 20px",fontWeight:800,fontSize:"0.9rem",cursor:"pointer",boxShadow:"0 4px 16px rgba(79,70,229,0.35)"}}>
+              <Plus size={18}/> Add Service Plan
+            </motion.button>
+          </div>
+        </div>
+
+        {/* ── Summary Pills ── */}
+        <div style={{display:"flex",gap:10,marginBottom:22,flexWrap:"wrap"}}>
+          {[
+            { label:"Total",    value:services.length,                         color:"#4f46e5", bg:"#eef2ff" },
+            { label:"Active",   value:services.filter(s=>s.is_active).length,  color:"#16a34a", bg:"#dcfce7" },
+            { label:"Inactive", value:services.filter(s=>!s.is_active).length, color:"#ef4444", bg:"#fee2e2" },
+            { label:"Popular",  value:services.filter(s=>s.is_popular).length, color:"#f59e0b", bg:"#fef3c7" },
+          ].map(p=>(
+            <div key={p.label} style={{background:p.bg,borderRadius:12,padding:"7px 15px",display:"flex",alignItems:"center",gap:7}}>
+              <span style={{fontSize:"1.15rem",fontWeight:900,color:p.color}}>{p.value}</span>
+              <span style={{fontSize:"0.8rem",fontWeight:600,color:p.color}}>{p.label}</span>
+            </div>
           ))}
         </div>
-      ) : services.length === 0 ? (
-        <div className="text-center py-20 text-gray-400">
-          <Settings size={48} className="mx-auto mb-3 opacity-30" />
-          <p className="font-medium">No services yet. Click "Add Service" to create one.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {services.map(svc => {
-            const Icon = SERVICE_ICONS[svc.service_type] || Settings;
-            return (
-              <div key={svc.id} className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition hover:shadow-md ${!svc.is_active ? "opacity-60" : ""}`}>
-                <div className="p-5">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-indigo-50`}>
-                      <Icon size={20} className="text-indigo-600" />
+
+        {/* ── Loading ── */}
+        {loading ? (
+          <div style={{textAlign:"center",padding:80}}>
+            <Loader2 size={36} color="#4f46e5" style={{animation:"spin 1s linear infinite"}}/>
+          </div>
+        ) : services.length===0 ? (
+          <div style={{textAlign:"center",padding:80,color:"#94a3b8"}}>
+            <GraduationCap size={56} style={{marginBottom:16,opacity:0.3}}/>
+            <h3 style={{margin:"0 0 8px"}}>Koi service nahi hai</h3>
+            <p style={{margin:0}}>+ Add Service Plan click karo</p>
+          </div>
+
+        ) : viewMode==="cards" ? (
+          /* ── CARDS VIEW ── */
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:20}}>
+            {services.map(svc => {
+              const disc = discPct(svc);
+              return (
+                <motion.div key={svc.id} whileHover={{y:-4,boxShadow:"0 20px 50px rgba(0,0,0,0.1)"}}
+                  style={{background:"white",borderRadius:20,overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,0.05)",border:svc.is_popular?`2px solid ${svc.color||"#4f46e5"}`:"1.5px solid #e2e8f0",position:"relative"}}>
+                  <div style={{height:5,background:svc.color||"#4f46e5"}}/>
+                  <div style={{position:"absolute",top:14,right:14,display:"flex",flexDirection:"column",gap:5,alignItems:"flex-end"}}>
+                    {svc.is_popular && <span style={{background:svc.color||"#4f46e5",color:"white",borderRadius:20,padding:"3px 9px",fontSize:"0.68rem",fontWeight:800,letterSpacing:1}}>MOST POPULAR</span>}
+                    {disc && <span style={{background:"#fef3c7",color:"#d97706",borderRadius:20,padding:"3px 9px",fontSize:"0.7rem",fontWeight:800}}>{disc}% OFF</span>}
+                    {svc.badge_text && !disc && <span style={{background:"#f0fdf4",color:"#16a34a",borderRadius:20,padding:"3px 9px",fontSize:"0.7rem",fontWeight:800}}>{svc.badge_text}</span>}
+                    {!svc.is_active && <span style={{background:"#fee2e2",color:"#ef4444",borderRadius:20,padding:"3px 9px",fontSize:"0.68rem",fontWeight:800}}>INACTIVE</span>}
+                  </div>
+                  <div style={{padding:"18px 22px 22px"}}>
+                    <h3 style={{margin:"0 0 3px",fontSize:"1.05rem",fontWeight:800,color:"#0f172a"}}>{svc.name}</h3>
+                    <p style={{margin:"0 0 12px",fontSize:"0.8rem",color:"#64748b",lineHeight:1.5}}>{svc.description}</p>
+                    <div style={{marginBottom:12}}>
+                      {svc.original_price && <span style={{fontSize:"0.85rem",color:"#94a3b8",textDecoration:"line-through",marginRight:6}}>₹{parseFloat(svc.original_price).toLocaleString("en-IN")}</span>}
+                      <span style={{fontSize:"1.7rem",fontWeight:900,color:"#0f172a"}}>₹{parseFloat(svc.price).toLocaleString("en-IN")}</span>
+                      <span style={{fontSize:"0.8rem",color:"#94a3b8",marginLeft:4}}>/{svc.validity_days}d</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${svc.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
-                        {svc.is_active ? "Active" : "Inactive"}
-                      </span>
-                      {!svc.is_chargeable && (
-                        <span className="text-xs px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-700">Free</span>
-                      )}
+                    {svc.features?.length>0 && (
+                      <ul style={{margin:"0 0 14px",padding:0,listStyle:"none",display:"flex",flexDirection:"column",gap:5}}>
+                        {svc.features.slice(0,4).map((f,i)=>(
+                          <li key={i} style={{display:"flex",alignItems:"center",gap:7,fontSize:"0.82rem",color:"#374151"}}>
+                            <CheckCircle size={12} color={svc.color||"#4f46e5"} style={{flexShrink:0}}/> {f}
+                          </li>
+                        ))}
+                        {svc.features.length>4 && <li style={{fontSize:"0.75rem",color:"#94a3b8"}}>+{svc.features.length-4} more</li>}
+                      </ul>
+                    )}
+                    <div style={{display:"flex",gap:6}}>
+                      <button onClick={()=>openEdit(svc)} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,padding:"9px",background:"#f1f5f9",border:"none",borderRadius:9,fontWeight:700,fontSize:"0.8rem",cursor:"pointer",color:"#475569"}}>
+                        <Edit2 size={12}/> Edit
+                      </button>
+                      <button onClick={()=>handleToggle(svc)} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,padding:"9px",background:svc.is_active?"#dcfce7":"#fee2e2",border:"none",borderRadius:9,fontWeight:700,fontSize:"0.8rem",cursor:"pointer",color:svc.is_active?"#16a34a":"#ef4444"}}>
+                        {svc.is_active?<ToggleRight size={12}/>:<ToggleLeft size={12}/>} {svc.is_active?"Active":"Inactive"}
+                      </button>
+                      <button onClick={()=>handleDelete(svc)} style={{padding:"9px 11px",background:"#fff1f2",border:"none",borderRadius:9,cursor:"pointer",display:"flex",alignItems:"center"}}>
+                        <Trash2 size={12} color="#ef4444"/>
+                      </button>
                     </div>
                   </div>
+                </motion.div>
+              );
+            })}
+          </div>
 
-                  <h3 className="font-bold text-gray-800 text-base">{svc.name}</h3>
-                  <p className="text-xs text-gray-400 mt-0.5">{SERVICE_TYPE_LABELS[svc.service_type]}</p>
-                  {svc.description && <p className="text-sm text-gray-500 mt-2 line-clamp-2">{svc.description}</p>}
-
-                  <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <p className="text-gray-400 text-xs">Base Price</p>
-                      <p className="font-bold text-gray-800 flex items-center gap-0.5"><IndianRupee size={13} />{svc.price}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 text-xs">Total (incl. GST)</p>
-                      <p className="font-bold text-indigo-600 flex items-center gap-0.5"><IndianRupee size={13} />{svc.total_price}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 text-xs">GST</p>
-                      <p className="font-medium text-gray-700">{svc.gst_percentage}%</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 text-xs">Validity</p>
-                      <p className="font-medium text-gray-700">{svc.validity_days} days</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex border-t border-gray-100 divide-x divide-gray-100">
-                  <button onClick={() => handleToggle(svc)} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-sm text-gray-600 hover:bg-gray-50 transition">
-                    {svc.is_active ? <ToggleRight size={16} className="text-green-500" /> : <ToggleLeft size={16} className="text-gray-400" />}
-                    {svc.is_active ? "Deactivate" : "Activate"}
-                  </button>
-                  <button onClick={() => openEdit(svc)} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-sm text-indigo-600 hover:bg-indigo-50 transition">
-                    <Pencil size={15} /> Edit
-                  </button>
-                  <button onClick={() => handleDelete(svc)} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-sm text-red-500 hover:bg-red-50 transition">
-                    <Trash2 size={15} /> Delete
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b">
-              <h2 className="text-lg font-bold text-gray-800">{editItem ? "Edit Service" : "Create Service"}</h2>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+        ) : (
+          /* ── TABLE VIEW (AG Grid v35) ── */
+          <div style={{background:"white",borderRadius:16,boxShadow:"0 4px 20px rgba(0,0,0,0.06)",border:"1px solid #e2e8f0",overflow:"hidden"}}>
+            <div style={{padding:"12px 20px",borderBottom:"1px solid #f1f5f9",display:"flex",justifyContent:"space-between",alignItems:"center",background:"#fafafa"}}>
+              <span style={{fontWeight:700,color:"#64748b",fontSize:"0.84rem",display:"flex",alignItems:"center",gap:7}}>
+                <Table2 size={15} color="#4f46e5"/>
+                {services.length} plans found
+              </span>
+              <span style={{fontSize:"0.77rem",color:"#94a3b8"}}>
+                Column header ▼ funnel icon → Filter karo
+              </span>
             </div>
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <label className="text-sm font-medium text-gray-700">Service Name *</label>
-                  <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
-                    className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="e.g. Exam Access — Batch A" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Service Type *</label>
-                  <select value={form.service_type} onChange={e => setForm({ ...form, service_type: e.target.value })}
-                    className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    {Object.entries(SERVICE_TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Validity (days)</label>
-                  <input type="number" value={form.validity_days} onChange={e => setForm({ ...form, validity_days: e.target.value })}
-                    className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Price (₹) *</label>
-                  <input type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })}
-                    className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0.00" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">GST (%)</label>
-                  <input type="number" value={form.gst_percentage} onChange={e => setForm({ ...form, gst_percentage: e.target.value })}
-                    className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="0" />
-                </div>
-                <div className="col-span-2">
-                  <label className="text-sm font-medium text-gray-700">Description</label>
-                  <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3}
-                    className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none" placeholder="What does this service include?" />
-                </div>
-                <div className="flex items-center gap-3">
-                  <label className="text-sm font-medium text-gray-700">Chargeable</label>
-                  <input type="checkbox" checked={form.is_chargeable} onChange={e => setForm({ ...form, is_chargeable: e.target.checked })} className="w-4 h-4 accent-indigo-600" />
-                </div>
-                <div className="flex items-center gap-3">
-                  <label className="text-sm font-medium text-gray-700">Active</label>
-                  <input type="checkbox" checked={form.is_active} onChange={e => setForm({ ...form, is_active: e.target.checked })} className="w-4 h-4 accent-indigo-600" />
-                </div>
-              </div>
-
-              {form.price && (
-                <div className="bg-indigo-50 rounded-xl p-3 text-sm">
-                  <p className="text-indigo-800 font-medium">Price Preview</p>
-                  <p className="text-gray-600">Base: ₹{form.price} + GST {form.gst_percentage}% = <strong className="text-indigo-700">₹{(parseFloat(form.price || 0) * (1 + parseFloat(form.gst_percentage || 0) / 100)).toFixed(2)}</strong></p>
-                </div>
-              )}
-            </div>
-            <div className="px-6 pb-6 flex gap-3">
-              <button onClick={() => setShowModal(false)} className="flex-1 border border-gray-300 rounded-xl py-2.5 text-gray-700 font-medium hover:bg-gray-50 transition">Cancel</button>
-              <button onClick={handleSave} disabled={saving} className="flex-1 bg-indigo-600 text-white rounded-xl py-2.5 font-bold hover:bg-indigo-700 transition disabled:opacity-60">
-                {saving ? "Saving..." : editItem ? "Update" : "Create"}
-              </button>
+            <div className="ag-theme-alpine" style={{width:"100%",height:"560px"}}>
+              <AgGridReact
+                ref={gridRef}
+                rowData={services}
+                columnDefs={columnDefs}
+                defaultColDef={defaultColDef}
+                context={gridContext}
+                pagination={true}
+                paginationPageSize={10}
+                paginationPageSizeSelector={[10, 20, 50]}
+                rowHeight={52}
+                headerHeight={48}
+                floatingFiltersHeight={40}
+                animateRows={true}
+                suppressRowClickSelection={true}
+                overlayNoRowsTemplate='<span style="color:#94a3b8;font-weight:600;">Koi service nahi mili</span>'
+              />
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+
+      {/* ── ADD / EDIT FORM MODAL ── */}
+      <AnimatePresence>
+        {showForm && (
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999,padding:20}}>
+            <motion.div initial={{scale:0.88,opacity:0}} animate={{scale:1,opacity:1}} exit={{scale:0.88,opacity:0}}
+              style={{background:"white",borderRadius:24,width:"100%",maxWidth:620,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 30px 80px rgba(0,0,0,0.25)"}}>
+
+              <div style={{padding:"22px 26px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,background:"white",zIndex:2,borderBottom:"1px solid #f1f5f9"}}>
+                <h2 style={{margin:0,fontSize:"1.2rem",fontWeight:900,color:"#0f172a"}}>
+                  {editId ? "✏️ Edit Plan" : "➕ New Service Plan"}
+                </h2>
+                <button onClick={()=>setShowForm(false)} style={{background:"#f1f5f9",border:"none",borderRadius:10,padding:8,cursor:"pointer"}}>
+                  <X size={20} color="#64748b"/>
+                </button>
+              </div>
+
+              <div style={{padding:"22px 26px 26px",display:"flex",flexDirection:"column",gap:16}}>
+                <div>
+                  <label style={labelStyle}>Plan Name *</label>
+                  <input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="e.g. Course Access Premium" style={inputStyle} onFocus={focusIn} onBlur={focusOut}/>
+                </div>
+                <div>
+                  <label style={labelStyle}>Description</label>
+                  <textarea value={form.description} onChange={e=>setForm({...form,description:e.target.value})} placeholder="Is plan mein kya milega..." rows={2} style={{...inputStyle,resize:"vertical",minHeight:56}} onFocus={focusIn} onBlur={focusOut}/>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+                  <div>
+                    <label style={labelStyle}>Service Type</label>
+                    <select value={form.service_type} onChange={e=>setForm({...form,service_type:e.target.value})} style={inputStyle}>
+                      {SERVICE_TYPE_OPTIONS.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Validity (days)</label>
+                    <input type="number" value={form.validity_days} onChange={e=>setForm({...form,validity_days:e.target.value})} placeholder="365" style={inputStyle} onFocus={focusIn} onBlur={focusOut}/>
+                  </div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+                  <div>
+                    <label style={labelStyle}>Price (₹) *</label>
+                    <input type="number" value={form.price} onChange={e=>setForm({...form,price:e.target.value})} placeholder="2999" style={inputStyle} onFocus={focusIn} onBlur={focusOut}/>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Original Price (₹) <span style={{color:"#94a3b8",fontWeight:400,textTransform:"none"}}>(strikethrough)</span></label>
+                    <input type="number" value={form.original_price} onChange={e=>setForm({...form,original_price:e.target.value})} placeholder="5999" style={inputStyle} onFocus={focusIn} onBlur={focusOut}/>
+                  </div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+                  <div>
+                    <label style={labelStyle}>GST %</label>
+                    <input type="number" value={form.gst_percentage} onChange={e=>setForm({...form,gst_percentage:e.target.value})} placeholder="18" style={inputStyle} onFocus={focusIn} onBlur={focusOut}/>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Badge Text</label>
+                    <input value={form.badge_text} onChange={e=>setForm({...form,badge_text:e.target.value})} placeholder="Best Value" style={inputStyle} onFocus={focusIn} onBlur={focusOut}/>
+                  </div>
+                </div>
+                {/* Color Picker */}
+                <div>
+                  <label style={labelStyle}>Card Color</label>
+                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                    {COLOR_PRESETS.map(c=>(
+                      <button key={c} onClick={()=>setForm({...form,color:c})}
+                        style={{width:30,height:30,borderRadius:8,background:c,border:form.color===c?"3px solid #0f172a":"3px solid transparent",cursor:"pointer",flexShrink:0}}/>
+                    ))}
+                    <input type="color" value={form.color} onChange={e=>setForm({...form,color:e.target.value})} style={{width:34,height:34,borderRadius:8,border:"none",cursor:"pointer",padding:2}}/>
+                    <span style={{fontSize:"0.82rem",color:"#64748b",fontFamily:"monospace"}}>{form.color}</span>
+                  </div>
+                </div>
+                {/* Toggles */}
+                <div style={{display:"flex",gap:12}}>
+                  <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",background:form.is_popular?"#eef2ff":"#f8fafc",padding:"11px 14px",borderRadius:11,border:`1.5px solid ${form.is_popular?"#818cf8":"#e2e8f0"}`,flex:1}}>
+                    <input type="checkbox" checked={form.is_popular} onChange={e=>setForm({...form,is_popular:e.target.checked})} style={{accentColor:"#4f46e5",width:15,height:15}}/>
+                    <span style={{fontWeight:700,color:form.is_popular?"#4f46e5":"#64748b",fontSize:"0.85rem"}}>⭐ Most Popular</span>
+                  </label>
+                  <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",background:form.is_active?"#f0fdf4":"#fff1f2",padding:"11px 14px",borderRadius:11,border:`1.5px solid ${form.is_active?"#86efac":"#fca5a5"}`,flex:1}}>
+                    <input type="checkbox" checked={form.is_active} onChange={e=>setForm({...form,is_active:e.target.checked})} style={{accentColor:"#16a34a",width:15,height:15}}/>
+                    <span style={{fontWeight:700,color:form.is_active?"#16a34a":"#ef4444",fontSize:"0.85rem"}}>✅ Active (visible to students)</span>
+                  </label>
+                </div>
+                {/* Features */}
+                <div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                    <label style={labelStyle}>Features List</label>
+                    <button onClick={addFeature} style={{display:"flex",alignItems:"center",gap:5,background:"#eef2ff",color:"#4f46e5",border:"none",borderRadius:8,padding:"5px 11px",fontWeight:700,fontSize:"0.79rem",cursor:"pointer"}}>
+                      <PlusCircle size={13}/> Add
+                    </button>
+                  </div>
+                  <div style={{display:"flex",flexDirection:"column",gap:7}}>
+                    {form.features.map((feat,i)=>(
+                      <div key={i} style={{display:"flex",gap:7,alignItems:"center"}}>
+                        <CheckCircle size={14} color="#4f46e5" style={{flexShrink:0}}/>
+                        <input value={feat} onChange={e=>updateFeature(i,e.target.value)} placeholder={`Feature ${i+1}`} style={{...inputStyle,flex:1,margin:0}} onFocus={focusIn} onBlur={focusOut}/>
+                        {form.features.length>1 && (
+                          <button onClick={()=>removeFeature(i)} style={{background:"#fee2e2",border:"none",borderRadius:8,padding:"7px",cursor:"pointer",display:"flex"}}>
+                            <Minus size={13} color="#ef4444"/>
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* Live Preview */}
+                <div style={{background:"#f8fafc",borderRadius:12,padding:14,border:"1px dashed #e2e8f0"}}>
+                  <p style={{margin:"0 0 8px",fontSize:"0.72rem",fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:1}}>Live Preview</p>
+                  <div style={{background:"white",borderRadius:12,border:`2px solid ${form.color}`,overflow:"hidden",maxWidth:260}}>
+                    <div style={{height:4,background:form.color}}/>
+                    <div style={{padding:"12px 14px"}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
+                        <strong style={{fontSize:"0.9rem",color:"#0f172a"}}>{form.name||"Plan Name"}</strong>
+                        {form.is_popular && <span style={{background:form.color,color:"white",borderRadius:20,padding:"2px 7px",fontSize:"0.62rem",fontWeight:800}}>POPULAR</span>}
+                      </div>
+                      <div style={{marginBottom:6}}>
+                        {form.original_price && <span style={{fontSize:"0.78rem",color:"#94a3b8",textDecoration:"line-through",marginRight:5}}>₹{form.original_price}</span>}
+                        <span style={{fontSize:"1.3rem",fontWeight:900}}>₹{form.price||"0"}</span>
+                        <span style={{fontSize:"0.72rem",color:"#94a3b8"}}> /{form.validity_days}d</span>
+                      </div>
+                      {form.features.filter(f=>f.trim()).slice(0,3).map((f,i)=>(
+                        <div key={i} style={{fontSize:"0.74rem",color:"#374151",display:"flex",alignItems:"center",gap:4,marginBottom:3}}>
+                          <CheckCircle size={10} color={form.color}/> {f}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                {/* Save Button */}
+                <motion.button whileTap={{scale:0.97}} onClick={handleSave} disabled={saving}
+                  style={{height:50,background:saving?"#a5b4fc":"linear-gradient(135deg,#4f46e5,#7c3aed)",color:"white",border:"none",borderRadius:13,fontWeight:800,fontSize:"1rem",cursor:saving?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,boxShadow:"0 4px 16px rgba(79,70,229,0.35)"}}>
+                  {saving && <Loader2 size={19} style={{animation:"spin 1s linear infinite"}}/>}
+                  {saving ? "Saving..." : editId ? "Update Plan" : "Create Plan"}
+                </motion.button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <style>{`
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .ag-theme-alpine {
+          --ag-header-background-color: #f8fafc;
+          --ag-odd-row-background-color: #fafafa;
+          --ag-row-hover-color: #f5f3ff;
+          --ag-selected-row-background-color: #eef2ff;
+          --ag-border-color: #e2e8f0;
+          --ag-header-foreground-color: #374151;
+          --ag-font-family: 'Inter', sans-serif;
+          --ag-font-size: 13px;
+          --ag-row-border-color: #f1f5f9;
+        }
+        .ag-theme-alpine .ag-header-cell-label {
+          font-weight: 800;
+          font-size: 0.76rem;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .ag-theme-alpine .ag-floating-filter-input {
+          border-radius: 6px !important;
+          font-size: 0.82rem !important;
+        }
+        .ag-theme-alpine .ag-paging-panel {
+          border-top: 1px solid #e2e8f0;
+          padding: 10px 20px;
+          font-weight: 600;
+          font-size: 0.82rem;
+          color: #475569;
+        }
+        .ag-theme-alpine .ag-cell {
+          display: flex;
+          align-items: center;
+        }
+      `}</style>
     </div>
   );
 }

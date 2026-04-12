@@ -13,8 +13,10 @@ def generate_invoice_number(prefix="INV"):
 # ============================================================
 class ServiceCatalog(models.Model):
     SERVICE_TYPES = [
+        ('course_access', 'Course Access'),
+        ('assignment_exam_access', 'Assignment & Exam Access'),
         ('exam', 'Exam Access'),
-        ('course', 'Course Access'),
+        ('course', 'Course'),
         ('hostel', 'Hostel Fee'),
         ('library', 'Library Access'),
         ('transport', 'Transport Fee'),
@@ -25,11 +27,18 @@ class ServiceCatalog(models.Model):
     description = models.TextField(blank=True)
     service_type = models.CharField(max_length=50, choices=SERVICE_TYPES, default='custom')
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    original_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True,
+        help_text="Original price before discount (for strikethrough display)")
     gst_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
-    is_chargeable = models.BooleanField(default=True, help_text="If False, service is free")
-    is_active = models.BooleanField(default=True, help_text="Toggle visibility to students")
-    validity_days = models.IntegerField(default=365, help_text="Access validity after payment (days)")
-    icon = models.CharField(max_length=50, default='BookOpen', help_text="Lucide icon name")
+    is_chargeable = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
+    is_popular = models.BooleanField(default=False, help_text="Show 'Most Popular' badge on card")
+    badge_text = models.CharField(max_length=50, blank=True, help_text="e.g. '75% off', 'Best Value'")
+    color = models.CharField(max_length=20, default='#4f46e5', help_text="Card accent hex color")
+    features = models.JSONField(default=list, blank=True,
+        help_text="List of feature strings shown on the card")
+    validity_days = models.IntegerField(default=365)
+    icon = models.CharField(max_length=50, default='BookOpen')
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
         null=True, blank=True, related_name='created_services'

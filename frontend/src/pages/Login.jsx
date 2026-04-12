@@ -36,6 +36,12 @@ export default function Login() {
   };
 
   // --- STEP 1: VERIFY CREDENTIALS, CAPTCHA & SEND OTP ---
+  // ============================================================
+  // OTP_MODE = false  → Direct login (Email + Password only)
+  // OTP_MODE = true   → OTP flow (enable jab zaroorat ho)
+  // ============================================================
+  const OTP_MODE = false;
+
   const verifyStepOne = async (e) => {
     e.preventDefault();
     setError("");
@@ -48,14 +54,52 @@ export default function Login() {
     }
 
     setIsLoading(true);
+
+    // ── DIRECT LOGIN (OTP disabled) ──────────────────────────
+    if (!OTP_MODE) {
+      try {
+        const res = await api.post("auth/login/", { email: emailOrPhone, password });
+        if (res.data?.access) {
+          localStorage.setItem("access_token", res.data.access);
+          localStorage.setItem("refresh_token", res.data.refresh);
+          localStorage.setItem("access", res.data.access);
+          localStorage.setItem("refresh", res.data.refresh);
+          if (res.data.role)  localStorage.setItem("user_role", res.data.role);
+          if (res.data.name)  localStorage.setItem("user_name", res.data.name);
+          if (res.data.email) localStorage.setItem("user_email", res.data.email);
+          localStorage.setItem("user", JSON.stringify({ name: res.data.name, email: emailOrPhone, role: res.data.role }));
+
+          toast.success("Welcome Back! 🚀");
+
+          const role = (res.data.role || "").toLowerCase();
+          setTimeout(() => {
+            if (role === "student")       window.location.href = "/student/dashboard";
+            else if (role === "teacher")  window.location.href = "/teacher/dashboard";
+            else if (role === "parent")   window.location.href = "/parent/dashboard";
+            else                          window.location.href = "/dashboard";
+          }, 400);
+        } else {
+          setError("Invalid server response. Try again.");
+          generateCaptcha();
+        }
+      } catch (err) {
+        setError(err.response?.data?.detail || err.response?.data?.error || "Invalid credentials.");
+        generateCaptcha();
+        setCaptchaInput("");
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // ── OTP FLOW (OTP_MODE = true) ───────────────────────────
     try {
-      // 🚀 Hit the Real API to Send OTP (Backend will decide SMS or Email)
       const res = await api.post("auth/send-otp/", { email_or_phone: emailOrPhone, password: password });
       toast.success(res.data.message || "OTP sent securely.");
-      setAuthStep(2); // Move to OTP Step
+      setAuthStep(2);
     } catch (err) {
       setError(err.response?.data?.error || "Invalid Credentials. Try again.");
-      generateCaptcha(); // Reset captcha on failure
+      generateCaptcha();
       setCaptchaInput("");
     } finally {
       setIsLoading(false);

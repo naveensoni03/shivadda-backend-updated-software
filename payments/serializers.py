@@ -13,13 +13,16 @@ class ServiceCatalogSerializer(serializers.ModelSerializer):
     gst_amount = serializers.SerializerMethodField()
     total_price = serializers.SerializerMethodField()
     created_by_name = serializers.SerializerMethodField()
+    discount_percent = serializers.SerializerMethodField()
 
     class Meta:
         model = ServiceCatalog
         fields = [
             'id', 'name', 'description', 'service_type', 'price',
+            'original_price', 'discount_percent',
             'gst_percentage', 'gst_amount', 'total_price',
-            'is_chargeable', 'is_active', 'validity_days', 'icon',
+            'is_chargeable', 'is_active', 'is_popular', 'badge_text',
+            'color', 'features', 'validity_days', 'icon',
             'created_by', 'created_by_name', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_by', 'created_at', 'updated_at']
@@ -33,19 +36,26 @@ class ServiceCatalogSerializer(serializers.ModelSerializer):
     def get_created_by_name(self, obj):
         return obj.created_by.full_name if obj.created_by else "System"
 
+    def get_discount_percent(self, obj):
+        if obj.original_price and obj.original_price > obj.price:
+            return round((1 - float(obj.price) / float(obj.original_price)) * 100)
+        return None
 
-# Student only sees active/public fields
+
 class ServiceCatalogPublicSerializer(serializers.ModelSerializer):
     gst_amount = serializers.SerializerMethodField()
     total_price = serializers.SerializerMethodField()
     has_access = serializers.SerializerMethodField()
+    discount_percent = serializers.SerializerMethodField()
 
     class Meta:
         model = ServiceCatalog
         fields = [
             'id', 'name', 'description', 'service_type', 'price',
+            'original_price', 'discount_percent',
             'gst_percentage', 'gst_amount', 'total_price',
-            'is_chargeable', 'validity_days', 'icon', 'has_access'
+            'is_chargeable', 'is_popular', 'badge_text',
+            'color', 'features', 'validity_days', 'icon', 'has_access'
         ]
 
     def get_gst_amount(self, obj):
@@ -53,6 +63,11 @@ class ServiceCatalogPublicSerializer(serializers.ModelSerializer):
 
     def get_total_price(self, obj):
         return obj.get_total_price()
+
+    def get_discount_percent(self, obj):
+        if obj.original_price and obj.original_price > obj.price:
+            return round((1 - float(obj.price) / float(obj.original_price)) * 100)
+        return None
 
     def get_has_access(self, obj):
         request = self.context.get('request')

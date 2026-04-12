@@ -6,56 +6,177 @@ import toast, { Toaster } from "react-hot-toast";
 import {
   Search, Bell, CloudSun, Clock, Calendar as CalendarIcon,
   BookOpen, Target, CheckCircle, TrendingUp, PlayCircle, FileText, ChevronRight, Loader2,
-  MessageCircle // 🔥 NEW ICON ADDED FOR WHATSAPP
+  MessageCircle, ClipboardList, Lock, CreditCard, Zap
 } from "lucide-react";
 import StudentSidebar from "../../components/StudentSidebar";
+
+const loadRazorpayScript = () =>
+  new Promise(resolve => {
+    if (window.Razorpay) return resolve(true);
+    const s = document.createElement("script");
+    s.src = "https://checkout.razorpay.com/v1/checkout.js";
+    s.onload = () => resolve(true);
+    s.onerror = () => resolve(false);
+    document.body.appendChild(s);
+  });
 
 export default function StudentDashboard() {
   const navigate = useNavigate();
   const [userName, setUserName] = useState("Student");
-
-  // Live Clock & Dynamic Data States
   const [currentTime, setCurrentTime] = useState(new Date());
   const [dashData, setDashData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Service Cards state
+  const [services, setServices] = useState([]);
+  const [servicesLoading, setServicesLoading] = useState(true);
+  const [servicesError, setServicesError] = useState(false);
+  const [permissions, setPermissions] = useState({ course_access: false, assignment_exam_access: false });
+  const [payingId, setPayingId] = useState(null);
+  const [sidebarKey, setSidebarKey] = useState(0); // force sidebar refresh after payment
+
   useEffect(() => {
     // Auth Check & Data Load
     const token = localStorage.getItem("access_token");
-    if (!token) {
-      navigate("/student/login");
-      return;
-    }
+    if (!token) { navigate("/student/login"); return; }
     const storedName = localStorage.getItem("user_name");
     if (storedName) setUserName(storedName);
 
-    // Clock Timer
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-
-    // Fetch Backend Data
     fetchDashboardData();
+    fetchServices();
 
     return () => clearInterval(timer);
   }, [navigate]);
 
-  // 🚀 FETCH FROM DJANGO API
   const fetchDashboardData = async () => {
     setIsLoading(true);
     try {
       const res = await api.get("/students/dashboard-summary/");
-      // 💡 TEMPORARY MOCK DATA FOR WHATSAPP GROUPS (Until backend sends real data)
-      const dataWithWhatsApp = {
+      setDashData({
         ...res.data,
         whatsapp_groups: res.data.whatsapp_groups || [
           { id: 1, name: "Physics Class 12 - Morning Batch", link: "https://chat.whatsapp.com/dummy123" }
         ]
-      };
-      setDashData(dataWithWhatsApp);
-    } catch (error) {
-      console.error("Dashboard API Error:", error);
+      });
+    } catch (err) {
+      console.error("Dashboard API Error:", err);
       toast.error("Could not fetch latest data from server.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchServices = async () => {
+    setServicesLoading(true);
+    setServicesError(false);
+    try {
+      // Use Promise.allSettled — if one fails, the other still completes
+      const [svcResult, permResult] = await Promise.allSettled([
+        api.get("payments/services/"),
+        api.get("payments/my-permissions/"),
+      ]);
+
+      if (svcResult.status === 'fulfilled') {
+        // Show ALL active services from catalog — no strict type filter
+        // Admin decides what to show; we display everything returned by the API
+        const allServices = Array.isArray(svcResult.value.data)
+          ? svcResult.value.data
+          : [];
+        setServices(allServices);
+        if (allServices.length === 0) {
+          console.info("No active services configured by admin yet.");
+        }
+      } else {
+        console.error("Services API failed:", svcResult.reason);
+        setServicesError(true);
+      }
+
+      if (permResult.status === 'fulfilled') {
+        setPermissions(permResult.value.data);
+      } else {
+        // Permissions failed — use defaults (all locked). Don't redirect.
+        console.warn("Permissions API failed (using defaults):", permResult.reason?.message);
+      }
+    } catch (err) {
+      console.error("fetchServices unexpected error:", err);
+      setServicesError(true);
+    } finally {
+      setServicesLoading(false);
+    }
+  };
+
+  const handleServicePayment = async (service) => {
+    setPayingId(service.id);
+    const loadToast = toast.loading(`Processing ${service.name}...`);
+    try {
+      const orderRes = await api.post("payments/create-order/", { service_id: service.id });
+      const { order_id, amount, currency, key, demo_mode } = orderRes.data;
+
+      toast.dismiss(loadToast);
+
+      // Demo mode — skip Razorpay, directly verify
+      if (demo_mode) {
+        const vt = toast.loading("Demo: Granting access...");
+        try {
+          await api.post("payments/verify/", {
+            razorpay_order_id: order_id,
+            razorpay_payment_id: `demo_pay_${Date.now()}`,
+            razorpay_signature: `demo_sig_${Date.now()}`,
+          });
+          toast.success(`${service.name} unlocked! 🎉`, { id: vt });
+          await fetchServices();
+          setSidebarKey(k => k + 1);
+        } catch (e) {
+          toast.error("Demo grant failed.", { id: vt });
+        } finally { setPayingId(null); }
+        return;
+      }
+
+      const sdkLoaded = await loadRazorpayScript();
+      if (!sdkLoaded) {
+        toast.error("Razorpay SDK load nahi hua.");
+        setPayingId(null);
+        return;
+      }
+
+      const options = {
+        key,
+        amount: amount.toString(),
+        currency,
+        name: "SHIV ADDA SCHOOL",
+        description: service.name,
+        order_id,
+        handler: async (response) => {
+          const vt = toast.loading("Verifying payment...");
+          try {
+            await api.post("payments/verify/", {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            toast.success(`${service.name} unlocked! 🎉`, { id: vt });
+            await fetchServices(); // refresh permissions
+            setSidebarKey(k => k + 1);
+          } catch (e) {
+            toast.error("Verification failed. Contact admin.", { id: vt });
+          } finally {
+            setPayingId(null);
+          }
+        },
+        prefill: {
+          name: localStorage.getItem("user_name") || "Student",
+          email: localStorage.getItem("user_email") || "",
+        },
+        method: { upi: true, card: true, emi: true, netbanking: false, wallet: false, paylater: false },
+        theme: { color: "#4f46e5" },
+        modal: { ondismiss: () => { setPayingId(null); toast("Payment cancelled."); } }
+      };
+      new window.Razorpay(options).open();
+    } catch (err) {
+      const msg = err.response?.data?.error || "Order create karne mein error.";
+      toast.error(msg, { id: loadToast });
+      setPayingId(null);
     }
   };
 
@@ -120,13 +241,192 @@ export default function StudentDashboard() {
                 <p className="date-text"><CalendarIcon size={14} /> {formattedDate}</p>
                 <h1>Welcome back, <span className="highlight-text">{userName}</span>! 👋</h1>
                 <p className="subtitle">
-                  You have {dashData?.schedule?.filter(s => s.is_live).length || 0} live classes and {dashData?.tasks?.length || 0} pending tasks today. Let's make it a great day of learning.
+                  You have {dashData?.schedule?.filter(s => s.is_live).length || 0} live classes and {dashData?.tasks?.length || 0} pending tasks today.
                 </p>
               </div>
               <div className="banner-graphic">
                 <div className="floating-circle c1"></div>
                 <div className="floating-circle c2"></div>
               </div>
+            </motion.div>
+
+            {/* ============================================
+                💳 SUBSCRIPTION PLANS — Hostinger Style
+                ============================================ */}
+            <motion.div variants={fadeUp} style={{ marginBottom: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
+                <div>
+                  <h2 style={{ fontSize: "1.4rem", fontWeight: 900, color: "#0f172a", margin: "0 0 4px" }}>
+                    🎯 Subscription Plans
+                  </h2>
+                  <p style={{ color: "#64748b", margin: 0, fontSize: "0.88rem" }}>
+                    Apna access unlock karo aur full learning experience pao
+                  </p>
+                </div>
+                {servicesError && (
+                  <button onClick={fetchServices}
+                    style={{ background: "#eef2ff", color: "#4f46e5", border: "none", borderRadius: 10, padding: "8px 14px", fontWeight: 700, fontSize: "0.82rem", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                    🔄 Retry
+                  </button>
+                )}
+              </div>
+
+              {/* Loading skeleton */}
+              {servicesLoading ? (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 20 }}>
+                  {[1, 2].map(i => (
+                    <div key={i} style={{ background: "white", borderRadius: 20, padding: 24, border: "1.5px solid #e2e8f0", animation: "pulse-bg 1.5s ease-in-out infinite" }}>
+                      <div style={{ height: 16, background: "#f1f5f9", borderRadius: 8, marginBottom: 10, width: "60%" }} />
+                      <div style={{ height: 12, background: "#f1f5f9", borderRadius: 6, marginBottom: 18, width: "80%" }} />
+                      <div style={{ height: 40, background: "#f1f5f9", borderRadius: 8, marginBottom: 16 }} />
+                      <div style={{ height: 44, background: "#f1f5f9", borderRadius: 12 }} />
+                    </div>
+                  ))}
+                </div>
+              ) : servicesError ? (
+                /* Error state */
+                <div style={{ textAlign: "center", padding: "36px 20px", background: "white", borderRadius: 20, border: "1.5px dashed #fca5a5" }}>
+                  <div style={{ fontSize: "2.5rem", marginBottom: 10 }}>⚠️</div>
+                  <h3 style={{ margin: "0 0 8px", color: "#ef4444", fontWeight: 800 }}>Plans load nahi ho sake</h3>
+                  <p style={{ margin: "0 0 16px", color: "#94a3b8", fontSize: "0.88rem" }}>Network ya server issue. Retry karo.</p>
+                  <button onClick={fetchServices}
+                    style={{ background: "#4f46e5", color: "white", border: "none", borderRadius: 10, padding: "10px 20px", fontWeight: 700, cursor: "pointer" }}>
+                    🔄 Retry
+                  </button>
+                </div>
+              ) : services.length === 0 ? (
+                /* Empty state — no services configured by admin yet */
+                <div style={{ textAlign: "center", padding: "36px 20px", background: "white", borderRadius: 20, border: "1.5px dashed #e2e8f0" }}>
+                  <div style={{ fontSize: "2.5rem", marginBottom: 10 }}>📋</div>
+                  <h3 style={{ margin: "0 0 8px", color: "#64748b", fontWeight: 800 }}>Koi plan available nahi hai</h3>
+                  <p style={{ margin: 0, color: "#94a3b8", fontSize: "0.88rem" }}>Admin abhi plans configure kar raha hai. Thodi der mein check karo.</p>
+                </div>
+              ) : (
+                /* Service cards grid */
+                <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(services.length, 3)}, 1fr)`, gap: 20, alignItems: "start" }}>
+                  {services.map(svc => {
+                    // Check access: use has_access from API, or match by service_type for known types
+                    const isPaid = svc.has_access
+                      || (svc.service_type === "course_access" && permissions.course_access)
+                      || (svc.service_type === "assignment_exam_access" && permissions.assignment_exam_access);
+
+                    const disc = svc.discount_percent ||
+                      (svc.original_price && parseFloat(svc.original_price) > parseFloat(svc.price)
+                        ? Math.round((1 - parseFloat(svc.price) / parseFloat(svc.original_price)) * 100) : null);
+
+                    const cardColor = svc.color || "#4f46e5";
+
+                    return (
+                      <motion.div key={svc.id}
+                        whileHover={{ y: svc.is_popular ? -6 : -4, boxShadow: svc.is_popular ? `0 24px 60px ${cardColor}33` : "0 16px 40px rgba(0,0,0,0.1)" }}
+                        style={{
+                          background: "white", borderRadius: 20,
+                          border: svc.is_popular ? `2.5px solid ${cardColor}` : "1.5px solid #e2e8f0",
+                          boxShadow: svc.is_popular ? `0 8px 30px ${cardColor}22` : "0 4px 16px rgba(0,0,0,0.05)",
+                          position: "relative", overflow: "hidden",
+                          transform: svc.is_popular ? "scale(1.03)" : "scale(1)",
+                        }}>
+
+                        {/* Top color bar */}
+                        <div style={{ height: 5, background: cardColor }} />
+
+                        {/* Most Popular banner */}
+                        {svc.is_popular && (
+                          <div style={{ background: cardColor, color: "white", textAlign: "center", padding: "7px", fontSize: "0.72rem", fontWeight: 800, letterSpacing: "1.5px" }}>
+                            ★ MOST POPULAR
+                          </div>
+                        )}
+
+                        <div style={{ padding: "24px 22px 26px" }}>
+                          {/* Header row */}
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                            <div>
+                              <h3 style={{ margin: "0 0 4px", fontSize: "1.1rem", fontWeight: 800, color: "#0f172a" }}>{svc.name}</h3>
+                              <p style={{ margin: 0, fontSize: "0.82rem", color: "#64748b", lineHeight: 1.4 }}>{svc.description}</p>
+                            </div>
+                            {disc && !isPaid && (
+                              <span style={{ background: "#fef3c7", color: "#d97706", borderRadius: 20, padding: "4px 10px", fontSize: "0.7rem", fontWeight: 800, whiteSpace: "nowrap", marginLeft: 8 }}>
+                                {disc}% off
+                              </span>
+                            )}
+                            {svc.badge_text && !disc && !isPaid && (
+                              <span style={{ background: "#f0fdf4", color: "#16a34a", borderRadius: 20, padding: "4px 10px", fontSize: "0.7rem", fontWeight: 800, marginLeft: 8 }}>
+                                {svc.badge_text}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Price */}
+                          <div style={{ marginBottom: 20 }}>
+                            {svc.original_price && (
+                              <p style={{ margin: "0 0 2px", fontSize: "0.88rem", color: "#94a3b8", textDecoration: "line-through" }}>
+                                ₹{parseFloat(svc.original_price).toLocaleString("en-IN")}
+                              </p>
+                            )}
+                            <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                              <span style={{ fontSize: "2.1rem", fontWeight: 900, color: "#0f172a" }}>
+                                ₹{parseFloat(svc.total_price || svc.price).toLocaleString("en-IN")}
+                              </span>
+                              <span style={{ fontSize: "0.82rem", color: "#94a3b8" }}>
+                                / {svc.validity_days} days
+                              </span>
+                            </div>
+                            {svc.original_price && (
+                              <p style={{ margin: "4px 0 0", fontSize: "0.76rem", color: "#16a34a", fontWeight: 700 }}>
+                                Save ₹{(parseFloat(svc.original_price) - parseFloat(svc.price)).toLocaleString("en-IN")} 🎉
+                              </p>
+                            )}
+                          </div>
+
+                          {/* CTA Button */}
+                          {isPaid ? (
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "13px", background: "#f0fdf4", borderRadius: 12, color: "#16a34a", fontWeight: 800, fontSize: "0.9rem", marginBottom: 20, border: "1.5px solid #bbf7d0" }}>
+                              <CheckCircle size={18} /> Access Active ✓
+                            </div>
+                          ) : (
+                            <motion.button whileTap={{ scale: 0.97 }}
+                              disabled={payingId === svc.id}
+                              onClick={() => handleServicePayment(svc)}
+                              style={{
+                                width: "100%", padding: "14px", marginBottom: 20,
+                                background: payingId === svc.id ? "#a5b4fc" : svc.is_popular ? cardColor : "white",
+                                color: payingId === svc.id ? "white" : svc.is_popular ? "white" : cardColor,
+                                border: `2px solid ${cardColor}`,
+                                borderRadius: 12, fontWeight: 800, fontSize: "0.95rem",
+                                cursor: payingId === svc.id ? "not-allowed" : "pointer",
+                                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                                boxShadow: svc.is_popular ? `0 4px 16px ${cardColor}44` : "none",
+                                transition: "all 0.2s"
+                              }}>
+                              {payingId === svc.id
+                                ? <><Loader2 size={17} className="svc-spin" /> Processing...</>
+                                : <>Choose Plan <ChevronRight size={17} /></>
+                              }
+                            </motion.button>
+                          )}
+
+                          {/* Divider + Features */}
+                          <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: 16 }}>
+                            {svc.features?.length > 0 ? (
+                              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 9 }}>
+                                {svc.features.map((f, i) => (
+                                  <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 9, fontSize: "0.85rem", color: "#374151" }}>
+                                    <CheckCircle size={15} color={cardColor} style={{ flexShrink: 0, marginTop: 1 }} /> {f}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p style={{ margin: 0, fontSize: "0.82rem", color: "#94a3b8", fontStyle: "italic" }}>
+                                Features admin update karenge.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
             </motion.div>
 
             {/* 🌟 KPI STATS CARDS (Connected to API) */}
@@ -375,6 +675,9 @@ export default function StudentDashboard() {
         .join-btn:hover { transform: translateY(-2px); background: #4338ca; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
         .spinner { animation: spin 1s linear infinite; }
+        .svc-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes pulse-bg { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
         /* Right Column Widgets */
         .right-col-widgets { display: flex; flex-direction: column; gap: 30px; }

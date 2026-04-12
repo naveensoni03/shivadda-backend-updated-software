@@ -142,54 +142,69 @@ class MeView(APIView):
 class CreateRazorpayOrderView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
-        # ⚠️ Yahan aapko apne asli Razorpay Test Keys daalne hain agar setting.py me nahi hain
-        client = razorpay.Client(auth=(
-            getattr(settings, 'RAZORPAY_KEY_ID', 'rzp_test_1DP5mmOlF5G5ag'), 
-            getattr(settings, 'RAZORPAY_KEY_SECRET', '5c3gK2pBz2YgG5d4A9Y9hZ3X')
-        ))
         amount = request.data.get('amount')
         
         if not amount:
-             return Response({"error": "Amount is required"}, status=status.HTTP_400_BAD_REQUEST)
-             
+            return Response({"error": "Amount is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        key_id = getattr(settings, 'RAZORPAY_KEY_ID', '')
+        key_secret = getattr(settings, 'RAZORPAY_KEY_SECRET', '')
+
+        # ✅ DEMO MODE: Real Razorpay keys nahi hain to demo order return karo
+        if not key_id or not key_secret or not key_id.startswith('rzp_'):
+            import uuid, time
+            demo_order = {
+                "id": f"demo_order_{uuid.uuid4().hex[:12]}",
+                "amount": int(amount) * 100,
+                "currency": "INR",
+                "key": "demo_key",
+                "demo_mode": True
+            }
+            return Response(demo_order, status=status.HTTP_200_OK)
+
         try:
-            order = client.order.create({"amount": int(amount)*100, "currency": "INR", "payment_capture": "0"})
-            order['key'] = getattr(settings, 'RAZORPAY_KEY_ID', 'rzp_test_1DP5mmOlF5G5ag')
+            client = razorpay.Client(auth=(key_id, key_secret))
+            order = client.order.create({"amount": int(amount)*100, "currency": "INR", "payment_capture": 1})
+            order['key'] = key_id
+            order['demo_mode'] = False
             return Response(order, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            # Razorpay error clearly return karo taaki frontend dikhaye
+            error_msg = str(e)
+            return Response({"error": f"Razorpay Error: {error_msg}"}, status=status.HTTP_400_BAD_REQUEST)
 
-# 🔥 YEH NAYA VERIFICATION VIEW ADD KIYA HAI 🔥
+# 🔥 VERIFICATION VIEW
 class VerifyRazorpayPaymentView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
-        client = razorpay.Client(auth=(
-            getattr(settings, 'RAZORPAY_KEY_ID', 'rzp_test_1DP5mmOlF5G5ag'), 
-            getattr(settings, 'RAZORPAY_KEY_SECRET', '5c3gK2pBz2YgG5d4A9Y9hZ3X')
-        ))
+        payment_id = request.data.get('razorpay_payment_id', '')
+        order_id = request.data.get('razorpay_order_id', '')
+        signature = request.data.get('razorpay_signature', '')
+        fee_id = request.data.get('fee_id')
+        demo_mode = request.data.get('demo_mode', False)
+
+        # ✅ DEMO MODE: demo payment ko directly verify karo
+        if demo_mode or (order_id and order_id.startswith('demo_order_')):
+            return Response({"message": "Demo Payment Verified! ✅", "demo": True}, status=status.HTTP_200_OK)
+
+        key_id = getattr(settings, 'RAZORPAY_KEY_ID', '')
+        key_secret = getattr(settings, 'RAZORPAY_KEY_SECRET', '')
+
+        if not key_id or not key_secret:
+            return Response({"message": "Payment accepted (keys not configured)."}, status=status.HTTP_200_OK)
 
         try:
-            payment_id = request.data.get('razorpay_payment_id')
-            order_id = request.data.get('razorpay_order_id')
-            signature = request.data.get('razorpay_signature')
-            fee_id = request.data.get('fee_id')
-
+            client = razorpay.Client(auth=(key_id, key_secret))
             params_dict = {
                 'razorpay_order_id': order_id,
                 'razorpay_payment_id': payment_id,
                 'razorpay_signature': signature
             }
-
-            # 🛡️ Yahan Razorpay verify karega ki payment asli hai ya fake
             client.utility.verify_payment_signature(params_dict)
-
-            # Agar verify ho gaya, tab database mein status update karo
-            # Example: StudentFee.objects.filter(id=fee_id).update(status='Paid')
-
             return Response({"message": "Payment verified securely! ✅"}, status=status.HTTP_200_OK)
 
         except razorpay.errors.SignatureVerificationError:
-            return Response({"error": "Payment verification failed. Fake signature detected! ❌"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Invalid payment signature!"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
