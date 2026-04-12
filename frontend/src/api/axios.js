@@ -1,8 +1,9 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://shivadda-backend-updated-software.onrender.com/api",
-  // baseURL: "http://127.0.0.1:8000/api", // 🔥 FIX: Removed trailing slash
+  baseURL: import.meta.env.VITE_API_URL
+    ? `${import.meta.env.VITE_API_URL}/api`
+    : "http://127.0.0.1:8000/api",
   withCredentials: false
 });
 
@@ -58,13 +59,20 @@ api.interceptors.response.use(
     // PURANA 401 (UNAUTHORIZED) LOGIC
     // ==========================================
     if (error.response?.status === 401) {
-      localStorage.clear();
-      const currentPath = window.location.pathname;
-      if (!currentPath.includes("/login")) {
-        if (currentPath.startsWith("/student")) {
-          window.location.href = "/student/login";
-        } else {
-          window.location.href = "/login";
+      // Don't redirect for background/non-critical endpoints
+      const url = error.config?.url || "";
+      const silentEndpoints = ["my-permissions", "my-access", "my-payments"];
+      const isSilent = silentEndpoints.some(ep => url.includes(ep));
+
+      if (!isSilent) {
+        localStorage.clear();
+        const currentPath = window.location.pathname;
+        if (!currentPath.includes("/login")) {
+          if (currentPath.startsWith("/student")) {
+            window.location.href = "/student/login";
+          } else {
+            window.location.href = "/login";
+          }
         }
       }
     }

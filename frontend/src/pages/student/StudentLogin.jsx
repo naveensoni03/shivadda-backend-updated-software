@@ -103,11 +103,6 @@ export default function StudentLogin() {
         }
     };
 
-    const leftPanelStyle = { flex: 1, background: "linear-gradient(135deg, #4f46e5, #3b82f6)", padding: "50px", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column" };
-    const labelStyle = { display: "block", fontSize: "0.85rem", fontWeight: "700", color: "#334155", marginBottom: "8px" };
-    const inputContainerStyle = { display: "flex", alignItems: "center", background: "#f8fafc", border: "2px solid #e2e8f0", borderRadius: "12px", overflow: "hidden", transition: "all 0.2s ease-in-out" };
-    const inputStyle = { flex: 1, border: "none", background: "transparent", padding: "14px 15px", fontSize: "0.95rem", color: "#1e293b", outline: "none", fontWeight: "500" };
-
     return (
         <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Inter', sans-serif", background: "#f8fafc" }}>
             <Toaster position="top-right" />
@@ -149,80 +144,112 @@ export default function StudentLogin() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.4 }}
-                    style={{ width: "100%", maxWidth: "420px", background: "white", padding: "40px", borderRadius: "24px", boxShadow: "0 20px 40px -15px rgba(0,0,0,0.05)" }}
+                    style={{ width: "100%", maxWidth: "420px", background: "white", padding: "40px", borderRadius: "24px", boxShadow: "0 20px 60px rgba(0,0,0,0.08)" }}
                 >
-                    <div style={{ textAlign: "center", marginBottom: "35px" }}>
-                        <h2 style={{ fontSize: "1.8rem", fontWeight: "800", color: "#0f172a", margin: "0 0 8px 0" }}>Welcome Student!</h2>
-                        <p style={{ color: "#64748b", margin: 0, fontSize: "0.95rem" }}>Please enter your details to access your classes.</p>
+                    <div style={{ textAlign: "center", marginBottom: "32px" }}>
+                        <div style={{ width: 56, height: 56, background: "linear-gradient(135deg,#4f46e5,#3b82f6)", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                            <BookOpen size={28} color="white" />
+                        </div>
+                        <h2 style={{ fontSize: "1.75rem", fontWeight: "800", color: "#0f172a", margin: "0 0 6px 0" }}>Welcome Student!</h2>
+                        <p style={{ color: "#64748b", margin: 0, fontSize: "0.95rem" }}>Sign in to access your classes.</p>
                     </div>
 
-                    <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                    <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+                        {/* Email Field */}
                         <div>
-                            <label style={labelStyle}>Email Address / Login ID</label>
-                            <div style={inputContainerStyle}>
-                                <Mail size={18} color="#94a3b8" style={{ marginLeft: "15px" }} />
+                            <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#374151", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                                Email Address
+                            </label>
+                            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                                <Mail size={17} color="#9ca3af" style={{ position: "absolute", left: 14, pointerEvents: "none", zIndex: 1 }} />
                                 <input
                                     type="text"
                                     name="email"
                                     placeholder="Enter your email"
                                     value={email}
                                     onChange={e => setEmail(e.target.value)}
-                                    style={inputStyle}
+                                    autoComplete="email"
+                                    className="sld-input"
+                                    style={{ width: "100%", padding: "13px 14px 13px 42px", border: "1.5px solid #e5e7eb", borderRadius: "12px", fontSize: "0.95rem", color: "#111827", background: "white", outline: "none", fontWeight: "500", transition: "border-color 0.2s, box-shadow 0.2s", boxSizing: "border-box" }}
+                                    onFocus={e => { e.target.style.borderColor = "#4f46e5"; e.target.style.boxShadow = "0 0 0 3px rgba(79,70,229,0.12)"; }}
+                                    onBlur={e => { e.target.style.borderColor = "#e5e7eb"; e.target.style.boxShadow = "none"; }}
                                 />
                             </div>
                         </div>
 
+                        {/* Password Field */}
                         <div>
-                            <label style={labelStyle}>Password</label>
-                            <div style={inputContainerStyle}>
-                                <Lock size={18} color="#94a3b8" style={{ marginLeft: "15px" }} />
+                            <label style={{ display: "block", fontSize: "0.82rem", fontWeight: "700", color: "#374151", marginBottom: "7px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                                Password
+                            </label>
+                            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                                <Lock size={17} color="#9ca3af" style={{ position: "absolute", left: 14, pointerEvents: "none", zIndex: 1 }} />
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     name="password"
                                     placeholder="Enter your password"
                                     value={password}
                                     onChange={e => setPassword(e.target.value)}
-                                    style={inputStyle}
+                                    autoComplete="current-password"
+                                    style={{ width: "100%", padding: "13px 44px 13px 42px", border: "1.5px solid #e5e7eb", borderRadius: "12px", fontSize: "0.95rem", color: "#111827", background: "white", outline: "none", fontWeight: "500", transition: "border-color 0.2s, box-shadow 0.2s", boxSizing: "border-box" }}
+                                    onFocus={e => { e.target.style.borderColor = "#4f46e5"; e.target.style.boxShadow = "0 0 0 3px rgba(79,70,229,0.12)"; }}
+                                    onBlur={e => { e.target.style.borderColor = "#e5e7eb"; e.target.style.boxShadow = "none"; }}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    style={{ background: "none", border: "none", cursor: "pointer", padding: "0 15px", display: "flex", alignItems: "center" }}
+                                    style={{ position: "absolute", right: 14, background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", color: "#9ca3af" }}
                                 >
-                                    {showPassword ? <EyeOff size={18} color="#94a3b8" /> : <Eye size={18} color="#94a3b8" />}
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
                             </div>
                         </div>
 
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.85rem", marginTop: "-5px" }}>
-                            <label style={{ display: "flex", alignItems: "center", gap: "8px", color: "#475569", cursor: "pointer" }}>
-                                <input type="checkbox" style={{ accentColor: "#4f46e5", width: "16px", height: "16px", cursor: "pointer" }} />
+                        {/* Remember + Forgot */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.85rem" }}>
+                            <label style={{ display: "flex", alignItems: "center", gap: "8px", color: "#475569", cursor: "pointer", fontWeight: "500" }}>
+                                <input type="checkbox" style={{ accentColor: "#4f46e5", width: "15px", height: "15px", cursor: "pointer" }} />
                                 Remember me
                             </label>
                             <span style={{ color: "#4f46e5", fontWeight: "600", cursor: "pointer" }}>Forgot Password?</span>
                         </div>
 
+                        {/* Submit */}
                         <motion.button
                             whileTap={{ scale: 0.98 }}
                             type="submit"
                             disabled={isLoading}
                             style={{
-                                marginTop: "10px", height: "50px", background: "linear-gradient(135deg, #6366f1, #4f46e5)",
-                                color: "white", border: "none", borderRadius: "12px", fontSize: "1rem", fontWeight: "bold",
-                                cursor: isLoading ? "not-allowed" : "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: "10px",
-                                boxShadow: "0 10px 20px -10px rgba(99, 102, 241, 0.5)"
+                                marginTop: "4px", height: "52px",
+                                background: isLoading ? "#a5b4fc" : "linear-gradient(135deg, #4f46e5, #3b82f6)",
+                                color: "white", border: "none", borderRadius: "12px", fontSize: "1rem", fontWeight: "700",
+                                cursor: isLoading ? "not-allowed" : "pointer",
+                                display: "flex", justifyContent: "center", alignItems: "center", gap: "10px",
+                                boxShadow: "0 4px 15px rgba(79,70,229,0.35)", transition: "all 0.2s"
                             }}
                         >
                             {isLoading ? <Loader2 size={22} className="animate-spin" /> : <>Login to Portal <ArrowRight size={18} /></>}
                         </motion.button>
                     </form>
 
-                    <div style={{ textAlign: "center", marginTop: "30px", fontSize: "0.9rem", color: "#64748b" }}>
-                        Don't have an account? <span style={{ color: "#4f46e5", fontWeight: "bold", cursor: "pointer" }}>Register Now</span>
+                    <div style={{ textAlign: "center", marginTop: "24px", fontSize: "0.9rem", color: "#64748b" }}>
+                        Don't have an account? <span style={{ color: "#4f46e5", fontWeight: "700", cursor: "pointer" }}>Register Now</span>
                     </div>
                 </motion.div>
             </div>
-            <style dangerouslySetInnerHTML={{ __html: `.animate-spin { animation: spin 1s linear infinite; } @keyframes spin { 100% { transform: rotate(360deg); } } @media (max-width: 900px) { .login-left-panel { display: none !important; } }` }} />
+
+            <style dangerouslySetInnerHTML={{ __html: `
+                .animate-spin { animation: spin 1s linear infinite; }
+                @keyframes spin { 100% { transform: rotate(360deg); } }
+                input:-webkit-autofill,
+                input:-webkit-autofill:hover,
+                input:-webkit-autofill:focus {
+                    -webkit-box-shadow: 0 0 0px 1000px white inset !important;
+                    -webkit-text-fill-color: #111827 !important;
+                    transition: background-color 5000s ease-in-out 0s;
+                }
+                @media (max-width: 900px) { .login-left-panel { display: none !important; } }
+            `}} />
         </div>
     );
 }

@@ -6,6 +6,8 @@ from .views import (
     VerifyServicePaymentView,
     MyPaymentHistoryView,
     MyServiceAccessView,
+    StudentAccessPermissionsView,
+    SeedDefaultServicesView,
     AdminStudentPaymentsView,
     TeacherBankDetailsView,
     AdminTeacherBankDetailsView,
@@ -19,7 +21,6 @@ router.register(r'services', ServiceCatalogViewSet, basename='service-catalog')
 router.register(r'teacher-salary', TeacherSalaryViewSet, basename='teacher-salary')
 
 urlpatterns = [
-    # Service Catalog + Salary ViewSets
     path('', include(router.urls)),
 
     # Razorpay Flow
@@ -29,11 +30,13 @@ urlpatterns = [
     # Student
     path('my-payments/', MyPaymentHistoryView.as_view(), name='my-payments'),
     path('my-access/', MyServiceAccessView.as_view(), name='my-access'),
+    path('my-permissions/', StudentAccessPermissionsView.as_view(), name='my-permissions'),
     path('invoice/<str:invoice_number>/', StudentInvoiceDetailView.as_view(), name='student-invoice'),
 
     # Admin
     path('admin/all-payments/', AdminStudentPaymentsView.as_view(), name='admin-all-payments'),
     path('admin/teacher/<int:teacher_id>/bank/', AdminTeacherBankDetailsView.as_view(), name='admin-teacher-bank'),
+    path('admin/seed-services/', SeedDefaultServicesView.as_view(), name='seed-services'),
 
     # Teacher
     path('teacher/bank-details/', TeacherBankDetailsView.as_view(), name='teacher-bank-details'),
