@@ -6,21 +6,30 @@ import {
     Users, UserPlus, Search, Edit3, Trash2, Eye,
     CheckCircle, XCircle, Mail, Shield, Lock, X, ChevronLeft, ChevronRight,
     Calendar, User, Phone, Sparkles, AlertTriangle, Power, Smartphone, HardDrive, Moon, Filter, MapPin, CalendarClock,
-    Briefcase, GraduationCap, Home, HeartPulse, Activity, Loader2
+    Briefcase, GraduationCap, Home, HeartPulse, Activity, Loader2, Layers, Server
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-// 🎨 PREMIUM THEME CONSTANTS (NO UI CHANGES)
+// 🎨 PREMIUM THEME CONSTANTS (UPDATED WITH NEW ROLES)
 const ROLE_THEMES = {
     SUPER_ADMIN: { color: '#8b5cf6', bg: 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)', badgeBg: '#f3e8ff', badgeText: '#6b21a8', border: '4px solid #8b5cf6' },
-    SCHOOL_ADMIN: { color: '#3b82f6', bg: 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)', badgeBg: '#e0f2fe', badgeText: '#0369a1', border: '4px solid #3b82f6' },
+    ADMIN: { color: '#6366f1', bg: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', badgeBg: '#eef2ff', badgeText: '#4338ca', border: '4px solid #6366f1' },
+    MANAGEMENT_STAFF: { color: '#3b82f6', bg: 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)', badgeBg: '#e0f2fe', badgeText: '#0369a1', border: '4px solid #3b82f6' },
+
+    HEAD_OF_PLACE: { color: '#ec4899', bg: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)', badgeBg: '#fce7f3', badgeText: '#be185d', border: '4px solid #ec4899' },
+    TEACHER: { color: '#f43f5e', bg: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', badgeBg: '#ffe4e6', badgeText: '#be123c', border: '4px solid #f43f5e' },
+    LAB_ASSISTANT: { color: '#8b5cf6', bg: 'linear-gradient(135deg, #a78bfa 0%, #c084fc 100%)', badgeBg: '#f3e8ff', badgeText: '#7e22ce', border: '4px solid #a78bfa' },
+    LIBRARIAN: { color: '#0ea5e9', bg: 'linear-gradient(135deg, #38bdf8 0%, #7dd3fc 100%)', badgeBg: '#e0f2fe', badgeText: '#0284c7', border: '4px solid #38bdf8' },
+
+    STUDENT: { color: '#14b8a6', bg: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)', badgeBg: '#ccfbf1', badgeText: '#0f766e', border: '4px solid #14b8a6' },
+    PARENT: { color: '#f59e0b', bg: 'linear-gradient(135deg, #f59e0b 0%, #f97316 100%)', badgeBg: '#ffedd5', badgeText: '#c2410c', border: '4px solid #f59e0b' },
+    GUEST: { color: '#94a3b8', bg: 'linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%)', badgeBg: '#f8fafc', badgeText: '#64748b', border: '4px solid #cbd5e1' },
+
+    SECURITY: { color: '#64748b', bg: 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)', badgeBg: '#f1f5f9', badgeText: '#475569', border: '4px solid #64748b' },
+    HOSTEL_STAFF: { color: '#10b981', bg: 'linear-gradient(135deg, #34d399 0%, #6ee7b7 100%)', badgeBg: '#dcfce7', badgeText: '#166534', border: '4px solid #34d399' },
+    TRANSPORT_STAFF: { color: '#f59e0b', bg: 'linear-gradient(135deg, #fbbf24 0%, #fcd34d 100%)', badgeBg: '#fef3c7', badgeText: '#b45309', border: '4px solid #fbbf24' },
     STAFF: { color: '#10b981', bg: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)', badgeBg: '#dcfce7', badgeText: '#15803d', border: '4px solid #10b981' },
-    AGENT: { color: '#f59e0b', bg: 'linear-gradient(135deg, #f59e0b 0%, #f97316 100%)', badgeBg: '#ffedd5', badgeText: '#c2410c', border: '4px solid #f59e0b' },
-    TEACHER: { color: '#ec4899', bg: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)', badgeBg: '#fce7f3', badgeText: '#be185d', border: '4px solid #ec4899' },
-    OWNER: { color: '#6366f1', bg: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', badgeBg: '#eef2ff', badgeText: '#4338ca', border: '4px solid #6366f1' },
-    SEEKER: { color: '#14b8a6', bg: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)', badgeBg: '#ccfbf1', badgeText: '#0f766e', border: '4px solid #14b8a6' },
-    PARENT: { color: '#f43f5e', bg: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', badgeBg: '#ffe4e6', badgeText: '#be123c', border: '4px solid #f43f5e' },
-    GUEST: { color: '#64748b', bg: 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)', badgeBg: '#f1f5f9', badgeText: '#475569', border: '4px solid #64748b' }
+    AGENT: { color: '#eab308', bg: 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)', badgeBg: '#fef9c3', badgeText: '#854d0e', border: '4px solid #eab308' }
 };
 
 const AVATAR_GRADIENTS = [
@@ -31,12 +40,34 @@ const AVATAR_GRADIENTS = [
     'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',
 ];
 
+// 🔥 THE 4 TABS ARCHITECTURE
+const TAB_ROLES = {
+    "Management": ["SUPER_ADMIN", "ADMIN", "MANAGEMENT_STAFF"],
+    "Portfolio (Staff)": ["HEAD_OF_PLACE", "TEACHER", "LAB_ASSISTANT", "LIBRARIAN"],
+    "Service Seeker": ["STUDENT", "PARENT", "GUEST"],
+    "Unacademic Users": ["SECURITY", "HOSTEL_STAFF", "TRANSPORT_STAFF", "STAFF", "AGENT"]
+};
+
+
+// ✨ STATIC SERVICES LIST (Can be fetched dynamically later)
+const AVAILABLE_SERVICES = [
+    { id: 1, name: "Hostel" },
+    { id: 2, name: "Transport" },
+    { id: 3, name: "Course" }
+];
+
 export default function UserManager() {
+    // 🔐 AUTH CHECKS FOR HIDING BUTTONS
+    const loggedInRole = localStorage.getItem("role") || "";
+    const canEdit = ["SUPER_ADMIN", "ADMIN", "SCHOOL_ADMIN", "HOD", "TEACHER"].includes(loggedInRole);
+    const canDelete = ["SUPER_ADMIN", "ADMIN", "SCHOOL_ADMIN"].includes(loggedInRole);
+
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
-    const [filterRole, setFilterRole] = useState("ALL");
-    const [filterLocation, setFilterLocation] = useState("ALL");
+
+    // 🚀 NEW TAB STATE
+    const [activeMainTab, setActiveMainTab] = useState("Management");
 
     const [selectedUserIds, setSelectedUserIds] = useState([]);
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -53,21 +84,20 @@ export default function UserManager() {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(6);
 
-    // 🚀 MEGA PROFILE STATES FOR ADMIN VIEW
     const [adminMegaProfile, setAdminMegaProfile] = useState(null);
     const [isProfileLoading, setIsProfileLoading] = useState(false);
     const [activeTab, setActiveTab] = useState("medical");
 
+    // ✨ ADDED 'rank', 'place' AND 'services' to Initial State
     const initialFormState = {
-        id: null, full_name: "", email: "", phone: "", role: "STAFF", password: "", account_status: "ACTIVE", location: "Global", validity_days: 365, is_disguised: false,
+        id: null, full_name: "", email: "", phone: "", role: "STUDENT", password: "", account_status: "ACTIVE",
+        rank: 0, place: "", services: [], // <-- New Architecture Fields Added
+        location: "Global", validity_days: 365, is_disguised: false,
         dob: "", gender: "Male", marital_status: "Single",
         post_nature: "Permanent", working_group: "Office",
         father_name: "", mother_name: "", parent_phone: "",
         highest_qualification: "", qualification_type: "Academic", experience_years: 0,
-        address_permanent: "",
-        terms_accepted: false,
-        profile_photo: null,
-        national_identity: ""
+        address_permanent: "", terms_accepted: false, profile_photo: null, national_identity: ""
     };
     const [formData, setFormData] = useState(initialFormState);
 
@@ -96,7 +126,7 @@ export default function UserManager() {
             setSelectedUserIds([]);
             toast.success(`${selectedUserIds.length} users deleted.`, { id: loadToast });
             setIsBulkDeleteOpen(false);
-        } catch (err) { toast.error("Bulk deletion failed.", { id: loadToast }); }
+        } catch (err) { toast.error("Bulk deletion failed. Unauthorized?", { id: loadToast }); }
     };
 
     const initiateDelete = (id) => { setUserToDelete(id); setIsDeleteModalOpen(true); };
@@ -107,7 +137,7 @@ export default function UserManager() {
             setUsers(users.filter(u => u.id !== userToDelete));
             toast.success("User deleted successfully!");
             setIsDeleteModalOpen(false);
-        } catch (err) { toast.error("Delete failed."); }
+        } catch (err) { toast.error("Delete failed. Check permissions."); }
     };
 
     const handleStatusToggleClick = (user) => {
@@ -125,30 +155,39 @@ export default function UserManager() {
         } catch (err) { toast.error("Update failed", { id: loadToast }); }
     };
 
-    // 🚀 THE MEGA FIX: FormData integration for file uploads
+    // ✨ HANDLE SERVICE CHECKBOX TOGGLE
+    const handleServiceToggle = (serviceId) => {
+        setFormData(prev => ({
+            ...prev,
+            services: prev.services.includes(serviceId)
+                ? prev.services.filter(id => id !== serviceId)
+                : [...prev.services, serviceId]
+        }));
+    };
+
     const handleSave = async (e) => {
         e.preventDefault();
         if (!formData.terms_accepted) return toast.error("You must agree to the Terms & Conditions!");
 
         const loadToast = toast.loading("Processing...");
-
         const submitData = new FormData();
 
         Object.keys(formData).forEach(key => {
             if (key === 'profile_photo') {
-                if (formData.profile_photo instanceof File) {
-                    submitData.append('profile_photo', formData.profile_photo);
-                }
+                if (formData.profile_photo instanceof File) submitData.append('profile_photo', formData.profile_photo);
             } else if (key === 'password') {
-                if (formData.password && formData.password.trim() !== "") {
-                    submitData.append('password', formData.password);
-                }
+                if (formData.password && formData.password.trim() !== "") submitData.append('password', formData.password);
             } else if (key === 'id') {
-                // Do nothing
+                // Ignore
+            } else if (key === 'place') {
+                if (formData[key]) submitData.append(key, formData[key]);
+            } else if (key === 'services') {
+                // ✨ APPEND MULTIPLE SERVICES FOR DJANGO MANY-TO-MANY
+                formData.services.forEach(serviceId => {
+                    submitData.append('services', serviceId);
+                });
             } else {
-                if (formData[key] !== null && formData[key] !== undefined) {
-                    submitData.append(key, formData[key]);
-                }
+                if (formData[key] !== null && formData[key] !== undefined) submitData.append(key, formData[key]);
             }
         });
 
@@ -163,7 +202,6 @@ export default function UserManager() {
             fetchUsers();
             closeForm();
         } catch (err) {
-            console.error("Save Error:", err.response?.data);
             let errorMsg = "Operation failed. Please check your data.";
             if (err.response?.data) {
                 const keys = Object.keys(err.response.data);
@@ -182,12 +220,11 @@ export default function UserManager() {
         setIsFormOpen(true);
     };
 
-    // 🚀 NEW: OPEN VIEW WITH MEGA PROFILE FETCH
     const openView = async (user) => {
         setSelectedUser(user);
         setIsViewOpen(true);
         setIsProfileLoading(true);
-        setActiveTab("medical"); // Reset tab
+        setActiveTab("medical");
         setAdminMegaProfile(null);
         try {
             const res = await api.get(`profiles/admin/${user.id}/`);
@@ -202,13 +239,13 @@ export default function UserManager() {
     const closeForm = () => setIsFormOpen(false);
     const closeView = () => { setIsViewOpen(false); setAdminMegaProfile(null); };
 
-    // Filters & Pagination
+    // 🚀 FILTERING LOGIC UPDATED FOR 4 TABS
     const filteredUsers = users.filter(u => {
+        const matchesTab = TAB_ROLES[activeMainTab].includes(u.role);
         const matchesSearch = u.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || u.email?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesRole = filterRole === "ALL" || u.role === filterRole;
-        const matchesLocation = filterLocation === "ALL" || (u.location && u.location === filterLocation);
-        return matchesSearch && matchesRole && matchesLocation;
+        return matchesTab && matchesSearch;
     });
+
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
@@ -230,37 +267,47 @@ export default function UserManager() {
                         <p style={{ color: '#64748b', fontSize: '1.1rem', marginTop: '8px', fontWeight: '500' }}>Orchestrate your team's access and permissions.</p>
                     </div>
                     <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
-                        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => selectedUserIds.length > 0 ? setIsBulkDeleteOpen(true) : toast("Select users first", { icon: '⚠️' })} style={{ ...secondaryBtn, opacity: selectedUserIds.length > 0 ? 1 : 0.5 }}>
-                            <Trash2 size={18} /> Bulk Actions
-                        </motion.button>
-                        <motion.button whileHover={{ scale: 1.05, boxShadow: '0 20px 40px -10px rgba(79, 70, 229, 0.5)' }} whileTap={{ scale: 0.95 }} onClick={() => openForm()} style={primaryBtn}>
-                            <div style={{ background: 'rgba(255,255,255,0.2)', padding: '8px', borderRadius: '10px' }}><UserPlus size={22} /></div>
-                            <span>Add New User</span>
-                        </motion.button>
+                        {canDelete && (
+                            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => selectedUserIds.length > 0 ? setIsBulkDeleteOpen(true) : toast("Select users first", { icon: '⚠️' })} style={{ ...secondaryBtn, opacity: selectedUserIds.length > 0 ? 1 : 0.5 }}>
+                                <Trash2 size={18} /> Bulk Actions
+                            </motion.button>
+                        )}
+                        {canEdit && (
+                            <motion.button whileHover={{ scale: 1.05, boxShadow: '0 20px 40px -10px rgba(79, 70, 229, 0.5)' }} whileTap={{ scale: 0.95 }} onClick={() => openForm()} style={primaryBtn}>
+                                <div style={{ background: 'rgba(255,255,255,0.2)', padding: '8px', borderRadius: '10px' }}><UserPlus size={22} /></div>
+                                <span>Add New User</span>
+                            </motion.button>
+                        )}
                     </div>
                 </motion.div>
+
+                {/* 🚀 4 TABS ARCHITECTURE (Replaces old Dropdown) */}
+                <div className="mega-tabs-header" style={{ marginBottom: '25px', marginTop: '10px' }}>
+                    {Object.keys(TAB_ROLES).map(tab => (
+                        <button
+                            key={tab}
+                            className={`mega-tab ${activeMainTab === tab ? 'active' : ''}`}
+                            onClick={() => { setActiveMainTab(tab); setCurrentPage(1); setSelectedUserIds([]); }}
+                            style={{ padding: '12px 24px', fontSize: '1rem', borderRadius: '12px' }}
+                        >
+                            {tab === "Management" && <Shield size={18} />}
+                            {tab === "Portfolio (Staff)" && <Briefcase size={18} />}
+                            {tab === "Service Seeker" && <GraduationCap size={18} />}
+                            {tab === "Unacademic Users" && <Layers size={18} />}
+                            {tab}
+                        </button>
+                    ))}
+                </div>
 
                 {/* FLOATING SEARCH */}
                 <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }} style={{ marginBottom: '35px', display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-                    <div style={{ position: 'relative', flex: 2, minWidth: '250px' }}>
+                    <div style={{ position: 'relative', flex: 1 }}>
                         <Search size={22} strokeWidth={2.5} style={{ position: 'absolute', left: '25px', top: '50%', transform: 'translateY(-50%)', color: '#6366f1' }} />
-                        <input placeholder="Search by name or email..." style={searchBar} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                    </div>
-                    <div className="filter-group">
-                        <div className="select-wrapper">
-                            <Filter size={16} className="select-icon" />
-                            <select style={filterSelect} value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
-                                <option value="ALL" style={{ color: '#1e293b' }}>All Roles</option>
-                                <option value="SUPER_ADMIN" style={{ color: '#1e293b' }}>Super Admin</option>
-                                <option value="STAFF" style={{ color: '#1e293b' }}>Staff</option>
-                                <option value="SEEKER" style={{ color: '#1e293b' }}>Student/Seeker</option>
-                                <option value="PARENT" style={{ color: '#1e293b' }}>Parent</option>
-                            </select>
-                        </div>
+                        <input placeholder={`Search within ${activeMainTab}...`} style={searchBar} value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} />
                     </div>
                 </motion.div>
 
-                {/* 🚀 TABLE AREA WITH SERIAL NUMBERS */}
+                {/* 🚀 TABLE AREA */}
                 <div className="table-responsive-wrapper hide-scrollbar" style={{ flex: 1 }}>
                     <table className="modern-table">
                         <thead>
@@ -318,10 +365,10 @@ export default function UserManager() {
                                         </td>
                                         <td style={{ background: isSelected ? '#f8fafc' : 'white', textAlign: 'right', paddingRight: '30px' }}>
                                             <div className="user-actions-wrap" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                                                <motion.button whileHover={{ scale: 1.15 }} onClick={() => handleStatusToggleClick(user)} style={{ ...actionBtn, background: '#f3f4f6' }}><Power size={18} /></motion.button>
+                                                {canEdit && <motion.button whileHover={{ scale: 1.15 }} onClick={() => handleStatusToggleClick(user)} style={{ ...actionBtn, background: '#f3f4f6' }}><Power size={18} /></motion.button>}
                                                 <motion.button whileHover={{ scale: 1.15 }} onClick={() => openView(user)} style={{ ...actionBtn, color: '#3b82f6', background: '#eff6ff' }}><Eye size={18} /></motion.button>
-                                                <motion.button whileHover={{ scale: 1.15 }} onClick={() => openForm(user)} style={{ ...actionBtn, color: '#f59e0b', background: '#fffbeb' }}><Edit3 size={18} /></motion.button>
-                                                <motion.button whileHover={{ scale: 1.15 }} onClick={() => initiateDelete(user.id)} style={{ ...actionBtn, color: '#ef4444', background: '#fef2f2' }}><Trash2 size={18} /></motion.button>
+                                                {canEdit && <motion.button whileHover={{ scale: 1.15 }} onClick={() => openForm(user)} style={{ ...actionBtn, color: '#f59e0b', background: '#fffbeb' }}><Edit3 size={18} /></motion.button>}
+                                                {canDelete && <motion.button whileHover={{ scale: 1.15 }} onClick={() => initiateDelete(user.id)} style={{ ...actionBtn, color: '#ef4444', background: '#fef2f2' }}><Trash2 size={18} /></motion.button>}
                                             </div>
                                         </td>
                                     </motion.tr>
@@ -329,6 +376,7 @@ export default function UserManager() {
                             })}
                         </tbody>
                     </table>
+                    {currentUsers.length === 0 && <p style={{ textAlign: 'center', padding: '40px', color: '#94a3b8', fontWeight: '600' }}>No users found in this category.</p>}
                 </div>
 
                 {/* PAGINATION */}
@@ -351,6 +399,7 @@ export default function UserManager() {
                                 <motion.button whileHover={{ rotate: 90 }} onClick={closeForm} style={closeBtn}><X size={22} /></motion.button>
                             </div>
                             <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: '70vh', overflowY: 'auto', paddingRight: '10px' }} className="hide-scrollbar">
+
                                 <h4 style={sectionTitle}>Basic Information</h4>
                                 <div className="user-form-split">
                                     <div style={inputGroup}><label style={labelStyle}>Full Name</label><input required value={formData.full_name} onChange={e => setFormData({ ...formData, full_name: e.target.value })} style={input} /></div>
@@ -363,6 +412,44 @@ export default function UserManager() {
                                 <div className="user-form-split">
                                     <div style={inputGroup}><label style={labelStyle}>Email</label><input required type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} style={input} /></div>
                                     <div style={inputGroup}><label style={labelStyle}>Phone</label><input value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} style={input} /></div>
+                                </div>
+
+                                {/* ✨ NEW ARCHITECTURE FIELDS SECTION */}
+                                <h4 style={sectionTitle}>Architecture Linking (Roles, Places & Services)</h4>
+                                <div className="user-form-split">
+                                    <div style={inputGroup}>
+                                        <label style={labelStyle}>Teacher/Staff Rank (0 to 5)</label>
+                                        <select value={formData.rank} onChange={e => setFormData({ ...formData, rank: e.target.value })} style={input}>
+                                            {[0, 1, 2, 3, 4, 5].map(r => <option key={r} value={r}>Rank Level {r}</option>)}
+                                        </select>
+                                    </div>
+                                    <div style={inputGroup}>
+                                        <label style={labelStyle}>Branch / Location (Place)</label>
+                                        <select value={formData.place || ""} onChange={e => setFormData({ ...formData, place: e.target.value })} style={input}>
+                                            <option value="">-- No Location Assigned --</option>
+                                            <option value="1">Branch 0 (Head Office)</option>
+                                            <option value="2">Branch 1 (North Campus)</option>
+                                            <option value="3">Branch 2 (South Wing)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* ✨ SERVICES CHECKBOX SECTION ADDED HERE */}
+                                <div style={{ marginTop: '5px' }}>
+                                    <label style={labelStyle}>Assigned Services</label>
+                                    <div style={{ display: 'flex', gap: '15px', marginTop: '10px', flexWrap: 'wrap' }}>
+                                        {AVAILABLE_SERVICES.map(srv => (
+                                            <label key={srv.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f8fafc', padding: '10px 15px', borderRadius: '10px', border: '1px solid #e2e8f0', cursor: 'pointer', fontSize: '0.9rem', color: '#1e293b', fontWeight: '600' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.services.includes(srv.id)}
+                                                    onChange={() => handleServiceToggle(srv.id)}
+                                                    style={{ cursor: 'pointer', accentColor: '#6366f1', width: '16px', height: '16px' }}
+                                                />
+                                                {srv.name}
+                                            </label>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 <h4 style={sectionTitle}>Identity & Photo</h4>
@@ -382,26 +469,26 @@ export default function UserManager() {
                                     <div style={inputGroup}><label style={labelStyle}>Date of Birth</label><input type="date" value={formData.dob} onChange={e => setFormData({ ...formData, dob: e.target.value })} style={input} /></div>
                                     <div style={inputGroup}><label style={labelStyle}>Gender</label>
                                         <select value={formData.gender} onChange={e => setFormData({ ...formData, gender: e.target.value })} style={input}>
-                                            <option value="Male" style={{ color: '#1e293b' }}>Male</option>
-                                            <option value="Female" style={{ color: '#1e293b' }}>Female</option>
-                                            <option value="Other" style={{ color: '#1e293b' }}>Other</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
                                         </select>
                                     </div>
                                 </div>
                                 <div className="user-form-split">
                                     <div style={inputGroup}><label style={labelStyle}>Nature of Post</label>
                                         <select value={formData.post_nature} onChange={e => setFormData({ ...formData, post_nature: e.target.value })} style={input}>
-                                            <option value="Permanent" style={{ color: '#1e293b' }}>Permanent</option>
-                                            <option value="Adhoc" style={{ color: '#1e293b' }}>Adhoc</option>
-                                            <option value="Guest" style={{ color: '#1e293b' }}>Guest</option>
-                                            <option value="Temporary" style={{ color: '#1e293b' }}>Temporary</option>
+                                            <option value="Permanent">Permanent</option>
+                                            <option value="Adhoc">Adhoc</option>
+                                            <option value="Guest">Guest</option>
+                                            <option value="Temporary">Temporary</option>
                                         </select>
                                     </div>
                                     <div style={inputGroup}><label style={labelStyle}>Working Group</label>
                                         <select value={formData.working_group} onChange={e => setFormData({ ...formData, working_group: e.target.value })} style={input}>
-                                            <option value="Office" style={{ color: '#1e293b' }}>Office</option>
-                                            <option value="Field" style={{ color: '#1e293b' }}>Field</option>
-                                            <option value="Both" style={{ color: '#1e293b' }}>Both</option>
+                                            <option value="Office">Office</option>
+                                            <option value="Field">Field</option>
+                                            <option value="Both">Both</option>
                                         </select>
                                     </div>
                                 </div>
@@ -455,10 +542,15 @@ export default function UserManager() {
 
                             <div style={{ padding: '25px 35px', maxHeight: '60vh', overflowY: 'auto', background: '#f8fafc' }} className="hide-scrollbar">
 
-                                <h4 style={sectionTitle}>Basic Identity</h4>
+                                <h4 style={sectionTitle}>Basic Identity & Architecture</h4>
                                 <DetailRow icon={<Shield size={20} />} label="National Identity" value={selectedUser.national_identity || "N/A"} color="#6366f1" />
                                 <DetailRow icon={<Briefcase size={20} />} label="Role / Post" value={`${selectedUser.role} (${selectedUser.post_nature || "N/A"})`} />
                                 <DetailRow icon={<Phone size={20} />} label="Contact" value={selectedUser.phone || "N/A"} />
+
+                                {/* MEGA VIEW UPDATE: RANK, PLACE & SERVICES DISPLAY */}
+                                <DetailRow icon={<Layers size={20} />} label="Rank / Level" value={`Rank ${selectedUser.rank || 0}`} color="#eab308" />
+                                <DetailRow icon={<MapPin size={20} />} label="Location (Branch)" value={selectedUser.place || "Global Branch"} />
+                                <DetailRow icon={<Server size={20} />} label="Active Services" value={selectedUser.services?.length > 0 ? selectedUser.services.join(", ") : "None Assigned"} />
 
                                 {isProfileLoading ? (
                                     <div style={{ textAlign: "center", padding: "40px" }}>
@@ -561,12 +653,9 @@ export default function UserManager() {
             <style>{`
               .hide-scrollbar::-webkit-scrollbar { display: none; }
               .user-main-view { flex: 1; margin-left: 280px; padding: 40px; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; }
-              .user-header-wrap { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 20px;}
+              .user-header-wrap { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;}
               .responsive-title { font-size: 3rem; }
               .user-form-split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-              .filter-group { display: flex; gap: 10px; flex-wrap: wrap; flex: 1;}
-              .select-wrapper { position: relative; flex: 1; min-width: 150px; }
-              .select-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none;}
               .table-responsive-wrapper { width: 100%; overflow-x: auto; }
               .modern-table { width: 100%; border-collapse: separate; border-spacing: 0 15px; min-width: 1000px; margin-top: -15px; }
               .modern-table th { padding: 0 30px; text-align: left; color: #94a3b8; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; border: none; }
@@ -576,8 +665,8 @@ export default function UserManager() {
               .table-row td:last-child { border-top-right-radius: 24px; border-bottom-right-radius: 24px; }
 
               /* MEGA TABS CSS */
-              .mega-tabs-header { display: flex; gap: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; overflow-x: auto; }
-              .mega-tab { background: none; border: none; padding: 8px 16px; font-weight: 700; color: #64748b; cursor: pointer; border-radius: 10px; transition: 0.3s; display: flex; align-items: center; gap: 6px; font-size: 0.9rem;}
+              .mega-tabs-header { display: flex; gap: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; overflow-x: auto; }
+              .mega-tab { background: none; border: 1px solid transparent; padding: 8px 16px; font-weight: 700; color: #64748b; cursor: pointer; border-radius: 10px; transition: 0.3s; display: flex; align-items: center; gap: 8px; font-size: 0.9rem;}
               .mega-tab:hover { background: #f1f5f9; color: var(--primary); }
               .mega-tab.active { background: #6366f1; color: white; box-shadow: 0 4px 10px rgba(99,102,241,0.3); }
 
@@ -611,7 +700,6 @@ const primaryBtn = { background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 10
 const secondaryBtn = { background: '#f1f5f9', color: '#475569', border: 'none', padding: '12px 20px', borderRadius: '14px', cursor: 'pointer', fontWeight: '700', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.3s' };
 const deleteBtnStyle = { background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: 'white', border: 'none', padding: '14px 20px', borderRadius: '14px', cursor: 'pointer', fontWeight: '700', fontSize: '1rem', boxShadow: '0 10px 20px -5px rgba(239, 68, 68, 0.4)' };
 const searchBar = { width: '100%', padding: '16px 25px 16px 55px', borderRadius: '16px', border: '2px solid transparent', background: 'white', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.05)', color: '#1e293b', fontWeight: '600', transition: 'all 0.3s' };
-const filterSelect = { width: '100%', padding: '16px 25px 16px 45px', borderRadius: '16px', border: '2px solid transparent', background: 'white', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.05)', color: '#1e293b', fontWeight: '600', transition: 'all 0.3s', appearance: 'none', cursor: 'pointer' };
 const avatar = { minWidth: '50px', height: '50px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '900', fontSize: '1.3rem', boxShadow: '0 8px 15px rgba(0,0,0,0.1)' };
 const badge = { padding: '8px 16px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.8px', textTransform: 'uppercase' };
 const statusBadge = { padding: '6px 14px', borderRadius: '10px', fontSize: '0.8rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px', width: 'fit-content' };

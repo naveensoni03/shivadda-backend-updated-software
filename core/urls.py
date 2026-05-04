@@ -1,3 +1,6 @@
+
+
+
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
@@ -24,7 +27,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         if email_input and password:
             user_obj = User.objects.filter(email=email_input).first()
-
             if user_obj:
                 if user_obj.check_password(password):
                     self.user = user_obj
@@ -57,7 +59,6 @@ router.register(r'users', UserManagementViewSet, basename='users')
 def create_live_admin(request):
     email = 'user2@gmail.com'
     password = 'user' 
-
     if not User.objects.filter(email=email).exists():
         try:
             user = User.objects.create_superuser(email=email, password=password)
@@ -74,48 +75,53 @@ def home(request):
     return HttpResponse("<h1 style='text-align:center; padding-top:50px;'>Backend is Running! 🚀</h1>")
 
 urlpatterns = [
-    path('api/interactions/', include('interactions.urls')),
     path("", home),
     path("admin/", admin.site.urls),
     
+    # Auth APIs
     path('api/auth/send-otp/', SendOTPView.as_view(), name='send_otp'),       
     path('api/auth/verify-otp/', VerifyOTPAndLoginView.as_view(), name='verify_otp'), 
     path('api/auth/login/', CustomTokenObtainPairView.as_view(), name='login'), 
     path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('setup-live-admin/', create_live_admin), 
     path('api/auth/change-password/', ChangePasswordView.as_view(), name='change-password'),
-
-    # 🔥 SAB SPECIFIC PATHS UPAR HONE CHAHIYE 🔥
     path("api/auth/", include("accounts.urls")), 
+
+    # Business Logic APIs
+    path("api/payments/", include("payments.urls")),  # 🔥 Payments link kar diya gaya hai
+    path("api/teachers/", include("teachers.urls")), 
+    path("api/students/", include("students.urls")),
+    path("api/fees/", include("fees.urls")),
+    path("api/payroll/", include("payroll.urls")),
     path("api/dashboard/", include("dashboard.urls")),
+    path("api/enrollments/", include("enrollments.urls")),
+    path("api/courses/", include("courses.urls")),
+    
+    # Utility/Setup
+    path('setup-live-admin/', create_live_admin), 
+    path('api/chat/', AIChatAPI.as_view()),
+    
+    # Generic includes (Sare specific api/ include kar lein)
     path("api/agents/", include("agents.urls")),
     path("api/logs/", include("logs.urls")),
-    path("api/students/", include("students.urls")),
-    path("api/teachers/", include("teachers.urls")), # 👈 YAHAN AAYEGA REQUEST DIRECTLY
     path("api/parents/", include("parents.urls")),
     path("api/institutions/", include("institutions.urls")),
     path('api/locations/', include('locations.urls')),
     path('api/centers/', include('centers.urls')),  
     path('api/services/', include('services.urls')),
-    path("api/courses/", include("courses.urls")),
     path("api/batches/", include("batches.urls")),
-    path("api/enrollments/", include("enrollments.urls")),
     path("api/attendance/", include("attendance.urls")),
-    path("api/fees/", include("fees.urls")),              
     path("api/exams/", include("exams.urls")),            
     path("api/lms/", include("lms.urls")),
     path("api/library/", include("library.urls")),
     path("api/inventory/", include("inventory.urls")),
     path("api/hostel/", include("hostel.urls")),   
     path("api/transport/", include("transport.urls")), 
-    path("api/payroll/", include("payroll.urls")),
     path('api/timetable/', include('timetable.urls')),
     path("api/news/", include("news.urls")), 
-    path('api/chat/', AIChatAPI.as_view()),
     path("api/profiles/", include("profiles.urls")),
-    path("api/payments/", include("payments.urls")),
+    path('api/interactions/', include('interactions.urls')),
 
-    # 🛑 YEH WALA SABSE AAKHRI MEIN HONA CHAHIYE 🛑
+    # Router URLs at the end
     path("api/", include(router.urls)), 
 ]
 

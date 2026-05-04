@@ -2,8 +2,19 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, BookOpen, Loader2 } from "lucide-react";
-import api from "../../api/axios";
+import api from "../../api/axios"; // Adjust path if needed
 import toast, { Toaster } from "react-hot-toast";
+
+// 🔥 FIX: Added the missing leftPanelStyle object here
+const leftPanelStyle = {
+    flex: 1,
+    background: "linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)",
+    padding: "40px",
+    position: "relative",
+    overflow: "hidden",
+    display: "flex",
+    flexDirection: "column"
+};
 
 export default function StudentLogin() {
     const navigate = useNavigate();
@@ -107,6 +118,7 @@ export default function StudentLogin() {
         <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Inter', sans-serif", background: "#f8fafc" }}>
             <Toaster position="top-right" />
 
+            {/* Left Panel - Includes the missing style variable now */}
             <div className="login-left-panel" style={leftPanelStyle}>
                 <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "white" }}>
@@ -135,10 +147,12 @@ export default function StudentLogin() {
                     </div>
                 </div>
 
+                {/* Abstract Background Elements */}
                 <div style={{ position: "absolute", top: "-10%", right: "-10%", width: "400px", height: "400px", background: "radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)", borderRadius: "50%" }} />
                 <div style={{ position: "absolute", bottom: "-10%", left: "-10%", width: "300px", height: "300px", background: "radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)", borderRadius: "50%" }} />
             </div>
 
+            {/* Right Panel (Login Form) */}
             <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px", position: "relative" }}>
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
@@ -238,7 +252,8 @@ export default function StudentLogin() {
                 </motion.div>
             </div>
 
-            <style dangerouslySetInnerHTML={{ __html: `
+            <style dangerouslySetInnerHTML={{
+                __html: `
                 .animate-spin { animation: spin 1s linear infinite; }
                 @keyframes spin { 100% { transform: rotate(360deg); } }
                 input:-webkit-autofill,

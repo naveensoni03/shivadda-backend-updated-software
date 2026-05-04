@@ -45,7 +45,6 @@ class Place(models.Model):
         ('None', 'None'),
     )
 
-    # ✅ FIXED: Status choices ko React Frontend ke payload ('ACTIVE', 'INACTIVE') se match kiya gaya
     STATUS_CHOICES = (
         ('ACTIVE', 'Active / Show'),
         ('INACTIVE', 'Inactive / Hide'),
@@ -55,6 +54,9 @@ class Place(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     
+    # ✅ NEW: Branch Code (For 0 to 7 mapping logic)
+    branch_code = models.IntegerField(null=True, blank=True, help_text="0 से 7 तक ब्रांच/लोकेशन कोड")
+
     # Parent Link (Recursive Relationship for Hierarchy)
     parent = models.ForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
     
@@ -67,7 +69,6 @@ class Place(models.Model):
     place_type = models.CharField(max_length=50, choices=PLACE_TYPES, default='Global')
     
     # --- SUPER ADMIN FIELDS (Geographical & Deep Config) ---
-    # 🔥 UPDATE: Ab ye fields properly frontend choices se validate hongi
     space_type = models.CharField(max_length=50, choices=SPACE_TYPES, null=True, blank=True)
     place_uses_for = models.CharField(max_length=100, choices=PLACE_USES, null=True, blank=True)
     work_status = models.CharField(max_length=50, choices=WORK_STATUS_CHOICES, null=True, blank=True)
@@ -98,7 +99,7 @@ class Place(models.Model):
                 count = Place.objects.filter(parent__isnull=True).count()
                 self.hierarchy_code = f"0.{count}" if count > 0 else "0"
 
-        # 2. Virtual ID Logic - Agar frontend ne Virtual ID nahi bheji, tabhi auto-generate kare
+        # 2. Virtual ID Logic 
         if not self.virtual_id:
             prefix = self.name[:3].upper() if self.name else "PLC"
             unique_seq = str(uuid.uuid4().int)[:6]

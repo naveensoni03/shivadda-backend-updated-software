@@ -99,16 +99,12 @@ class MailboxStat(models.Model):
     uploaded_mb = models.FloatField(default=0.0)
     updated_at = models.DateTimeField(auto_now=True)
     
-    
-    
-    
 # 13. Live Tracking & Sessions (Phase 6)
 class SystemSession(models.Model):
     user_name = models.CharField(max_length=150, default='Anonymous')
     ip_address = models.CharField(max_length=50, blank=True, null=True)
     login_time = models.DateTimeField(auto_now_add=True)
     logout_time = models.DateTimeField(null=True, blank=True)
-    # Saves format: Years, Months, Days, Hours, Minutes, Seconds, Milliseconds
     duration_calculated = models.CharField(max_length=255, blank=True, null=True) 
     is_live = models.BooleanField(default=True)
 
@@ -123,16 +119,13 @@ class ActionLog(models.Model):
     ]
     user_name = models.CharField(max_length=150, default='Super Admin')
     action_type = models.CharField(max_length=50, choices=ACTION_TYPES)
-    module_affected = models.CharField(max_length=100) # e.g., 'Exams', 'Users'
+    module_affected = models.CharField(max_length=100)
     description = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self): return f"{self.action_type} on {self.module_affected}"
     
-    
-    
-    
-    # ==========================================
+# ==========================================
 # SUPER ADMIN: GLOBAL SYSTEM SETTINGS (SINGLETON)
 # ==========================================
 class GlobalSettings(models.Model):
@@ -159,29 +152,24 @@ class GlobalSettings(models.Model):
         verbose_name_plural = "Global Settings"
 
     def save(self, *args, **kwargs):
-        # 🔥 SINGLETON LOGIC: Hamesha ID=1 hi rahegi, dusri row nahi banegi
         self.pk = 1
         super(GlobalSettings, self).save(*args, **kwargs)
 
     @classmethod
     def load(cls):
-        # Database se settings uthao, agar nahi hai toh default bana do
         obj, created = cls.objects.get_or_create(pk=1)
         return obj
 
     def __str__(self):
         return f"System Settings ({self.site_name})"
     
-    
-    # ==========================================
+# ==========================================
 # SUPER ADMIN: RECYCLE BIN & DATA RECOVERY
 # ==========================================
 class RecycleBinItem(models.Model):
-    original_model_name = models.CharField(max_length=100) # e.g., 'Student', 'Exam', 'Teacher'
+    original_model_name = models.CharField(max_length=100) 
     original_object_id = models.CharField(max_length=100)
     object_repr = models.CharField(max_length=255, help_text="Name of the deleted item")
-    
-    # Ye column us data ka pura backup JSON format mein save karega
     object_data = models.JSONField(help_text="Serialized data for restore")
     
     deleted_by = models.CharField(max_length=150, default='System / Admin')

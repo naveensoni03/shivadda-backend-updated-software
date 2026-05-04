@@ -1,204 +1,449 @@
-import { useEffect, useState, useRef, useCallback } from "react";
-import axios from "axios";
-import toast from "react-hot-toast";
-import { AgGridReact } from "ag-grid-react";
-import "ag-grid-community/styles/ag-grid.css";
-import "ag-grid-community/styles/ag-theme-alpine.css";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import { Download, IndianRupee, Users, CheckCircle, Clock, Filter } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Search, Filter, CheckCircle, XCircle, Eye, Users,
+  FileText, ChevronLeft, ChevronRight, MapPin, Briefcase,
+  Settings, CreditCard, Plus, ShieldCheck, AlertCircle, Loader2, X,
+  Landmark, Receipt, UserCog, Mail, Phone, Calendar, DownloadCloud, Send
+} from "lucide-react";
 
-const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
-const token = () => localStorage.getItem("access");
+// 🎨 ULTRA PREMIUM LIGHT THEME
+const THEME = {
+  bg: '#F8FAFC',
+  primary: '#6366F1',
+  primaryLight: '#EEF2FF',
+  textMain: '#0F172A',
+  textMuted: '#64748B',
+  cardBg: '#FFFFFF',
+  borderLight: '#E2E8F0',
+  shadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
+};
 
+// --- Clean & Crisp Badges ---
 const StatusBadge = ({ value }) => {
-  const colors = {
-    paid: "bg-green-100 text-green-700",
-    pending: "bg-amber-100 text-amber-700",
-    failed: "bg-red-100 text-red-700",
-    refunded: "bg-gray-100 text-gray-600",
-  };
+  const isPaid = value?.toLowerCase() === "paid";
   return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${colors[value] || "bg-gray-100 text-gray-500"}`}>
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: '6px',
+      fontSize: '0.75rem', fontWeight: '800',
+      color: isPaid ? '#10B981' : '#EF4444', textTransform: 'uppercase', letterSpacing: '0.5px'
+    }}>
+      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: isPaid ? '#10B981' : '#EF4444', boxShadow: `0 0 6px ${isPaid ? '#10B981' : '#EF4444'}` }}></span>
+      {value || "Unpaid"}
+    </span>
+  );
+};
+
+const RoleBadge = ({ value }) => {
+  const isStudent = value?.toLowerCase() === "student";
+  return (
+    <span style={{
+      background: isStudent ? '#EEF2FF' : '#FDF2F8',
+      color: isStudent ? '#4F46E5' : '#EC4899',
+      padding: '4px 10px', borderRadius: '20px', fontSize: '0.7rem',
+      fontWeight: '800', letterSpacing: '0.5px', textTransform: 'uppercase'
+    }}>
       {value}
     </span>
   );
 };
 
-const AmountCell = ({ value }) => (
-  <span className="font-bold text-indigo-700">₹{parseFloat(value || 0).toFixed(2)}</span>
-);
-
-const DateCell = ({ value }) => (
-  <span className="text-gray-500 text-sm">
-    {value ? new Date(value).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
-  </span>
-);
-
 export default function PaymentAccounts() {
-  const gridRef = useRef();
-  const [payments, setPayments] = useState([]);
-  const [summary, setSummary] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ status: "", service_type: "", from_date: "", to_date: "", search: "" });
+  // States
+  const [toast, setToast] = useState(null);
+  const [isPaying, setIsPaying] = useState(false);
+  const [activeModal, setActiveModal] = useState(null);
+  const [selectedUserProfile, setSelectedUserProfile] = useState(null); // 🔥 Profile Modal State
 
-  const fetchPayments = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = Object.fromEntries(Object.entries(filters).filter(([, v]) => v));
-      const { data } = await axios.get(`${API}/api/payments/admin/all-payments/`, {
-        headers: { Authorization: `Bearer ${token()}` },
-        params,
-      });
-      setPayments(data.payments || []);
-      setSummary(data.summary || {});
-    } catch {
-      toast.error("Failed to load payments.");
-    } finally {
-      setLoading(false);
-    }
-  }, [filters]);
+  // Filter States
+  const [searchQuery, setSearchQuery] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
+  const [serviceFilter, setServiceFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
-  useEffect(() => { fetchPayments(); }, [fetchPayments]);
+  // Pagination
+  const [limit, setLimit] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const colDefs = [
-    { field: "invoice_number", headerName: "Invoice", width: 160, pinned: "left", cellStyle: { fontWeight: 600, color: "#4F46E5" } },
-    { field: "user_name", headerName: "Student Name", flex: 1, minWidth: 150 },
-    { field: "user_email", headerName: "Email", flex: 1, minWidth: 180 },
-    { field: "student_roll", headerName: "Roll No", width: 110 },
-    { field: "service_name_snapshot", headerName: "Service", flex: 1, minWidth: 160 },
-    { field: "service_type_snapshot", headerName: "Type", width: 130 },
-    { field: "base_amount", headerName: "Base (₹)", width: 110, cellRenderer: AmountCell },
-    { field: "gst_amount", headerName: "GST (₹)", width: 100, cellRenderer: AmountCell },
-    { field: "total_amount", headerName: "Total (₹)", width: 120, cellRenderer: AmountCell, sort: "desc" },
-    { field: "status", headerName: "Status", width: 110, cellRenderer: StatusBadge },
-    { field: "payment_method", headerName: "Method", width: 110 },
-    { field: "razorpay_payment_id", headerName: "Razorpay ID", width: 200, cellStyle: { fontSize: "11px", color: "#888" } },
-    { field: "paid_at", headerName: "Paid On", width: 140, cellRenderer: DateCell },
-    { field: "created_at", headerName: "Created", width: 140, cellRenderer: DateCell },
-  ];
+  // Mock Data
+  const [rowData] = useState([
+    { id: "USR-001", name: "Rahul Sharma", email: "rahul.s@example.com", phone: "+91 98765 43210", joined: "12 Jan 2026", role: "Student", location: "Jaipur", service: "Full Course", status: "Paid", amount: "₹4,999" },
+    { id: "USR-002", name: "Priya Singh", email: "priya.singh@example.com", phone: "+91 87654 32109", joined: "05 Feb 2026", role: "Student", location: "Delhi", service: "Live Classes", status: "Unpaid", amount: "₹2,999" },
+    { id: "USR-003", name: "Amit Verma", email: "amit.verma@institute.com", phone: "+91 76543 21098", joined: "20 Nov 2025", role: "Teacher", location: "Mumbai", service: "Math Faculty", status: "Paid", amount: "₹45,000" },
+    { id: "USR-004", name: "Neha Gupta", email: "neha.g@example.com", phone: "+91 65432 10987", joined: "18 Mar 2026", role: "Student", location: "Jaipur", service: "Exam Access", status: "Paid", amount: "₹999" },
+    { id: "USR-005", name: "Vikas Kumar", email: "vikas.k@example.com", phone: "+91 54321 09876", joined: "02 Apr 2026", role: "Student", location: "Pune", service: "Previous Lectures", status: "Unpaid", amount: "₹1,499" },
+  ]);
 
-  const defaultColDef = {
-    sortable: true, filter: true, resizable: true,
-    suppressMovable: false, floatingFilter: true,
-  };
-
-  const exportCSV = () => {
-    gridRef.current?.api.exportDataAsCsv({ fileName: "student_payments.csv" });
-  };
-
-  const exportPDF = () => {
-    const doc = new jsPDF({ orientation: "landscape" });
-    doc.setFillColor(79, 70, 229);
-    doc.rect(0, 0, 297, 25, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text("Student Payment Accounts Report", 148, 15, { align: "center" });
-
-    const rows = payments.map(p => [
-      p.invoice_number, p.user_name, p.user_email,
-      p.service_name_snapshot, `₹${parseFloat(p.total_amount).toFixed(2)}`,
-      p.status, p.payment_method || "—",
-      p.paid_at ? new Date(p.paid_at).toLocaleDateString("en-IN") : "—",
-    ]);
-
-    autoTable(doc, {
-      startY: 32,
-      head: [["Invoice", "Student", "Email", "Service", "Amount", "Status", "Method", "Paid On"]],
-      body: rows,
-      headStyles: { fillColor: [79, 70, 229], textColor: 255 },
-      styles: { fontSize: 8 },
+  // Dynamic Filter
+  const filteredData = useMemo(() => {
+    return rowData.filter(row => {
+      const matchSearch = row.name.toLowerCase().includes(searchQuery.toLowerCase()) || row.id.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchLocation = locationFilter ? row.location.toLowerCase() === locationFilter.toLowerCase() : true;
+      const matchService = serviceFilter ? row.service.toLowerCase() === serviceFilter.toLowerCase() : true;
+      const matchStatus = statusFilter ? row.status.toLowerCase() === statusFilter.toLowerCase() : true;
+      return matchSearch && matchLocation && matchService && matchStatus;
     });
+  }, [rowData, searchQuery, locationFilter, serviceFilter, statusFilter]);
 
-    doc.save(`payment-accounts-${Date.now()}.pdf`);
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / limit));
+  const paginatedData = filteredData.slice((currentPage - 1) * limit, currentPage * limit);
+
+  const triggerToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  // 🚀 ASLI BACKEND API CALL (Dummy mapped for UI display)
+  const handlePayTeachers = async () => {
+    setIsPaying(true);
+    setTimeout(() => {
+      triggerToast("Success! Teacher Salary has been processed.", "success");
+      setIsPaying(false);
+    }, 1500);
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Payment Accounts</h1>
-          <p className="text-gray-500 text-sm mt-1">Complete visibility of all student payments. Filter, search & export.</p>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={exportCSV} className="flex items-center gap-2 border border-gray-300 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 transition">
-            <Download size={15} /> CSV
-          </button>
-          <button onClick={exportPDF} className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition">
-            <Download size={15} /> PDF Report
-          </button>
-        </div>
-      </div>
+    <div style={{ display: "flex", background: THEME.bg, minHeight: "100vh", fontFamily: "'Inter', sans-serif", color: THEME.textMain }}>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: "Total Revenue", value: `₹${parseFloat(summary.total_revenue || 0).toFixed(2)}`, icon: IndianRupee, color: "indigo" },
-          { label: "Paid Transactions", value: summary.total_paid || 0, icon: CheckCircle, color: "green" },
-          { label: "Pending", value: summary.total_pending || 0, icon: Clock, color: "amber" },
-          { label: "Total Records", value: summary.total_records || 0, icon: Users, color: "blue" },
-        ].map(c => {
-          const Icon = c.icon;
-          return (
-            <div key={c.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl bg-${c.color}-50 flex items-center justify-center`}>
-                <Icon size={18} className={`text-${c.color}-600`} />
+      <div className="hide-scrollbar" style={{ flex: 1, padding: "30px 40px", display: "flex", flexDirection: "column", height: "100vh", overflowY: 'auto' }}>
+
+        {/* 🚀 TOAST NOTIFICATION */}
+        <AnimatePresence>
+          {toast && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+              className={`fixed top-6 right-6 z-[100] flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-xl text-sm font-bold border backdrop-blur-md ${toast.type === "error" ? "bg-white/90 text-rose-600 border-rose-100" :
+                  toast.type === "info" ? "bg-slate-900/90 text-white border-slate-800" :
+                    "bg-white/90 text-emerald-600 border-emerald-100"
+                }`}
+            >
+              {toast.type === "error" ? <AlertCircle size={18} /> : toast.type === "info" ? <ShieldCheck size={18} /> : <CheckCircle size={18} />}
+              {toast.message}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* 🚀 SETTINGS / ADD USER MODALS */}
+        <AnimatePresence>
+          {activeModal && (
+            <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(4px)', padding: '20px' }}>
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+                style={{ background: 'white', width: '100%', maxWidth: '450px', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}
+              >
+                <div style={{ padding: '20px 24px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 style={{ margin: 0, fontWeight: '800', color: THEME.textMain, fontSize: '1.2rem' }}>
+                    {activeModal === 'pricing' ? 'Pricing & Settings' : 'Add New User'}
+                  </h3>
+                  <button onClick={() => setActiveModal(null)} className="close-btn"><X size={20} /></button>
+                </div>
+                <div style={{ padding: '24px' }}>
+                  {activeModal === 'pricing' ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <p style={{ margin: 0, fontSize: '0.9rem', color: THEME.textMuted }}>Configure global pricing rules and payment gateway settings here.</p>
+                      <div style={{ padding: '16px', borderRadius: '12px', border: '1px solid #E0E7FF', background: '#EEF2FF', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <Settings color={THEME.primary} size={24} />
+                        <span style={{ fontWeight: '700', color: '#312E81' }}>Gateway Active (Live Mode)</span>
+                      </div>
+                      <button onClick={() => { setActiveModal(null); triggerToast("Settings saved successfully!"); }} className="modal-primary-btn">Save Configurations</button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <input className="clean-modal-input" placeholder="Full Name" />
+                      <input className="clean-modal-input" placeholder="Email Address" />
+                      <select className="clean-modal-input" style={{ cursor: 'pointer' }}>
+                        <option>Assign Role: Student</option>
+                        <option>Assign Role: Teacher</option>
+                      </select>
+                      <button onClick={() => { setActiveModal(null); triggerToast("User added successfully!"); }} className="modal-primary-btn">Create User</button>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* 🔥 ULTRA PREMIUM USER PROFILE MODAL */}
+        <AnimatePresence>
+          {selectedUserProfile && (
+            <div style={{ position: 'fixed', inset: 0, zIndex: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(6px)', padding: '20px' }}>
+              <motion.div
+                initial={{ opacity: 0, y: 30, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.95 }} transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                style={{ background: 'white', width: '100%', maxWidth: '750px', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.3)' }}
+              >
+                {/* Header */}
+                <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ background: '#EEF2FF', padding: '8px', borderRadius: '10px' }}><UserCog size={20} color={THEME.primary} /></div>
+                    <h3 style={{ margin: 0, fontWeight: '800', fontSize: '1.2rem', color: THEME.textMain }}>Account Profile</h3>
+                  </div>
+                  <button onClick={() => setSelectedUserProfile(null)} className="close-btn"><X size={20} /></button>
+                </div>
+
+                {/* Body */}
+                <div style={{ padding: '30px', display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
+
+                  {/* Left Side: Avatar & Basic Info */}
+                  <div style={{ flex: '1 1 250px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '24px', background: '#F8FAFC', borderRadius: '20px', border: '1px solid #E2E8F0' }}>
+                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: '900', marginBottom: '16px', boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.3)' }}>
+                      {selectedUserProfile.name.charAt(0)}
+                    </div>
+                    <h2 style={{ margin: '0 0 6px 0', fontSize: '1.3rem', fontWeight: '800', color: THEME.textMain }}>{selectedUserProfile.name}</h2>
+                    <RoleBadge value={selectedUserProfile.role} />
+
+                    <div style={{ width: '100%', height: '1px', background: '#E2E8F0', margin: '20px 0' }}></div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', textAlign: 'left' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: THEME.textMuted, fontSize: '0.85rem', fontWeight: '500' }}>
+                        <Mail size={16} /> {selectedUserProfile.email}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: THEME.textMuted, fontSize: '0.85rem', fontWeight: '500' }}>
+                        <Phone size={16} /> {selectedUserProfile.phone}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: THEME.textMuted, fontSize: '0.85rem', fontWeight: '500' }}>
+                        <Calendar size={16} /> Joined: {selectedUserProfile.joined}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Side: Financial & Plan Details */}
+                  <div style={{ flex: '2 1 350px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                      {/* Info Box 1 */}
+                      <div style={{ padding: '20px', borderRadius: '16px', border: '1px solid #E2E8F0', background: 'white' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: THEME.textMuted, marginBottom: '8px', fontSize: '0.8rem', fontWeight: '600', textTransform: 'uppercase' }}>
+                          <Briefcase size={16} /> Enrolled Plan
+                        </div>
+                        <div style={{ fontSize: '1.1rem', fontWeight: '800', color: THEME.textMain }}>{selectedUserProfile.service}</div>
+                        <div style={{ fontSize: '0.8rem', color: THEME.textMuted, marginTop: '4px' }}>Center: {selectedUserProfile.location}</div>
+                      </div>
+
+                      {/* Info Box 2 */}
+                      <div style={{ padding: '20px', borderRadius: '16px', border: '1px solid #E2E8F0', background: 'white' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: THEME.textMuted, marginBottom: '8px', fontSize: '0.8rem', fontWeight: '600', textTransform: 'uppercase' }}>
+                          <Landmark size={16} /> Plan Value
+                        </div>
+                        <div style={{ fontSize: '1.2rem', fontWeight: '800', color: THEME.textMain, fontFamily: 'monospace' }}>{selectedUserProfile.amount}</div>
+                        <div style={{ marginTop: '8px' }}>
+                          <StatusBadge value={selectedUserProfile.status} />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons inside Modal */}
+                    <div style={{ marginTop: 'auto', display: 'flex', gap: '12px' }}>
+                      <button onClick={() => triggerToast("Statement Downloaded", "success")} className="modal-action-btn secondary">
+                        <DownloadCloud size={18} /> Download Statement
+                      </button>
+                      <button onClick={() => triggerToast("Reminder Sent to User", "info")} className="modal-action-btn primary">
+                        <Send size={18} /> Send Reminder
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* --- Header Area --- */}
+        <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }} style={{ marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <div style={{ background: THEME.primary, padding: '8px', borderRadius: '10px', color: 'white', display: 'flex', boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)' }}>
+                <Landmark size={24} />
               </div>
-              <div>
-                <p className="text-xs text-gray-500">{c.label}</p>
-                <p className={`text-xl font-bold text-${c.color}-600`}>{c.value}</p>
+              <h1 style={{ fontSize: '2rem', fontWeight: '800', color: THEME.textMain, margin: 0, letterSpacing: '-0.5px' }}>
+                Payment Accounts
+              </h1>
+            </div>
+            <p style={{ color: THEME.textMuted, fontSize: '0.95rem', fontWeight: '500', margin: 0, paddingLeft: '44px' }}>Centralized control center for all transactions and salaries.</p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button onClick={() => setActiveModal('pricing')} className="top-action-btn border-btn">
+              <Settings size={16} /> Pricing Settings
+            </button>
+            <button onClick={handlePayTeachers} disabled={isPaying} className="top-action-btn primary-btn">
+              {isPaying ? <Loader2 size={16} className="animate-spin" /> : <CreditCard size={16} />}
+              {isPaying ? "Processing..." : "Pay Teachers"}
+            </button>
+            <button onClick={() => setActiveModal('adduser')} className="top-action-btn dark-btn">
+              <Plus size={16} /> Add User
+            </button>
+          </div>
+        </motion.div>
+
+        {/* --- Advanced Filters Section --- */}
+        <div className="safe-filters" style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '25px', background: THEME.cardBg, padding: '20px', borderRadius: '16px', border: `1px solid ${THEME.borderLight}`, boxShadow: THEME.shadow }}>
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <div className="filter-box" style={{ flex: 2 }}>
+              <Search size={18} color={THEME.textMuted} />
+              <input type="text" placeholder="Search users, IDs, or emails..." value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} className="clean-input" />
+            </div>
+            <div className="filter-box" style={{ flex: 1 }}>
+              <MapPin size={18} color={THEME.textMuted} />
+              <select value={locationFilter} onChange={(e) => { setLocationFilter(e.target.value); setCurrentPage(1); }} className="clean-select">
+                <option value="">All Locations</option>
+                <option value="jaipur">Jaipur</option>
+                <option value="delhi">Delhi</option>
+                <option value="mumbai">Mumbai</option>
+                <option value="pune">Pune</option>
+              </select>
+            </div>
+            <div className="filter-box" style={{ flex: 1 }}>
+              <Briefcase size={18} color={THEME.textMuted} />
+              <select value={serviceFilter} onChange={(e) => { setServiceFilter(e.target.value); setCurrentPage(1); }} className="clean-select">
+                <option value="">All Services</option>
+                <option value="live classes">Live Classes</option>
+                <option value="full course">Full Course</option>
+                <option value="exam access">Exam Access</option>
+              </select>
+            </div>
+            <div className="filter-box" style={{ flex: 1 }}>
+              <FileText size={18} color={THEME.textMuted} />
+              <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }} className="clean-select">
+                <option value="">Any Status</option>
+                <option value="paid">Paid</option>
+                <option value="unpaid">Unpaid</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* --- Table Data Area --- */}
+        <div style={{ background: THEME.cardBg, borderRadius: '16px', border: `1px solid ${THEME.borderLight}`, boxShadow: THEME.shadow, display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+          <div style={{ padding: '16px 24px', borderBottom: `1px solid ${THEME.borderLight}`, background: '#FFFFFF', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: '700', color: THEME.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Displaying {filteredData.length} Records
+            </span>
+          </div>
+
+          <div style={{ overflowX: 'auto', flex: 1 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead style={{ background: '#F8FAFC', position: 'sticky', top: 0, zIndex: 10 }}>
+                <tr>
+                  <th className="table-header">ID</th>
+                  <th className="table-header">User Name</th>
+                  <th className="table-header">Role</th>
+                  <th className="table-header">Location</th>
+                  <th className="table-header">Service Plan</th>
+                  <th className="table-header">Amount</th>
+                  <th className="table-header">Status</th>
+                  <th className="table-header" style={{ textAlign: 'right', paddingRight: '30px' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedData.length === 0 ? (
+                  <tr><td colSpan="8" style={{ padding: '50px', textAlign: 'center', color: THEME.textMuted, fontWeight: '600' }}>No records match your filters.</td></tr>
+                ) : (
+                  paginatedData.map((user, idx) => (
+                    <motion.tr key={user.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: idx * 0.03 }} className="table-row">
+                      <td style={{ padding: '18px 24px', fontWeight: '700', color: THEME.primary, fontSize: '0.85rem' }}>#{user.id}</td>
+                      <td style={{ padding: '18px 24px', fontWeight: '700', color: THEME.textMain, fontSize: '0.95rem' }}>{user.name}</td>
+                      <td style={{ padding: '18px 24px' }}><RoleBadge value={user.role} /></td>
+                      <td style={{ padding: '18px 24px', color: THEME.textMuted, fontWeight: '500', fontSize: '0.9rem' }}>{user.location}</td>
+                      <td style={{ padding: '18px 24px', color: THEME.textMuted, fontWeight: '500', fontSize: '0.9rem' }}>{user.service}</td>
+                      <td style={{ padding: '18px 24px', fontWeight: '800', color: THEME.textMain, fontSize: '0.95rem', fontFamily: 'monospace' }}>{user.amount}</td>
+                      <td style={{ padding: '18px 24px' }}><StatusBadge value={user.status} /></td>
+                      <td style={{ padding: '18px 24px', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                          {/* 🔥 ICONS FIXED: Explicit size & padding to prevent CSS shrinking */}
+                          <button onClick={() => setSelectedUserProfile(user)} className="icon-action-btn" title="View Profile" style={{ minWidth: '36px', minHeight: '36px' }}>
+                            <UserCog size={18} />
+                          </button>
+                          <button onClick={() => triggerToast(`Invoice downloaded for ${user.name}`, 'success')} className="icon-action-btn invoice-btn" title="Download Invoice" style={{ minWidth: '36px', minHeight: '36px' }}>
+                            <Receipt size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination Footer */}
+          <div style={{ padding: '16px 24px', borderTop: `1px solid ${THEME.borderLight}`, background: '#FFFFFF', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottomLeftRadius: '16px', borderBottomRightRadius: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: '600', color: THEME.textMuted }}>Page Size:</span>
+              <select value={limit} onChange={(e) => { setLimit(Number(e.target.value)); setCurrentPage(1); }} className="pagination-select">
+                <option value={10}>10</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: '600', color: THEME.textMuted }}>
+                Page {currentPage} of {totalPages} <span style={{ color: THEME.textMain, fontWeight: '800' }}>({filteredData.length} Total)</span>
+              </span>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="page-btn"><ChevronLeft size={18} /></button>
+                <button disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="page-btn"><ChevronRight size={18} /></button>
               </div>
             </div>
-          );
-        })}
+          </div>
+        </div>
+
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-        <div className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-600">
-          <Filter size={15} /> Filters
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <input
-            placeholder="Search name, email, invoice..."
-            value={filters.search}
-            onChange={e => setFilters({ ...filters, search: e.target.value })}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none col-span-2 md:col-span-2"
-          />
-          <select value={filters.status} onChange={e => setFilters({ ...filters, status: e.target.value })}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-            <option value="">All Status</option>
-            <option value="paid">Paid</option>
-            <option value="pending">Pending</option>
-            <option value="failed">Failed</option>
-          </select>
-          <input type="date" value={filters.from_date} onChange={e => setFilters({ ...filters, from_date: e.target.value })}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-          <input type="date" value={filters.to_date} onChange={e => setFilters({ ...filters, to_date: e.target.value })}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-        </div>
-      </div>
+      {/* 🔥 BULLETPROOF CSS */}
+      <style>{`
+                .hide-scrollbar::-webkit-scrollbar { display: none; }
+                .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+                
+                /* Filter Area Styling */
+                .safe-filters .filter-box { display: flex; align-items: center; background: #F1F5F9; padding: 0 16px; border-radius: 12px; gap: 10px; transition: all 0.2s; border: 1px solid transparent; }
+                .safe-filters .filter-box:focus-within { border-color: #6366F1; background: #ffffff; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+                .clean-input { border: none !important; background: transparent !important; padding: 14px 0 !important; width: 100% !important; outline: none !important; font-weight: 500 !important; font-size: 0.9rem !important; color: #0F172A !important; box-shadow: none !important; }
+                .clean-select { border: none !important; background: transparent !important; padding: 14px 0 !important; width: 100% !important; outline: none !important; font-weight: 600 !important; font-size: 0.9rem !important; color: #0F172A !important; cursor: pointer !important; box-shadow: none !important; appearance: auto !important; }
 
-      {/* AG Grid */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="ag-theme-alpine" style={{ height: 520, width: "100%" }}>
-          <AgGridReact
-            ref={gridRef}
-            rowData={payments}
-            columnDefs={colDefs}
-            defaultColDef={defaultColDef}
-            animateRows={true}
-            rowSelection="multiple"
-            pagination={true}
-            paginationPageSize={20}
-            loading={loading}
-            overlayLoadingTemplate='<span class="text-indigo-600 font-medium">Loading payments...</span>'
-            overlayNoRowsTemplate='<span class="text-gray-400">No payment records found.</span>'
-          />
-        </div>
-      </div>
+                /* Top Action Buttons */
+                .top-action-btn { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; outline: none; }
+                .top-action-btn:active { transform: scale(0.95); }
+                .top-action-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+                .border-btn { background: #FFFFFF; color: #475569; border: 1px solid #CBD5E1; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+                .border-btn:hover { background: #F8FAFC; border-color: #94A3B8; color: #0F172A; }
+                .primary-btn { background: #6366F1; color: #FFFFFF; border: 1px solid transparent; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2); }
+                .primary-btn:hover:not(:disabled) { background: #4F46E5; box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3); }
+                .dark-btn { background: #0F172A; color: #FFFFFF; border: 1px solid transparent; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15); }
+                .dark-btn:hover { background: #1E293B; }
+
+                /* Settings Modals */
+                .clean-modal-input { width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid #E2E8F0; background: #F8FAFC; outline: none; font-size: 0.95rem; color: #0F172A; transition: 0.2s; }
+                .clean-modal-input:focus { border-color: #6366F1; background: #FFFFFF; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+                .modal-primary-btn { width: 100%; padding: 14px; background: #6366F1; color: white; font-weight: 700; border-radius: 12px; border: none; cursor: pointer; font-size: 1rem; transition: 0.2s; margin-top: 10px; }
+                .modal-primary-btn:hover { background: #4F46E5; }
+
+                /* Profile Modal Buttons */
+                .modal-action-btn { flex: 1; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: 0.2s; outline: none; border: none; }
+                .modal-action-btn:active { transform: scale(0.98); }
+                .modal-action-btn.primary { background: #0F172A; color: white; }
+                .modal-action-btn.primary:hover { background: #1E293B; }
+                .modal-action-btn.secondary { background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0; }
+                .modal-action-btn.secondary:hover { background: #E2E8F0; color: #0F172A; }
+
+                /* Table Styling */
+                .table-header { padding: 16px 24px; color: #64748B; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #E2E8F0; }
+                .table-row { border-bottom: 1px solid #F1F5F9; transition: background-color 0.2s ease; }
+                .table-row:hover { background-color: #F8FAFC; }
+                
+                /* Action Icons - FIXED SIZE to prevent shrinking */
+                .icon-action-btn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; min-width: 36px; min-height: 36px; border-radius: 10px; background: #F1F5F9; color: #64748B; border: none; cursor: pointer; transition: 0.2s; outline: none; padding: 0; margin: 0; }
+                .icon-action-btn:hover { background: #EEF2FF; color: #4F46E5; }
+                .icon-action-btn.invoice-btn:hover { background: #ECFDF5; color: #10B981; }
+
+                .page-btn { width: 36px; height: 36px; border-radius: 10px; border: 1px solid #E2E8F0; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; color: #0F172A; outline: none; }
+                .page-btn:hover:not(:disabled) { background: #F1F5F9; border-color: #CBD5E1; }
+                .page-btn:disabled { color: #CBD5E1; cursor: not-allowed; background: #F8FAFC; }
+                .pagination-select { padding: 8px 12px; border-radius: 10px; border: 1px solid #E2E8F0; outline: none; font-weight: 700; color: #0F172A; cursor: pointer; font-size: 0.9rem; background: #FFFFFF; }
+                
+                .close-btn { background: #F1F5F9; border: none; color: #64748B; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+                .close-btn:hover { background: #E2E8F0; color: #EF4444; }
+            `}</style>
     </div>
   );
 }

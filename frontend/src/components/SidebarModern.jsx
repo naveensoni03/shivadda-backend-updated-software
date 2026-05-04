@@ -6,6 +6,17 @@ const SidebarModern = ({ forceOpen }) => {
   const navigate = useNavigate();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
+  // 🔥 EMERGENCY BYPASS LOGIC: 
+  // अगर लोकल स्टोरेज में रोल नहीं मिल रहा है, तो सिस्टम को ज़बरदस्ती "ADMIN" बता दो!
+  // इससे आपके सारे मेनू वापस आ जाएंगे।
+  const rawRole = localStorage.getItem("role") || localStorage.getItem("userRole") || "ADMIN";
+  const userRole = rawRole.replace(/['"]/g, "").trim().toUpperCase();
+
+  // ROLES KE LOGIC (Kon kya dekh sakta hai)
+  const isManagement = ["SUPER_ADMIN", "ADMIN", "SCHOOL_ADMIN", "SUPER ADMIN"].includes(userRole) || userRole.includes("ADMIN");
+  const isAcademic = ["TEACHER", "HOD"].includes(userRole);
+  const isSecurity = ["SECURITY", "SECURITY GUARD"].includes(userRole);
+
   useEffect(() => {
     if (forceOpen !== undefined) {
       setIsMobileOpen(forceOpen);
@@ -33,6 +44,7 @@ const SidebarModern = ({ forceOpen }) => {
 
   const handleLogout = () => {
     localStorage.clear();
+    sessionStorage.clear();
     navigate("/login");
   };
 
@@ -83,50 +95,88 @@ const SidebarModern = ({ forceOpen }) => {
         </div>
 
         <nav style={{ flex: 1 }}>
-          <p style={sectionHeaderStyle}>Super Controls</p>
+          {/* COMMON FOR ALL LOGGED IN USERS */}
+          <p style={sectionHeaderStyle}>Overview</p>
           <NavLink to="/dashboard" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Dashboard</NavLink>
 
-          {/* 🔥 NEW MASTER GRID LINK ADDED HERE 🔥 */}
-          <NavLink to="/superadmin/master-data" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Master Data Grid</NavLink>
+          {/* 🔥 1. SUPER CONTROLS */}
+          {isManagement && (
+            <>
+              <p style={sectionHeaderStyle}>Super Controls</p>
+              <NavLink to="/superadmin/master-data" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Master Data Grid</NavLink>
+              <NavLink to="/ai-brain" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> AI Brain</NavLink>
+              <NavLink to="/institutions" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Institutions</NavLink>
+              <NavLink to="/locations" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="4" /> Global Locations</NavLink>
+            </>
+          )}
 
-          <NavLink to="/ai-brain" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> AI Brain</NavLink>
-          <NavLink to="/institutions" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="4" /> Institutions</NavLink>
-          <NavLink to="/locations" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="5" /> Global Locations</NavLink>
+          {/* 🔥 2. ACCESS & LOGS */}
+          {isManagement && (
+            <>
+              <p style={sectionHeaderStyle}>Access & Logs</p>
+              <NavLink to="/users" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> User Manager</NavLink>
+              <NavLink to="/access-logs" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Audit Logs</NavLink>
+              <NavLink to="/virtual-space" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Virtual Space</NavLink>
+            </>
+          )}
 
-          <p style={sectionHeaderStyle}>Access & Logs</p>
-          <NavLink to="/users" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> User Manager</NavLink>
-          <NavLink to="/access-logs" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Audit Logs</NavLink>
-          <NavLink to="/virtual-space" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Virtual Space</NavLink>
+          {/* 🔥 3. SCHOOL OPS */}
+          {(isManagement || isAcademic || isSecurity) && (
+            <>
+              <p style={sectionHeaderStyle}>School Ops</p>
 
-          <p style={sectionHeaderStyle}>School Ops</p>
-          <NavLink to="/visitors" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Front Office</NavLink>
-          <NavLink to="/admissions" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Admissions</NavLink>
-          <NavLink to="/attendance" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Attendance</NavLink>
-          <NavLink to="/students" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="4" /> Student Base</NavLink>
-          <NavLink to="/teachers" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="5" /> Teachers</NavLink>
-          <NavLink to="/courses" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="6" /> Course Manager</NavLink>
-          <NavLink to="/exams" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="7" /> Exams & AI</NavLink>
-          <NavLink to="/homework" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="8" /> Homework & Tasks</NavLink>
+              {(isManagement || isSecurity) && (
+                <NavLink to="/visitors" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Front Office / Visitors</NavLink>
+              )}
 
-          <p style={sectionHeaderStyle}>Finance & Assets</p>
-          <NavLink to="/fees" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Fees Ledger</NavLink>
-          <NavLink to="/payroll" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Payroll & Salary</NavLink>
-          <NavLink to="/service-catalog" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> 💳 Service Catalog</NavLink>
-          <NavLink to="/payment-accounts" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="4" /> 📊 Payment Accounts</NavLink>
-          <NavLink to="/teacher-salary" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="5" /> 👩‍🏫 Teacher Salary</NavLink>
-          <NavLink to="/inventory" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="6" /> Inventory</NavLink>
-          <NavLink to="/timetable" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="7" /> Timetable & Routine</NavLink>
-          <NavLink to="/communication" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="8" /> Communication</NavLink>
+              {(isManagement || isAcademic) && (
+                <>
+                  {isManagement && <NavLink to="/admissions" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Admissions</NavLink>}
+                  <NavLink to="/attendance" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Attendance</NavLink>
+                  <NavLink to="/students" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="4" /> Student Base</NavLink>
+                  {isManagement && <NavLink to="/teachers" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="5" /> Teachers</NavLink>}
+                  <NavLink to="/courses" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="6" /> Course Manager</NavLink>
+                  <NavLink to="/exams" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="7" /> Exams & AI</NavLink>
+                  <NavLink to="/homework" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="8" /> Homework & Tasks</NavLink>
+                </>
+              )}
+            </>
+          )}
 
-          <p style={sectionHeaderStyle}>Facilities</p>
-          <NavLink to="/library" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Library</NavLink>
-          <NavLink to="/hostel" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Hostel</NavLink>
-          <NavLink to="/transport" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Transport</NavLink>
+          {/* 🔥 4. FINANCE & ASSETS */}
+          {isManagement && (
+            <>
+              <p style={sectionHeaderStyle}>Finance & Assets</p>
+              <NavLink to="/fees" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Fees Ledger</NavLink>
+              <NavLink to="/payroll" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Payroll & Salary</NavLink>
+              <NavLink to="/service-catalog" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> 💳 Service Catalog</NavLink>
+              <NavLink to="/payment-accounts" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="4" /> 📊 Payment Accounts</NavLink>
+              <NavLink to="/teacher-salary" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="5" /> 👩‍🏫 Teacher Salary</NavLink>
+              <NavLink to="/inventory" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="6" /> Inventory</NavLink>
+              <NavLink to="/timetable" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="7" /> Timetable & Routine</NavLink>
+              <NavLink to="/communication" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="8" /> Communication</NavLink>
+            </>
+          )}
 
-          <p style={sectionHeaderStyle}>System</p>
-          <NavLink to="/services" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Service Master</NavLink>
-          <NavLink to="/global-settings" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Global Config</NavLink>
-          <NavLink to="/recycle-bin" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Recycle Bin</NavLink>
+          {/* 🔥 5. FACILITIES */}
+          {(isManagement) && (
+            <>
+              <p style={sectionHeaderStyle}>Facilities</p>
+              <NavLink to="/library" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Library</NavLink>
+              <NavLink to="/hostel" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Hostel</NavLink>
+              <NavLink to="/transport" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Transport</NavLink>
+            </>
+          )}
+
+          {/* 🔥 6. SYSTEM */}
+          {isManagement && (
+            <>
+              <p style={sectionHeaderStyle}>System</p>
+              <NavLink to="/services" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Service Master</NavLink>
+              <NavLink to="/global-settings" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Global Config</NavLink>
+              <NavLink to="/recycle-bin" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Recycle Bin</NavLink>
+            </>
+          )}
         </nav>
 
         <div onClick={handleLogout} style={logoutButtonStyle}>

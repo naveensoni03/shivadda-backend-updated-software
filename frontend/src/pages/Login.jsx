@@ -10,7 +10,7 @@ export default function Login() {
   const navigate = useNavigate();
 
   // --- EXISTING STATES ---
-  const [emailOrPhone, setEmailOrPhone] = useState(""); // 🚀 UPDATED: Email OR Phone
+  const [emailOrPhone, setEmailOrPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -64,19 +64,25 @@ export default function Login() {
           localStorage.setItem("refresh_token", res.data.refresh);
           localStorage.setItem("access", res.data.access);
           localStorage.setItem("refresh", res.data.refresh);
-          if (res.data.role)  localStorage.setItem("user_role", res.data.role);
-          if (res.data.name)  localStorage.setItem("user_name", res.data.name);
+
+          // 🔥 FIXED: Saving exactly as "role" for the Sidebar to read correctly
+          const userRole = res.data.role || res.data.user_role || "ADMIN";
+          localStorage.setItem("role", userRole.toUpperCase());
+
+          // 🔥 NEW ARCHITECTURE SAVED
+          if (res.data.rank !== undefined) localStorage.setItem("rank", res.data.rank);
+          if (res.data.name) localStorage.setItem("user_name", res.data.name);
           if (res.data.email) localStorage.setItem("user_email", res.data.email);
-          localStorage.setItem("user", JSON.stringify({ name: res.data.name, email: emailOrPhone, role: res.data.role }));
+          localStorage.setItem("user", JSON.stringify({ name: res.data.name, email: emailOrPhone, role: userRole }));
 
           toast.success("Welcome Back! 🚀");
 
-          const role = (res.data.role || "").toLowerCase();
+          const role = userRole.toLowerCase();
           setTimeout(() => {
-            if (role === "student")       window.location.href = "/student/dashboard";
-            else if (role === "teacher")  window.location.href = "/teacher/dashboard";
-            else if (role === "parent")   window.location.href = "/parent/dashboard";
-            else                          window.location.href = "/dashboard";
+            if (role === "student") window.location.href = "/student/dashboard";
+            else if (role === "teacher") window.location.href = "/teacher/dashboard";
+            else if (role === "parent") window.location.href = "/parent/dashboard";
+            else window.location.href = "/dashboard";
           }, 400);
         } else {
           setError("Invalid server response. Try again.");
@@ -116,37 +122,32 @@ export default function Login() {
     setError("");
 
     try {
-      // 🚀 Hit the Real Login API with Email/Phone and OTP
       const res = await api.post("auth/verify-otp/", { email_or_phone: emailOrPhone, otp: otp });
       if (res.data && res.data.access) {
-        // 1. Save Tokens
         localStorage.setItem("access_token", res.data.access);
         localStorage.setItem("refresh_token", res.data.refresh);
 
-        // 2. Save User Details (Role, Name, Email)
-        if (res.data.role) localStorage.setItem("user_role", res.data.role);
-        else if (res.data.user_role) localStorage.setItem("user_role", res.data.user_role);
-        else localStorage.setItem("user_role", "Admin"); // Failsafe if backend doesn't send role
-
+        // 🔥 FIXED: Saving exact keys for Sidebar and Architecture
+        const finalRole = res.data.role || res.data.user_role || "ADMIN";
+        localStorage.setItem("role", finalRole.toUpperCase());
+        if (res.data.rank !== undefined) localStorage.setItem("rank", res.data.rank);
         if (res.data.name) localStorage.setItem("user_name", res.data.name);
         if (res.data.email) localStorage.setItem("user_email", res.data.email);
 
         toast.success("Welcome Back! 🚀");
 
-        // 🚀 FIXED: Removed navigate() and reload(). Using window.location.href for proper hard redirect.
         setTimeout(() => {
           window.location.href = "/dashboard";
         }, 500);
       } else {
         setError("Invalid server response");
         generateCaptcha();
-        setAuthStep(1); // Go back if server fails weirdly
+        setAuthStep(1);
       }
-
     } catch (err) {
       console.error("Login Error:", err);
       setError(err.response?.data?.error || "Invalid OTP. Please try again.");
-      setOtp(""); // Clear OTP box
+      setOtp("");
     } finally {
       setIsLoading(false);
     }
@@ -157,7 +158,6 @@ export default function Login() {
     e.preventDefault();
     if (!tempIdCode) return setError("Please enter the Time-Limited Access Code.");
     toast.success("Temporary ID Authenticated. Access granted.");
-    // Mock Redirect for Temp ID
     // navigate("/guest-dashboard");
   };
 

@@ -3,20 +3,14 @@ from django.db import models
 from django.utils.timezone import now
 from django.conf import settings
 
-
 def generate_invoice_number(prefix="INV"):
     return f"{prefix}-{uuid.uuid4().hex[:10].upper()}"
 
-
-# ============================================================
-# 1. SERVICE CATALOG — Admin defines payable services
-# ============================================================
 class ServiceCatalog(models.Model):
+    # Enforcing strict alignment with frontend keys
     SERVICE_TYPES = [
         ('course_access', 'Course Access'),
         ('assignment_exam_access', 'Assignment & Exam Access'),
-        ('exam', 'Exam Access'),
-        ('course', 'Course'),
         ('hostel', 'Hostel Fee'),
         ('library', 'Library Access'),
         ('transport', 'Transport Fee'),
@@ -27,22 +21,17 @@ class ServiceCatalog(models.Model):
     description = models.TextField(blank=True)
     service_type = models.CharField(max_length=50, choices=SERVICE_TYPES, default='custom')
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    original_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True,
-        help_text="Original price before discount (for strikethrough display)")
+    original_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     gst_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
     is_chargeable = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
-    is_popular = models.BooleanField(default=False, help_text="Show 'Most Popular' badge on card")
-    badge_text = models.CharField(max_length=50, blank=True, help_text="e.g. '75% off', 'Best Value'")
-    color = models.CharField(max_length=20, default='#4f46e5', help_text="Card accent hex color")
-    features = models.JSONField(default=list, blank=True,
-        help_text="List of feature strings shown on the card")
+    is_popular = models.BooleanField(default=False)
+    badge_text = models.CharField(max_length=50, blank=True)
+    color = models.CharField(max_length=20, default='#4f46e5')
+    features = models.JSONField(default=list, blank=True)
     validity_days = models.IntegerField(default=365)
     icon = models.CharField(max_length=50, default='BookOpen')
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-        null=True, blank=True, related_name='created_services'
-    )
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -52,7 +41,7 @@ class ServiceCatalog(models.Model):
         verbose_name_plural = "Service Catalog"
 
     def get_gst_amount(self):
-        return round(self.price * self.gst_percentage / 100, 2)
+        return round(self.price * (self.gst_percentage / 100), 2)
 
     def get_total_price(self):
         return round(self.price + self.get_gst_amount(), 2)
@@ -60,6 +49,7 @@ class ServiceCatalog(models.Model):
     def __str__(self):
         return f"{self.name} — ₹{self.price}"
 
+# ... Baki Models (StudentServicePayment, ServiceAccess, etc.) remains same as your snippet ...
 
 # ============================================================
 # 2. STUDENT SERVICE PAYMENT — Records every student payment

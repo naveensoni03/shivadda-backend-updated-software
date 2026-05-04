@@ -3,7 +3,7 @@ import random
 import razorpay
 from django.db.models import Q
 from django.contrib.auth import get_user_model, authenticate
-from django.core.mail import EmailMultiAlternatives # 👈 YEH CHANGE KIYA
+from django.core.mail import EmailMultiAlternatives 
 from django.conf import settings
 
 from rest_framework import viewsets, status, filters
@@ -19,15 +19,17 @@ from rest_framework.pagination import PageNumberPagination
 from .models import Agent
 from .serializers import AgentSerializer, AgentCreateSerializer, UserManagementSerializer
 
+# ✨ IMPORTING OUR NEW ROLE BASED SECURITY PERMISSION
+from .permissions import RoleBasedEditorPermission 
+
 User = get_user_model()
 
 # ==========================================
-# 📧 ASYNC EMAIL HELPER (ANYMAIL BREVO FIX)
+# 📧 ASYNC EMAIL HELPER 
 # ==========================================
 def send_otp_email_async(subject, message, recipient):
     def send():
         try:
-            # 👈 YEH NAYA CODE ANYMAIL KE LIYE HAI
             msg = EmailMultiAlternatives(
                 subject=subject,
                 body=message,
@@ -69,7 +71,6 @@ class SendOTPView(APIView):
         user.save()
 
         if user.email:
-            # Console checking ke liye rakha hai
             print(f"\n==========================================")
             print(f"🚀🚀🚀 OTP FOR {user.email} IS: {otp} 🚀🚀🚀")
             print(f"==========================================\n")
@@ -98,7 +99,8 @@ class VerifyOTPAndLoginView(APIView):
                 "refresh": str(refresh),
                 "role": user.role, 
                 "name": user.full_name,
-                "email": user.email
+                "email": user.email,
+                "rank": user.rank # Sending rank on login
             }, status=200)
         return Response({"error": "Invalid OTP! ❌"}, status=401)
 
@@ -106,9 +108,13 @@ class VerifyOTPAndLoginView(APIView):
 # 🚀 USER MANAGEMENT & AGENTS
 # ==========================================
 class UserManagementViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all().order_by('-date_joined')
+    # Optimize query to fetch related place and services
+    queryset = User.objects.all().select_related('place').prefetch_related('services').order_by('-date_joined')
     serializer_class = UserManagementSerializer
-    permission_classes = [AllowAny] 
+    
+    # 🔥 SECURITY APPLIED: Only Admin/HOD can create/edit. Student/Guard cannot delete.
+    permission_classes = [IsAuthenticated, RoleBasedEditorPermission] 
+    
     parser_classes = [MultiPartParser, FormParser] 
     filter_backends = [filters.SearchFilter]
     search_fields = ['email', 'full_name', 'phone']
@@ -133,7 +139,8 @@ class MeView(APIView):
         return Response({
             "email": request.user.email, 
             "role": request.user.role, 
-            "name": request.user.full_name
+            "name": request.user.full_name,
+            "rank": request.user.rank
         })
 
 # ==========================================
@@ -150,7 +157,6 @@ class CreateRazorpayOrderView(APIView):
         key_id = getattr(settings, 'RAZORPAY_KEY_ID', '')
         key_secret = getattr(settings, 'RAZORPAY_KEY_SECRET', '')
 
-        # ✅ DEMO MODE: Real Razorpay keys nahi hain to demo order return karo
         if not key_id or not key_secret or not key_id.startswith('rzp_'):
             import uuid, time
             demo_order = {
@@ -169,11 +175,9 @@ class CreateRazorpayOrderView(APIView):
             order['demo_mode'] = False
             return Response(order, status=status.HTTP_200_OK)
         except Exception as e:
-            # Razorpay error clearly return karo taaki frontend dikhaye
             error_msg = str(e)
             return Response({"error": f"Razorpay Error: {error_msg}"}, status=status.HTTP_400_BAD_REQUEST)
 
-# 🔥 VERIFICATION VIEW
 class VerifyRazorpayPaymentView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
@@ -183,7 +187,6 @@ class VerifyRazorpayPaymentView(APIView):
         fee_id = request.data.get('fee_id')
         demo_mode = request.data.get('demo_mode', False)
 
-        # ✅ DEMO MODE: demo payment ko directly verify karo
         if demo_mode or (order_id and order_id.startswith('demo_order_')):
             return Response({"message": "Demo Payment Verified! ✅", "demo": True}, status=status.HTTP_200_OK)
 
@@ -255,18 +258,15 @@ class MyChildrenProfileView(APIView):
 
 class MyChildrenProgressView(APIView):
     permission_classes = [IsAuthenticated]
-    def get(self, request):
-        return Response([], status=200)
+    def get(self, request): return Response([], status=200)
 
 class MyChildrenFeesView(APIView):
     permission_classes = [IsAuthenticated]
-    def get(self, request):
-        return Response([], status=200)
+    def get(self, request): return Response([], status=200)
 
 class MyChildrenExamsView(APIView):
     permission_classes = [IsAuthenticated]
-    def get(self, request):
-        return Response([], status=200)
+    def get(self, request): return Response([], status=200)
 
 class ParentSettingsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -299,14 +299,12 @@ class ParentSettingsView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=500)
         
-        
 # ==========================================
 # 👑 SUPER ADMIN: MASTER DATA & 360 VIEW
 # ==========================================
-
 class MasterGridPagination(PageNumberPagination):
     page_size = 10
-    page_size_query_param = 'limit' # Frontend se ?limit=50 bhej sakte hain
+    page_size_query_param = 'limit' 
     max_page_size = 100
 
 class SuperAdminMasterGridView(APIView):
@@ -319,11 +317,11 @@ class SuperAdminMasterGridView(APIView):
         role_filter = request.query_params.get('role', None)
         status_filter = request.query_params.get('status', None)
         search_query = request.query_params.get('search', None)
-        # Naye Filters
         location_filter = request.query_params.get('location', None)
         service_filter = request.query_params.get('service', None)
 
-        users_query = User.objects.all().order_by('-date_joined')
+        # ✨ PREFETCH ADDED FOR HIGH PERFORMANCE
+        users_query = User.objects.all().select_related('place').prefetch_related('services').order_by('-date_joined')
 
         if role_filter:
             users_query = users_query.filter(role__iexact=role_filter)
@@ -347,18 +345,18 @@ class SuperAdminMasterGridView(APIView):
                 "email": user.email,
                 "phone": user.phone,
                 "role": user.role,
+                "rank": user.rank, # ✨ RANK ADDED
                 "status": user.account_status,
                 "date_joined": user.date_joined.strftime("%Y-%m-%d"),
-                "is_otp_enabled": getattr(user, 'is_otp_enabled', False)
+                "is_otp_enabled": getattr(user, 'is_otp_enabled', False),
+                "place": user.place.name if user.place else "No Location", # ✨ PLACE ADDED
+                "services": [srv.name for srv in user.services.all()] if user.services.exists() else [] # ✨ SERVICES ADDED
             }
 
-            # Related data extract karna (Student/Teacher models se)
             try:
                 if user.role == 'STUDENT' and hasattr(user, 'student_profile'):
                     base_info["student_id"] = user.student_profile.admission_number
                     base_info["fee_status"] = user.student_profile.fee_status
-                    base_info["location"] = user.student_profile.city # Example location mapping
-                    base_info["service"] = user.student_profile.user_group # Example service mapping
             except Exception:
                 pass
 
@@ -370,7 +368,6 @@ class ToggleUserOTPView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, pk):
-        # Security: Sirf Super Admin ya Admin hi OTP change kar sakte hain
         if request.user.role not in ['SUPER_ADMIN', 'ADMIN']:
             return Response({"error": "Unauthorized Access"}, status=status.HTTP_403_FORBIDDEN)
 
@@ -400,36 +397,30 @@ class User360ViewAPI(APIView):
         try:
             user = User.objects.get(pk=pk)
             
-            # Base Data (Jo har user ke paas hoga)
             data = {
                 "id": user.id,
                 "name": user.full_name,
                 "email": user.email,
                 "phone": user.phone or "Not Provided",
                 "role": user.role,
+                "rank": user.rank, # ✨ RANK ADDED
                 "status": user.account_status,
                 "date_joined": user.date_joined.strftime("%B %d, %Y"),
                 "financial_status": "N/A",
                 "academic_status": "N/A",
-                "location": "Global System",
-                "service": "Platform Access",
+                "location": user.place.name if user.place else "Global System", # ✨ UPDATED WITH REAL PLACE
+                "service": ", ".join([srv.name for srv in user.services.all()]) if user.services.exists() else "Platform Access", # ✨ UPDATED WITH REAL SERVICES
                 "recent_activity": []
             }
 
-            # 🎓 Agar User STUDENT hai
             if user.role == 'STUDENT':
                 try:
                     student = getattr(user, 'student_profile', None)
                     if student:
-                        data["location"] = getattr(student, 'city', 'N/A')
-                        data["service"] = getattr(student, 'user_group', 'N/A')
-                        
-                        # 💰 Finance Check
                         data["financial_status"] = f"{student.fee_status}"
                         if student.fee_status == 'Pending':
                             data["recent_activity"].append("⚠️ Fee is pending.")
                         
-                        # 📝 Attendance Check
                         try:
                             total_days = student.attendances.count()
                             if total_days > 0:
@@ -440,7 +431,6 @@ class User360ViewAPI(APIView):
                         except Exception:
                             data["academic_status"] = "Attendance: Pending Sync"
                             
-                        # 📊 Exam Check
                         try:
                             from exams.models import ExamAttempt
                             latest_exam = ExamAttempt.objects.filter(student=user, is_evaluated=True).order_by('-end_time').first()
@@ -452,13 +442,11 @@ class User360ViewAPI(APIView):
                 except Exception as e:
                     print(f"360 View Student Error: {e}")
 
-            # 👩‍🏫 Agar User TEACHER hai
             elif user.role == 'TEACHER':
                 data["financial_status"] = "Salary Active (Payroll Linked)"
                 data["academic_status"] = "Assigned Batches: Syncing..."
                 data["recent_activity"].append("📚 Teacher Dashboard Active")
 
-            # 👨‍👩‍👦 Agar User PARENT hai
             elif user.role == 'PARENT':
                 data["financial_status"] = "Checking Child Fee Ledger..."
                 data["academic_status"] = "Tracking Child Progress"

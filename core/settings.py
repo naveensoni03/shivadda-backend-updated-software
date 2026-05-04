@@ -181,8 +181,15 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 # --------------------------------------------------
 # 💳 RAZORPAY PAYMENT GATEWAY
 # --------------------------------------------------
-RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID', '')
-RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET', '')
+import os
+
+# ==================================================
+# RAZORPAY INTEGRATION SETTINGS
+# ==================================================
+# Aapki .env file se keys yahan aayengi
+RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', 'rzp_test_ScIAVooVTNwIUx')
+RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', '8qHiNO04pO7BKaQq8ewk0k32')
+RAZORPAYX_ACCOUNT_NUMBER = os.environ.get('RAZORPAYX_ACCOUNT_NUMBER', '7878780080316316')
 
 # --------------------------------------------------
 # 🤖 GOOGLE GEMINI AI

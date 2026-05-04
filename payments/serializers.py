@@ -109,7 +109,13 @@ class StudentServicePaymentSerializer(serializers.ModelSerializer):
 
     def get_student_name(self, obj):
         if obj.student:
-            return obj.student.full_name
+            # 🔥 FIX: student model ke andar direct full_name nahi hai, 
+            # wo uske linked user model mein hota hai.
+            try:
+                return obj.student.user.full_name
+            except AttributeError:
+                # Agar user link nahi milta, toh safe fallback
+                return "Student" 
         return obj.user.full_name if obj.user else ''
 
     def get_student_roll(self, obj):

@@ -29,18 +29,33 @@ class UserManager(BaseUserManager):
 # 2. Main Custom User Model (Updated)
 # ----------------------------------------------------------------
 class User(AbstractBaseUser, PermissionsMixin):
+    # ✅ UPDATE: Architecture Based Roles 
     ROLE_CHOICES = (
+        # 1. Management
         ("SUPER_ADMIN", "Super Admin"),
-        ("SCHOOL_ADMIN", "School Admin"),
-        ("STAFF", "Staff"),
-        ("AGENT", "Agent"),
         ("ADMIN", "Admin"),
+        ("MANAGEMENT_STAFF", "Management Staff"),
+        
+        # 2. Portfolio (Staff)
+        ("HEAD_OF_PLACE", "Head of Place"),
         ("TEACHER", "Teacher"),
+        ("LAB_ASSISTANT", "Lab Assistant"),
+        ("LIBRARIAN", "Librarian"),
+        
+        # 3. Service Seeker
         ("STUDENT", "Student"),
         ("PARENT", "Parent"),
+        ("GUEST", "Guest"),
+        
+        # 4. Unacademic Users / Operations
+        ("SECURITY", "Security Guard"),
+        ("HOSTEL_STAFF", "Hostel Staff"),
+        ("TRANSPORT_STAFF", "Transport Staff"),
+        ("STAFF", "Other Staff"),
+        ("AGENT", "Agent"),
     )
 
-    # ✅ New: Deep Feature Status
+    # Deep Feature Status
     STATUS_CHOICES = [
         ('ACTIVE', 'Active (Can Login)'),
         ('INACTIVE', 'Inactive (Suspended)'),
@@ -52,28 +67,35 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone = models.CharField(max_length=20, blank=True, null=True) # Global Phone Field
     role = models.CharField(max_length=50, choices=ROLE_CHOICES, default="STUDENT")
     
+    # ✅ NEW: Rank System (0 to 5)
+    rank = models.IntegerField(default=0, help_text="Rank from 0 to 5 (Mainly for Teachers/HOD)")
+
+    # ✅ NEW: Place & Services Linking (String references to avoid Circular Import Error)
+    place = models.ForeignKey('locations.Place', on_delete=models.SET_NULL, null=True, blank=True, related_name='users')
+    services = models.ManyToManyField('services.ServiceType', blank=True, related_name='users_enrolled')
+
     # Status Control
     account_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ACTIVE')
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
 
-    # ✅ Audit Log (Kisne Banaya)
+    # Audit Log (Kisne Banaya)
     created_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
 
     # Virtual Storage Fields
     storage_limit_mb = models.IntegerField(default=500, help_text="Total Allocated Space in MB")
     storage_used_mb = models.FloatField(default=0.0, help_text="Space Used in MB")
 
-    # ✨ NEW ADDED: Deep Profile Features (Photo & Identity)
+    # Deep Profile Features (Photo & Identity)
     profile_photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True)
     national_identity = models.CharField(max_length=100, blank=True, null=True, help_text="Aadhar/PAN/Passport Number")
 
     # ========================================================
-    # 🔐 NEW FIELDS ADDED FOR ADVANCED AUTHENTICATION
+    # 🔐 FIELDS FOR ADVANCED AUTHENTICATION
     # ========================================================
     otp = models.CharField(max_length=6, blank=True, null=True, help_text="Temporary OTP for Login")
-    is_otp_enabled = models.BooleanField(default=False, help_text="Admin control to enable/disable OTP for this user") # ✨ NAYA FIELD
+    is_otp_enabled = models.BooleanField(default=False, help_text="Admin control to enable/disable OTP for this user") 
     temp_id_code = models.CharField(max_length=100, blank=True, null=True, unique=True, help_text="Code for Time-Limited Trial/Guest Access")
     temp_id_expiry = models.DateTimeField(blank=True, null=True, help_text="Expiry Date & Time for Temporary ID")
     # ========================================================
@@ -125,7 +147,7 @@ class ParentProfile(models.Model):
 
 
 # ----------------------------------------------------------------
-# 5. System Configuration (Super Admin Settings) - ✨ NAYA MODEL
+# 5. System Configuration (Super Admin Settings)
 # ----------------------------------------------------------------
 class SystemConfig(models.Model):
     company_name = models.CharField(max_length=255, default="Shiv Adda")

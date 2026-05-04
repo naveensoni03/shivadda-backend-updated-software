@@ -83,39 +83,46 @@ import ParentSettings from "./pages/parent/ParentSettings";
 // Components
 import ChatWidget from "./components/ChatWidget";
 
-// 🔐 ADVANCED ROLE-BASED SECURITY GUARD (STRICT MODE)
+// 🔐 ADVANCED ROLE-BASED SECURITY GUARD (STRICT & BULLETPROOF MODE)
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  const token = sessionStorage.getItem("access_token") || localStorage.getItem("access_token");
-  let rawRole = sessionStorage.getItem("user_role") || localStorage.getItem("user_role") || "";
+  // 1. Fetch Token and Role dynamically
+  const token = sessionStorage.getItem("access_token") || localStorage.getItem("access_token") || localStorage.getItem("access");
+  const rawRole = sessionStorage.getItem("user_role") || localStorage.getItem("user_role") || localStorage.getItem("role") || "";
 
-  const userRole = rawRole.replace(/['"]/g, "").trim().toLowerCase().replace(/_/g, " ");
+  // 🔥 SUPREME FIX: Quotes हटाओ और बीच के "Space" को "Underscore" (_) में बदल दो!
+  // इससे "SUPER ADMIN" और "SUPER_ADMIN" दोनों एक ही बन जाएंगे।
+  const userRole = rawRole.replace(/['"]/g, "").replace(/\s+/g, "_").trim().toUpperCase();
 
   if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  const safeAllowedRoles = allowedRoles.map(role => role.toLowerCase().trim().replace(/_/g, " "));
+  // 2. Format allowed roles to match UPPERCASE and Underscores
+  const safeAllowedRoles = allowedRoles.map(role => role.replace(/\s+/g, "_").toUpperCase().trim());
 
+  // 3. Strict Check
   if (!safeAllowedRoles.includes(userRole)) {
-    console.warn(`🛡️ Access Denied! Role "${rawRole}" tried to access a restricted route.`);
+    console.warn(`🛡️ Access Denied! Role "${userRole}" tried to access a restricted route.`);
 
     // Strict Role Redirects (Koi kisi dusre ke portal me nahi jayega)
-    if (userRole === "student") return <Navigate to="/student/dashboard" replace />;
-    if (userRole === "teacher") return <Navigate to="/teacher/dashboard" replace />;
-    if (userRole === "parent") return <Navigate to="/parent/dashboard" replace />;
-    if (userRole === "super admin" || userRole === "admin") return <Navigate to="/dashboard" replace />;
+    if (userRole === "STUDENT") return <Navigate to="/student/dashboard" replace />;
+    if (userRole === "TEACHER" || userRole === "HOD") return <Navigate to="/teacher/dashboard" replace />;
+    if (userRole === "PARENT") return <Navigate to="/parent/dashboard" replace />;
 
-    return <Navigate to="/login" replace />;
+    // Default for Management / Staff / Security
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children;
 };
 
 export default function App() {
-  const STAFF_ALL = ["Super Admin", "Admin", "Teacher", "Accountant", "Receptionist"];
-  const ADMIN_ONLY = ["Super Admin", "Admin"];
-  const FINANCE_ROLES = ["Super Admin", "Admin", "Accountant"];
-  const ACADEMIC_STAFF = ["Super Admin", "Admin", "Teacher"];
+  // 🚀 NEW ARCHITECTURE ROLE GROUPS
+  const ADMIN_ONLY = ["SUPER_ADMIN", "ADMIN", "SCHOOL_ADMIN"];
+  const ACADEMIC_STAFF = ["SUPER_ADMIN", "ADMIN", "SCHOOL_ADMIN", "HOD", "TEACHER"];
+  const FINANCE_ROLES = ["SUPER_ADMIN", "ADMIN", "SCHOOL_ADMIN"];
+  const FRONT_OFFICE = ["SUPER_ADMIN", "ADMIN", "SCHOOL_ADMIN", "SECURITY", "STAFF"];
+  const STAFF_ALL = ["SUPER_ADMIN", "ADMIN", "SCHOOL_ADMIN", "HOD", "TEACHER", "SECURITY", "STAFF", "AGENT"];
 
   return (
     <BrowserRouter>
@@ -146,7 +153,10 @@ export default function App() {
           <Route path="/users" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><UserManager /></ProtectedRoute>} />
           <Route path="/system" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><SystemConfig /></ProtectedRoute>} />
           <Route path="/ai-brain" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><AIBrain /></ProtectedRoute>} />
-          <Route path="/visitors" element={<ProtectedRoute allowedRoles={["Super Admin", "Admin", "Receptionist"]}><Visitors /></ProtectedRoute>} />
+
+          {/* Security Guard can access Visitors */}
+          <Route path="/visitors" element={<ProtectedRoute allowedRoles={FRONT_OFFICE}><Visitors /></ProtectedRoute>} />
+
           <Route path="/teachers" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><Teachers /></ProtectedRoute>} />
           <Route path="/agents" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><Agents /></ProtectedRoute>} />
           <Route path="/students" element={<ProtectedRoute allowedRoles={ACADEMIC_STAFF}><Students /></ProtectedRoute>} />
@@ -163,7 +173,7 @@ export default function App() {
           <Route path="/transport" element={<ProtectedRoute allowedRoles={STAFF_ALL}><Transport /></ProtectedRoute>} />
           <Route path="/hostel" element={<ProtectedRoute allowedRoles={STAFF_ALL}><Hostel /></ProtectedRoute>} />
           <Route path="/inventory" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><Inventory /></ProtectedRoute>} />
-          <Route path="/communication" element={<ProtectedRoute allowedRoles={["Super Admin", "Admin", "Teacher"]}><Communication /></ProtectedRoute>} />
+          <Route path="/communication" element={<ProtectedRoute allowedRoles={ACADEMIC_STAFF}><Communication /></ProtectedRoute>} />
           <Route path="/global-settings" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><GlobalSettings /></ProtectedRoute>} />
           <Route path="/recycle-bin" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><RecycleBin /></ProtectedRoute>} />
 
@@ -173,30 +183,26 @@ export default function App() {
           <Route path="/teacher-salary" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><TeacherSalaryAdmin /></ProtectedRoute>} />
 
           {/* ==========================================
-              🎓 STUDENT PORTAL PROTECTED ROUTES (STRICTLY FOR STUDENTS)
+              🎓 STUDENT PORTAL PROTECTED ROUTES 
           ============================================= */}
-          <Route path="/student/dashboard" element={<ProtectedRoute allowedRoles={["Student"]}><StudentDashboard /></ProtectedRoute>} />
-          <Route path="/student/course-space/:courseId" element={<ProtectedRoute allowedRoles={["Student"]}><StudentCourseSpace /></ProtectedRoute>} />
-          <Route path="/student/courses" element={<ProtectedRoute allowedRoles={["Student"]}><MyCourses /></ProtectedRoute>} />
-          <Route path="/student/timetable" element={<ProtectedRoute allowedRoles={["Student"]}><StudentTimetable /></ProtectedRoute>} />
-          <Route path="/student/exams" element={<ProtectedRoute allowedRoles={["Student"]}><StudentExams /></ProtectedRoute>} />
-          <Route path="/student/profile" element={<ProtectedRoute allowedRoles={["Student"]}><StudentProfile /></ProtectedRoute>} />
-          <Route path="/student/assignments" element={<ProtectedRoute allowedRoles={["Student"]}><StudentAssignments /></ProtectedRoute>} />
-          <Route path="/student/exam/:id" element={<ProtectedRoute allowedRoles={["Student"]}><TakeExam /></ProtectedRoute>} />
-
-          {/* 🔥 NAYA ROUTE: Student Fees */}
-          <Route path="/student/fees" element={<ProtectedRoute allowedRoles={["Student"]}><StudentFees /></ProtectedRoute>} />
-
-          {/* 💳 Student Account & Payments */}
-          <Route path="/student/account" element={<ProtectedRoute allowedRoles={["Student"]}><StudentAccount /></ProtectedRoute>} />
+          <Route path="/student/dashboard" element={<ProtectedRoute allowedRoles={["STUDENT"]}><StudentDashboard /></ProtectedRoute>} />
+          <Route path="/student/course-space/:courseId" element={<ProtectedRoute allowedRoles={["STUDENT"]}><StudentCourseSpace /></ProtectedRoute>} />
+          <Route path="/student/courses" element={<ProtectedRoute allowedRoles={["STUDENT"]}><MyCourses /></ProtectedRoute>} />
+          <Route path="/student/timetable" element={<ProtectedRoute allowedRoles={["STUDENT"]}><StudentTimetable /></ProtectedRoute>} />
+          <Route path="/student/exams" element={<ProtectedRoute allowedRoles={["STUDENT"]}><StudentExams /></ProtectedRoute>} />
+          <Route path="/student/profile" element={<ProtectedRoute allowedRoles={["STUDENT"]}><StudentProfile /></ProtectedRoute>} />
+          <Route path="/student/assignments" element={<ProtectedRoute allowedRoles={["STUDENT"]}><StudentAssignments /></ProtectedRoute>} />
+          <Route path="/student/exam/:id" element={<ProtectedRoute allowedRoles={["STUDENT"]}><TakeExam /></ProtectedRoute>} />
+          <Route path="/student/fees" element={<ProtectedRoute allowedRoles={["STUDENT"]}><StudentFees /></ProtectedRoute>} />
+          <Route path="/student/account" element={<ProtectedRoute allowedRoles={["STUDENT"]}><StudentAccount /></ProtectedRoute>} />
 
           {/* ==========================================
-              👩‍🏫 TEACHER PORTAL PROTECTED ROUTES (STRICTLY FOR TEACHERS)
+              👩‍🏫 TEACHER PORTAL PROTECTED ROUTES 
           ============================================= */}
           <Route
             path="/teacher"
             element={
-              <ProtectedRoute allowedRoles={["Teacher"]}>
+              <ProtectedRoute allowedRoles={["TEACHER", "HOD"]}>
                 <TeacherLayout />
               </ProtectedRoute>
             }
@@ -216,14 +222,14 @@ export default function App() {
           </Route>
 
           {/* ==========================================
-              👨‍👩‍👧 PARENT PORTAL PROTECTED ROUTES (STRICTLY FOR PARENTS)
+              👨‍👩‍👧 PARENT PORTAL PROTECTED ROUTES 
           ============================================= */}
-          <Route path="/parent/dashboard" element={<ProtectedRoute allowedRoles={["Parent"]}><ParentDashboard /></ProtectedRoute>} />
-          <Route path="/parent/children" element={<ProtectedRoute allowedRoles={["Parent"]}><ParentChildren /></ProtectedRoute>} />
-          <Route path="/parent/fees" element={<ProtectedRoute allowedRoles={["Parent"]}><ParentFees /></ProtectedRoute>} />
-          <Route path="/parent/exams" element={<ProtectedRoute allowedRoles={["Parent"]}><ParentExams /></ProtectedRoute>} />
-          <Route path="/parent/messages" element={<ProtectedRoute allowedRoles={["Parent"]}><ParentCommunication /></ProtectedRoute>} />
-          <Route path="/parent/settings" element={<ProtectedRoute allowedRoles={["Parent"]}><ParentSettings /></ProtectedRoute>} />
+          <Route path="/parent/dashboard" element={<ProtectedRoute allowedRoles={["PARENT"]}><ParentDashboard /></ProtectedRoute>} />
+          <Route path="/parent/children" element={<ProtectedRoute allowedRoles={["PARENT"]}><ParentChildren /></ProtectedRoute>} />
+          <Route path="/parent/fees" element={<ProtectedRoute allowedRoles={["PARENT"]}><ParentFees /></ProtectedRoute>} />
+          <Route path="/parent/exams" element={<ProtectedRoute allowedRoles={["PARENT"]}><ParentExams /></ProtectedRoute>} />
+          <Route path="/parent/messages" element={<ProtectedRoute allowedRoles={["PARENT"]}><ParentCommunication /></ProtectedRoute>} />
+          <Route path="/parent/settings" element={<ProtectedRoute allowedRoles={["PARENT"]}><ParentSettings /></ProtectedRoute>} />
 
         </Routes>
         <ChatWidget />
