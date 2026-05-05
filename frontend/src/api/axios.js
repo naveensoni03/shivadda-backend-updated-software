@@ -1,9 +1,10 @@
 import axios from "axios";
 
 const api = axios.create({
+  // 🚀 MEGA FIX: Localhost hata kar Live Server ka path daal diya hai!
   baseURL: import.meta.env.VITE_API_URL
     ? `${import.meta.env.VITE_API_URL}/api`
-    : "http://127.0.0.1:8000/api",
+    : "https://shivadda-backend-updated-software.onrender.com/api",
   withCredentials: false
 });
 
