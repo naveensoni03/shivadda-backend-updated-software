@@ -6,13 +6,10 @@ const SidebarModern = ({ forceOpen }) => {
   const navigate = useNavigate();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  // 🔥 EMERGENCY BYPASS LOGIC: 
-  // अगर लोकल स्टोरेज में रोल नहीं मिल रहा है, तो सिस्टम को ज़बरदस्ती "ADMIN" बता दो!
-  // इससे आपके सारे मेनू वापस आ जाएंगे।
   const rawRole = localStorage.getItem("role") || localStorage.getItem("userRole") || "ADMIN";
   const userRole = rawRole.replace(/['"]/g, "").trim().toUpperCase();
 
-  // ROLES KE LOGIC (Kon kya dekh sakta hai)
+  // ROLES KE LOGIC (Management, Academic, Security) - Yeh logic aapke role-based access ke liye hai. Aap apne roles ke hisab se isko customize kar sakte hain.
   const isManagement = ["SUPER_ADMIN", "ADMIN", "SCHOOL_ADMIN", "SUPER ADMIN"].includes(userRole) || userRole.includes("ADMIN");
   const isAcademic = ["TEACHER", "HOD"].includes(userRole);
   const isSecurity = ["SECURITY", "SECURITY GUARD"].includes(userRole);
@@ -99,10 +96,10 @@ const SidebarModern = ({ forceOpen }) => {
           <p style={sectionHeaderStyle}>Overview</p>
           <NavLink to="/dashboard" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Dashboard</NavLink>
 
-          {/* 🔥 1. SUPER CONTROLS */}
+          {/* 🔥 1. PLACES (Old: Super Controls) */}
           {isManagement && (
             <>
-              <p style={sectionHeaderStyle}>Super Controls</p>
+              <p style={sectionHeaderStyle}>1. Super Controls PLACES</p>
               <NavLink to="/superadmin/master-data" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Master Data Grid</NavLink>
               <NavLink to="/ai-brain" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> AI Brain</NavLink>
               <NavLink to="/institutions" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Institutions</NavLink>
@@ -110,20 +107,20 @@ const SidebarModern = ({ forceOpen }) => {
             </>
           )}
 
-          {/* 🔥 2. ACCESS & LOGS */}
+          {/* 🔥 3. USERS MANAGEMENT (Old: Access & Logs) */}
           {isManagement && (
             <>
-              <p style={sectionHeaderStyle}>Access & Logs</p>
-              <NavLink to="/users" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> User Manager</NavLink>
-              <NavLink to="/access-logs" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Audit Logs</NavLink>
+              <p style={sectionHeaderStyle}>3. Access & Logs  USERS MANAGEMENT</p>
+              <NavLink to="/users" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Academic Users</NavLink>
+              <NavLink to="/access-logs" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Unacademic Users</NavLink>
               <NavLink to="/virtual-space" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Virtual Space</NavLink>
             </>
           )}
 
-          {/* 🔥 3. SCHOOL OPS */}
+          {/* 🔥 2. SERVICES (Old: School Ops) */}
           {(isManagement || isAcademic || isSecurity) && (
             <>
-              <p style={sectionHeaderStyle}>School Ops</p>
+              <p style={sectionHeaderStyle}>2. SERVICES</p>
 
               {(isManagement || isSecurity) && (
                 <NavLink to="/visitors" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Front Office / Visitors</NavLink>
@@ -143,10 +140,10 @@ const SidebarModern = ({ forceOpen }) => {
             </>
           )}
 
-          {/* 🔥 4. FINANCE & ASSETS */}
+          {/* 🔥 10. ACCOUNTS MANAGEMENT (Old: Finance & Assets) */}
           {isManagement && (
             <>
-              <p style={sectionHeaderStyle}>Finance & Assets</p>
+              <p style={sectionHeaderStyle}>10.Finance and Assets <br /> ACCOUNTS MANAGEMENT</p>
               <NavLink to="/fees" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Fees Ledger</NavLink>
               <NavLink to="/payroll" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Payroll & Salary</NavLink>
               <NavLink to="/service-catalog" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> 💳 Service Catalog</NavLink>
@@ -158,17 +155,17 @@ const SidebarModern = ({ forceOpen }) => {
             </>
           )}
 
-          {/* 🔥 5. FACILITIES */}
+          {/* 🔥 11. UNACADEMIC SERVICES (Old: Facilities) */}
           {(isManagement) && (
             <>
-              <p style={sectionHeaderStyle}>Facilities</p>
+              <p style={sectionHeaderStyle}>11. Facilties  <br /> UNACADEMIC SERVICES</p>
               <NavLink to="/library" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Library</NavLink>
               <NavLink to="/hostel" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Hostel</NavLink>
               <NavLink to="/transport" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Transport</NavLink>
             </>
           )}
 
-          {/* 🔥 6. SYSTEM */}
+          {/* 🔥 6. SYSTEM (Kept as is based on code provided) */}
           {isManagement && (
             <>
               <p style={sectionHeaderStyle}>System</p>
