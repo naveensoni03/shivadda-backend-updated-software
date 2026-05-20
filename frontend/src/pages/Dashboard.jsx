@@ -71,7 +71,7 @@ export default function Dashboard() {
             // 1. Fetch KPIs Data Stream
             const res = await api.get(`dashboard/stats/?t=${new Date().getTime()}`);
             setStats({
-                students: res.data.students || 14, // Fallbacks matched with image layout requirements
+                students: res.data.students || 14,
                 staff: res.data.staff || 38,
                 revenue: res.data.revenue || 93900,
                 pending: res.data.pending || 0
@@ -84,9 +84,8 @@ export default function Dashboard() {
             if (showToast) toast.success("System framework synchronized!", { id: toastId });
         } catch (error) {
             console.error("🛑 Live Sync Stream Error:", error);
-            if (showToast) toast.error("Sync partial error. Using cached stream data.", { id: toastId });
+            if (showToast) toast.error("Sync partial error. Using cached data.", { id: toastId });
 
-            // Safe Operational Layout Mocks if Backend drops Connection
             setStats(prev => ({
                 students: prev.students || 14,
                 staff: prev.staff || 38,
@@ -111,7 +110,7 @@ export default function Dashboard() {
     };
 
     const formatTimeAgo = (dateString) => {
-        if (!dateString) return '2h ago'; // Clean fallback logic
+        if (!dateString) return '2h ago';
         const date = new Date(dateString);
         const now = new Date();
         const diffInMinutes = Math.floor((now - date) / 60000);
@@ -132,7 +131,6 @@ export default function Dashboard() {
         }
     };
 
-    // --- ANIMATION SCHEDULER MATRIX ---
     const pageAnimation = {
         hidden: { opacity: 0 },
         visible: { opacity: 1, transition: { duration: 0.5, staggerChildren: 0.1 } }
@@ -157,12 +155,11 @@ export default function Dashboard() {
                 animate="visible"
                 style={{ flex: 1, marginLeft: "280px", padding: "30px 40px", display: "flex", flexDirection: "column", height: "100vh", overflowY: 'auto', position: 'relative' }}
             >
-
-                {/* 🌊 Luxury Glass Morph Background Accents */}
+                {/* 🌊 Background Accents */}
                 <div style={{ position: 'fixed', top: '-10%', right: '-5%', width: '550px', height: '550px', background: 'radial-gradient(circle, rgba(99,102,241,0.07) 0%, rgba(168,85,247,0.03) 50%, rgba(0,0,0,0) 70%)', pointerEvents: 'none', borderRadius: '50%', zIndex: 0 }}></div>
                 <div style={{ position: 'fixed', bottom: '-10%', left: '20%', width: '450px', height: '450px', background: 'radial-gradient(circle, rgba(16,185,129,0.04) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none', borderRadius: '50%', zIndex: 0 }}></div>
 
-                {/* 🚀 HEADER & OPERATIONS INTERACTIVE MODULE */}
+                {/* 🚀 HEADER */}
                 <motion.div className="header-wrapper" variants={sectionEntrance} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px', position: 'relative', zIndex: 10 }}>
                     <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
@@ -182,7 +179,6 @@ export default function Dashboard() {
                         </div>
 
                         <div className="header-actions" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                            {/* Functional Live Core Synchronizer Trigger Button */}
                             <motion.div
                                 className="sys-status"
                                 whileHover={{ scale: 1.02 }}
@@ -213,7 +209,7 @@ export default function Dashboard() {
                     </div>
                 </motion.div>
 
-                {/* 📊 KPI HIGH CONTRAST MATRIX GRID */}
+                {/* 📊 STATS GRID */}
                 <motion.div className="stats-grid" variants={sectionEntrance} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '35px', position: 'relative', zIndex: 10 }}>
                     <div onClick={() => navigate('/students')}>
                         <StatCard title="Total Students" value={stats.students} trend="+12%" isPositive={true} icon={<GraduationCap size={22} color="white" />} gradient={THEME.primaryGradient} shadowColor="rgba(99, 102, 241, 0.25)" />
@@ -229,13 +225,11 @@ export default function Dashboard() {
                     </div>
                 </motion.div>
 
-                {/* 🧩 SPLIT ARCHITECTURE MAIN WORKBENCH PANEL */}
+                {/* 🧩 WORKBENCH LAYOUT GRID */}
                 <div className="main-grid-container" style={{ position: 'relative', zIndex: 10 }}>
-
-                    {/* Left Column Dashboard Execution Cards */}
                     <motion.div className="left-column" variants={sectionEntrance} style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
 
-                        {/* 🎮 PIPELINE QUICK INTERRUPTS */}
+                        {/* 🎮 PIPELINE PANEL */}
                         <div style={{ background: THEME.cardBg, backdropFilter: 'blur(24px)', borderRadius: '28px', padding: '25px', border: THEME.glassBorder, boxShadow: THEME.shadow }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
                                 <Sparkles size={16} color={THEME.primary} />
@@ -249,7 +243,7 @@ export default function Dashboard() {
                             </div>
                         </div>
 
-                        {/* 📈 FINANCES DYNAMIC INTERACTIVE CHART CANVAS */}
+                        {/* 📈 ANALYTICS CHART CANVAS */}
                         <div className="chart-card" style={{ background: THEME.cardBg, backdropFilter: 'blur(24px)', borderRadius: '28px', padding: '25px', border: THEME.glassBorder, boxShadow: THEME.shadow, display: 'flex', flexDirection: 'column' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', position: 'relative' }}>
                                 <div>
@@ -289,8 +283,6 @@ export default function Dashboard() {
 
                             <div className="chart-wrapper" style={{ overflowX: 'auto', paddingBottom: '5px' }}>
                                 <div className="chart-inner" style={{ minWidth: '450px', height: '220px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative' }}>
-
-                                    {/* Core Background Guides Grid */}
                                     <div style={{ position: 'absolute', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', pointerEvents: 'none', borderBottom: '1px solid #E2E8F0', zIndex: 1 }}>
                                         <div style={{ width: '100%', borderTop: '1px dashed #E2E8F0', opacity: 0.4 }}></div>
                                         <div style={{ width: '100%', borderTop: '1px dashed #E2E8F0', opacity: 0.4 }}></div>
@@ -299,7 +291,6 @@ export default function Dashboard() {
 
                                     <div className="chart-bars-wrapper" style={{ flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '0 10px', gap: '12px', position: 'relative', zIndex: 2 }}>
                                         {chartMetrics.map((bar, i) => {
-                                            // Dynamic scaling calculation simulation
                                             const modifier = selectedFiscalYear === "2025" ? 0.8 : selectedFiscalYear === "2024" ? 0.6 : 1;
                                             const finalHeight = bar.val * modifier;
                                             const dynamicDisplayAmount = Math.round((stats.revenue * (finalHeight / 96)));
@@ -325,7 +316,6 @@ export default function Dashboard() {
                                                         }}
                                                         className="chart-bar-pillar"
                                                     >
-                                                        {/* Elastic Springs Tooltips Engine for Hover Events */}
                                                         <AnimatePresence>
                                                             {(hoveredBar === i || (hoveredBar === null && i === 11)) && (
                                                                 <motion.div
@@ -361,7 +351,7 @@ export default function Dashboard() {
                                     <h3 style={{ fontSize: '1.05rem', fontWeight: '800', margin: 0, letterSpacing: '-0.3px' }}>Audit Stream</h3>
                                     <span style={{ fontSize: '0.7rem', fontWeight: '800', background: '#E6F4EA', color: '#137333', padding: '2px 8px', borderRadius: '10px' }} className="live-blink-badge">Live</span>
                                 </div>
-                                <div onClick={() => toast.info("Filters configured dynamically.")} style={{ width: '32px', height: '32px', background: '#F8FAFC', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyY: 'center', justifyContent: 'center', border: '1px solid #E2E8F0', cursor: 'pointer' }}>
+                                <div onClick={() => toast.info("Filters configured dynamically.")} style={{ width: '32px', height: '32px', background: '#F8FAFC', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #E2E8F0', cursor: 'pointer' }}>
                                     <Filter size={13} color="#475569" />
                                 </div>
                             </div>
@@ -383,7 +373,6 @@ export default function Dashboard() {
                                         );
                                     })
                                 ) : (
-                                    /* Beautiful fallbacks mapping as requested for structural safety */
                                     <>
                                         <ActivityItem title="CREATE" desc="User profile was created in the system. Assigned Role: SUPER_ADMIN" time="5 May" icon={getActivityStyle('LOGIN').icon} bg={getActivityStyle('LOGIN').bg} borderColor={getActivityStyle('LOGIN').border} />
                                         <ActivityItem title="UPDATE" desc="Plan: FREE | Principal: Dr. Rana" time="15 Feb" icon={getActivityStyle('SYSTEM').icon} bg={getActivityStyle('SYSTEM').bg} borderColor={getActivityStyle('SYSTEM').border} />
@@ -398,21 +387,15 @@ export default function Dashboard() {
                             </motion.button>
                         </div>
                     </motion.div>
-
                 </div>
             </motion.div>
 
-            {/* 🚀 COMPREHENSIVE RESPONSIVENESS AND ANIMATION EMBED CODE */}
+            {/* 🚀 RESPONSIVENESS EMBED STYLES */}
             <style>{`
                 html, body, #root { margin: 0; padding: 0; height: 100%; width: 100%; background: ${THEME.bg}; }
                 .hide-scrollbar::-webkit-scrollbar { display: none; }
                 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-                /* Status Pulsing Engine for Dynamic Live Sync */
-                .pulse-indicator {
-                    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
-                }
-                
                 .live-blink-badge {
                     animation: statusBlink 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
                 }
@@ -421,7 +404,6 @@ export default function Dashboard() {
                     50% { opacity: .6; }
                 }
 
-                /* Waving hand keyframe setup */
                 .wave-hand {
                     display: inline-block;
                     animation: handWave 2.5s infinite;
@@ -435,7 +417,6 @@ export default function Dashboard() {
                     50% { transform: rotate(10deg) }
                 }
 
-                /* Responsive Component Layout Matrix */
                 .main-grid-container {
                     display: grid;
                     grid-template-columns: 1.8fr 1fr;
@@ -448,7 +429,6 @@ export default function Dashboard() {
                     box-shadow: 0 8px 20px rgba(99, 102, 241, 0.25) !important;
                 }
 
-                /* Media Queries for responsive breakpoints */
                 @media (max-width: 1150px) {
                     .main-grid-container { grid-template-columns: 1.5fr 1fr; gap: 20px; }
                 }
@@ -490,8 +470,6 @@ export default function Dashboard() {
         </div>
     );
 }
-
-// --- CORE MINI LAYOUT SEGMENTS WITH MICRO MOTIONS ---
 
 const StatCard = ({ title, value, trend, isPositive, icon, gradient, shadowColor }) => (
     <motion.div
