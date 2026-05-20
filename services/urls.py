@@ -4,6 +4,7 @@ from .views import (
     EducationLevelViewSet,
     GlobalSettingsAPIView, 
     ServiceTypeViewSet, 
+    ServiceCategoryViewSet,
     ServiceModeViewSet,
     ManagementTypeViewSet,        
     PlaceCodeMappingViewSet,
@@ -22,6 +23,7 @@ from .views import (
 router = DefaultRouter()
 router.register(r'levels', EducationLevelViewSet)
 router.register(r'types', ServiceTypeViewSet)
+router.register(r'categories', ServiceCategoryViewSet)
 router.register(r'modes', ServiceModeViewSet)
 router.register(r'management', ManagementTypeViewSet)
 router.register(r'place-codes', PlaceCodeMappingViewSet)

@@ -5,6 +5,7 @@ from .models import RecycleBinItem
 from .models import (
     EducationLevel, 
     ServiceType, 
+    ServiceCategory,
     ServiceMode,
     ManagementType,      
     PlaceCodeMapping,
@@ -25,6 +26,11 @@ class EducationLevelSerializer(serializers.ModelSerializer):
 class ServiceTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServiceType
+        fields = '__all__'
+
+class ServiceCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ServiceCategory
         fields = '__all__'
 
 class ServiceModeSerializer(serializers.ModelSerializer):

@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@rive-app/react-canvas": "^4.28.4",
+    "@splinetool/react-spline": "^4.1.0",
     "ag-grid-community": "^35.2.1",
     "ag-grid-react": "^35.2.1",
     "axios": "^1.13.2",
@@ -25,7 +27,7 @@
     "react-hot-toast": "^2.6.0",
     "react-leaflet": "^5.0.0",
     "react-player": "^3.4.0",
-    "react-router-dom": "^7.11.0",
+    "react-router-dom": "^7.15.0",
     "react-webcam": "^7.2.0",
     "recharts": "^3.6.0",
     "tailwind-merge": "^3.4.0"

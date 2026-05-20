@@ -6,7 +6,7 @@ import {
     Globe, Map as MapIcon, Plus, Trash2, X, Flag,
     Layers, ChevronDown, ChevronRight, Sparkles, LayoutList, MapPin, ArrowLeft, Save,
     CheckSquare, Check, Eye, EyeOff, Power,
-    ChevronLeft // ✅ NEW: Added ChevronLeft for Pagination
+    ChevronLeft
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -40,6 +40,7 @@ const GradientStat = ({ label, value, icon, color }) => (
             boxShadow: '0 8px 20px -5px rgba(0,0,0,0.2)',
             minWidth: '140px'
         }}
+        className="header-stat-card"
     >
         <div style={{ background: 'rgba(255,255,255,0.2)', padding: '8px', borderRadius: '10px', display: 'flex' }}>{icon}</div>
         <div>
@@ -60,7 +61,6 @@ const continentsData = {
     "Antarctica": ["Antarctica"]
 };
 
-// Generating complete lists (Mock but complete view for UI logic)
 const allIndianStates = [
     "Andaman and Nicobar", "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chandigarh", "Chhattisgarh", "Dadra and Nagar Haveli",
     "Daman and Diu", "Delhi", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", "Jharkhand", "Karnataka", "Kerala",
@@ -68,7 +68,6 @@ const allIndianStates = [
     "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
 ];
 
-// Helper to generate generic massive lists if specific one is missing
 const generateGenericList = (prefix, count) => Array.from({ length: count }, (_, i) => `${prefix} ${i + 1}`);
 
 const countriesData = {
@@ -79,21 +78,18 @@ const countriesData = {
     "United Kingdom": ["England", "Scotland", "Wales", "Northern Ireland"]
 };
 
-// Extensive District/State Data for demo purposes
 const statesData = {
     "Uttar Pradesh": ["Agra", "Aligarh", "Ambedkar Nagar", "Amethi", "Amroha", "Auraiya", "Ayodhya", "Azamgarh", "Baghpat", "Bahraich", "Ballia", "Banda", "Bara Banki", "Bareilly", "Basti", "Bhadohi", "Bijnor", "Budaun", "Bulandshahr", "Chandauli", "Chitrakoot", "Deoria", "Etah", "Etawah", "Farrukhabad", "Fatehpur", "Firozabad", "Gautam Buddha Nagar", "Ghaziabad", "Ghazipur", "Gonda", "Gorakhpur", "Hamirpur", "Hapur", "Hardoi", "Hathras", "Jalaun", "Jaunpur", "Jhansi", "Kannauj", "Kanpur Dehat", "Kanpur Nagar", "Kasganj", "Kaushambi", "Kheri", "Kushinagar", "Lakhimpur Kheri", "Lalitpur", "Lucknow", "Maharajganj", "Mahoba", "Mainpuri", "Mathura", "Mau", "Meerut", "Mirzapur", "Moradabad", "Muzaffarnagar", "Pilibhit", "Pratapgarh", "Prayagraj", "Raebareli", "Rampur", "Saharanpur", "Sambhal", "Sant Kabir Nagar", "Shahjahanpur", "Shamli", "Shravasti", "Siddharthnagar", "Sitapur", "Sonbhadra", "Sultanpur", "Unnao", "Varanasi"],
     "Maharashtra": ["Ahmednagar", "Akola", "Amravati", "Aurangabad", "Beed", "Bhandara", "Buldhana", "Chandrapur", "Dhule", "Gadchiroli", "Gondia", "Hingoli", "Jalgaon", "Jalna", "Kolhapur", "Latur", "Mumbai City", "Mumbai Suburban", "Nagpur", "Nanded", "Nandurbar", "Nashik", "Osmanabad", "Palghar", "Parbhani", "Pune", "Raigad", "Ratnagiri", "Sangli", "Satara", "Sindhudurg", "Solapur", "Thane", "Wardha", "Washim", "Yavatmal"],
     "Rajasthan": ["Ajmer", "Alwar", "Banswara", "Baran", "Barmer", "Bharatpur", "Bhilwara", "Bikaner", "Bundi", "Chittorgarh", "Churu", "Dausa", "Dholpur", "Dungarpur", "Hanumangarh", "Jaipur", "Jaisalmer", "Jalore", "Jhalawar", "Jhunjhunu", "Jodhpur", "Karauli", "Kota", "Nagaur", "Pali", "Pratapgarh", "Rajsamand", "Sawai Madhopur", "Sikar", "Sirohi", "Sri Ganganagar", "Tonk", "Udaipur"]
 };
 
-// Generic Zone lists to ensure ALL districts have something
 const districtsData = {
     "Agra": ["East Zone", "West Zone", "North Zone", "South Zone", "Central Zone"],
     "Jaipur": ["Zone 1", "Zone 2", "Zone 3", "Zone 4", "Zone 5", "Zone 6", "Zone 7", "Zone 8"],
     "Lucknow": ["Gomti Nagar Zone", "Alambagh Zone", "Hazratganj Zone", "Indira Nagar Zone", "Ashiyana Zone", "Cantonment Zone"],
 };
 
-// Depth Map to logically determine which dropdowns to show
 const depthMap = {
     "Global": 0,
     "Continent": 1,
@@ -104,36 +100,22 @@ const depthMap = {
     "School": 6
 };
 
-// --- MAIN COMPONENT ---
 export default function Locations() {
     const [places, setPlaces] = useState([]);
     const [breadcrumbs, setBreadcrumbs] = useState([]);
 
     const [newPlace, setNewPlace] = useState({
-        name: "",
-        place_type: "Continent",
-        space_type: "Physical",
-        place_uses_for: "None",
-        pin_code: "",
-        zip_code: "",
-        beat_no: "",
-        village_code: "",
-        virtual_id: "",
-        google_map_id: "",
-        latitude: "",
-        longitude: "",
-        work_status: "Ministerial Office",
+        name: "", place_type: "Continent", space_type: "Physical", place_uses_for: "None",
+        pin_code: "", zip_code: "", beat_no: "", village_code: "", virtual_id: "",
+        google_map_id: "", latitude: "", longitude: "", work_status: "Ministerial Office",
         status: "ACTIVE"
     });
 
     const [agreedToTerms, setAgreedToTerms] = useState(false);
     const [loadingId, setLoadingId] = useState(null);
     const [selectedIds, setSelectedIds] = useState([]);
-
-    // ✅ NEW: Pagination State
     const [currentPage, setCurrentPage] = useState(1);
 
-    // --- SEQUENTIAL CASCADING STATES ---
     const [selectedContinent, setSelectedContinent] = useState("");
     const [selectedCountry, setSelectedCountry] = useState("");
     const [selectedState, setSelectedState] = useState("");
@@ -142,7 +124,6 @@ export default function Locations() {
 
     const currentDepth = depthMap[newPlace.place_type] || 0;
 
-    // Reset handlers to clear lower dependencies when a higher dependency changes
     const handleContinentChange = (e) => {
         setSelectedContinent(e.target.value);
         setSelectedCountry(""); setSelectedState(""); setSelectedDistrict(""); setSelectedZone("");
@@ -160,12 +141,10 @@ export default function Locations() {
         setSelectedZone("");
     };
 
-    // Helper Functions to Fetch Dropdown Options Dynamically
     const getCountryOptions = () => continentsData[selectedContinent] || generateGenericList(`${selectedContinent} Country`, 20);
     const getStateOptions = () => countriesData[selectedCountry] || generateGenericList(`${selectedCountry} State`, 30);
     const getDistrictOptions = () => statesData[selectedState] || generateGenericList(`${selectedState} District`, 40);
     const getZoneOptions = () => districtsData[selectedDistrict] || generateGenericList(`${selectedDistrict} Zone`, 10);
-
 
     useEffect(() => {
         fetchPlaces(null);
@@ -178,7 +157,7 @@ export default function Locations() {
             const res = await api.get(url);
             setPlaces(Array.isArray(res.data) ? res.data : []);
             setSelectedIds([]);
-            setCurrentPage(1); // ✅ Reset pagination to page 1 on fetch
+            setCurrentPage(1);
         } catch (err) {
             setPlaces([]);
         }
@@ -200,13 +179,11 @@ export default function Locations() {
     const addPlace = async (e) => {
         e.preventDefault();
         if (!newPlace.name) return toast.error("Please enter a location/syllabus name");
-
         if (!agreedToTerms) return toast.error("You must agree to the Terms and Conditions!");
 
         setLoadingId('addPlace');
         try {
             const parentId = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].id : null;
-
             const payload = { ...newPlace, parent: parentId };
             Object.keys(payload).forEach(key => {
                 if (payload[key] === "" || payload[key] === "None") {
@@ -290,7 +267,6 @@ export default function Locations() {
 
     const currentLevelName = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].name : "Global";
 
-    // ✅ NEW: Pagination Math (Strictly 6 items per page)
     const recordsPerPage = 6;
     const totalPages = Math.ceil(places.length / recordsPerPage);
     const indexOfLastRecord = currentPage * recordsPerPage;
@@ -313,18 +289,17 @@ export default function Locations() {
                             )}
                             <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#6366f1', textTransform: 'uppercase', letterSpacing: '1px' }}>{currentLevelName} Directory</span>
                         </div>
-                        <h1 style={{ fontSize: '2.4rem', fontWeight: '900', color: '#0f172a', letterSpacing: '-1px', margin: 0 }}>
-                            Place Master <span style={{ fontSize: '2rem', verticalAlign: 'middle' }}>🌍</span>
+                        <h1 className="responsive-h1" style={{ fontWeight: '900', color: '#0f172a', letterSpacing: '-1px', margin: 0 }}>
+                            Place Master <span style={{ verticalAlign: 'middle' }}>🌍</span>
                         </h1>
-                        <p style={{ color: '#64748b', fontSize: '1.05rem', fontWeight: '500', marginTop: '5px' }}>Advanced Global Hierarchy & Space Control.</p>
+                        <p className="responsive-subtitle" style={{ color: '#64748b', fontWeight: '500', marginTop: '5px' }}>Advanced Global Hierarchy & Space Control.</p>
                     </div>
-                    <div style={{ display: 'flex', gap: '15px' }}>
+                    <div className="header-stats-wrapper" style={{ display: 'flex', gap: '15px' }}>
                         <GradientStat label="Sub-Regions" value={places.length} icon={<Layers size={18} />} color="linear-gradient(135deg, #6366f1, #4f46e5)" />
                     </div>
                 </div>
 
                 <div className="locations-content-grid">
-
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
                         <GlassCard style={{ padding: '25px', borderLeft: '5px solid #6366f1' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
@@ -336,7 +311,6 @@ export default function Locations() {
                             </div>
 
                             <form onSubmit={addPlace} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-
                                 <div className="form-row">
                                     <input placeholder="Location / Item Name" value={newPlace.name} onChange={e => setNewPlace({ ...newPlace, name: e.target.value })} style={inputStyle} />
                                     <div style={{ position: 'relative', flex: 1 }}>
@@ -362,12 +336,8 @@ export default function Locations() {
                                     </div>
                                 </div>
 
-                                {/* --- TRUE CONDITIONAL CASCADING DROPDOWNS CHAIN --- */}
-
-                                {/* Row 1: Continent and Country */}
                                 {currentDepth >= 1 && (
                                     <div className="form-row">
-                                        {/* 1. Continent Dropdown appears first */}
                                         <div style={{ position: 'relative', flex: 1 }}>
                                             <select value={selectedContinent} onChange={handleContinentChange} style={{ ...inputStyle, appearance: 'none', border: '2px solid #818cf8', background: '#eef2ff' }}>
                                                 <option value="">-- Select Continent --</option>
@@ -376,7 +346,6 @@ export default function Locations() {
                                             <ChevronDown size={18} className="select-icon" />
                                         </div>
 
-                                        {/* 2. Country Dropdown appears ONLY when Continent is selected */}
                                         {currentDepth >= 2 && selectedContinent && (
                                             <div style={{ position: 'relative', flex: 1 }}>
                                                 <select value={selectedCountry} onChange={handleCountryChange} style={{ ...inputStyle, appearance: 'none', border: '2px solid #34d399', background: '#ecfdf5' }}>
@@ -389,10 +358,8 @@ export default function Locations() {
                                     </div>
                                 )}
 
-                                {/* Row 2: State and District */}
                                 {currentDepth >= 3 && selectedCountry && (
                                     <div className="form-row">
-                                        {/* 3. State Dropdown appears ONLY when Country is selected */}
                                         <div style={{ position: 'relative', flex: 1 }}>
                                             <select value={selectedState} onChange={handleStateChange} style={{ ...inputStyle, appearance: 'none', border: '2px solid #fbbf24', background: '#fffbeb' }}>
                                                 <option value="">-- Select State --</option>
@@ -401,7 +368,6 @@ export default function Locations() {
                                             <ChevronDown size={18} className="select-icon" />
                                         </div>
 
-                                        {/* 4. District Dropdown appears ONLY when State is selected */}
                                         {currentDepth >= 4 && selectedState && (
                                             <div style={{ position: 'relative', flex: 1 }}>
                                                 <select value={selectedDistrict} onChange={handleDistrictChange} style={{ ...inputStyle, appearance: 'none', border: '2px solid #f472b6', background: '#fdf2f8' }}>
@@ -414,10 +380,8 @@ export default function Locations() {
                                     </div>
                                 )}
 
-                                {/* Row 3: Zone */}
                                 {currentDepth >= 5 && selectedDistrict && (
                                     <div className="form-row">
-                                        {/* 5. Zone Dropdown appears ONLY when District is selected */}
                                         <div style={{ position: 'relative', flex: 1 }}>
                                             <select value={selectedZone} onChange={e => setSelectedZone(e.target.value)} style={{ ...inputStyle, appearance: 'none', border: '2px solid #a78bfa', background: '#f5f3ff' }}>
                                                 <option value="">-- Select Zone --</option>
@@ -425,10 +389,9 @@ export default function Locations() {
                                             </select>
                                             <ChevronDown size={18} className="select-icon" />
                                         </div>
-                                        <div style={{ flex: 1 }}></div> {/* Empty space to keep width 50% */}
+                                        <div className="empty-spacer" style={{ flex: 1 }}></div>
                                     </div>
                                 )}
-
 
                                 <div className="form-row">
                                     <div style={{ position: 'relative', flex: 1 }}>
@@ -518,7 +481,7 @@ export default function Locations() {
                     </div>
 
                     <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingLeft: '5px', flexWrap: 'wrap', gap: '10px' }}>
+                        <div className="explore-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingLeft: '5px', flexWrap: 'wrap', gap: '10px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <LayoutList size={22} color="#64748b" />
                                 <h3 style={{ fontSize: '1.3rem', fontWeight: '800', color: '#334155', margin: 0 }}>Explore Hierarchy</h3>
@@ -553,7 +516,7 @@ export default function Locations() {
                             )}
                         </AnimatePresence>
 
-                        <div style={{ overflowX: 'auto', background: 'white', borderRadius: '24px', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.06)', border: '1px solid rgba(255, 255, 255, 0.6)' }}>
+                        <div className="table-scroll-container" style={{ overflowX: 'auto', background: 'white', borderRadius: '24px', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.06)', border: '1px solid rgba(255, 255, 255, 0.6)', WebkitOverflowScrolling: 'touch' }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
                                 <thead>
                                     <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
@@ -604,7 +567,7 @@ export default function Locations() {
                                                     />
                                                 </td>
                                                 <td style={{ padding: '16px', fontWeight: '800', color: '#475569', fontSize: '0.9rem' }}>
-                                                    {indexOfFirstRecord + index + 1}. {/* ✅ Updated so sequence continues on page 2 */}
+                                                    {indexOfFirstRecord + index + 1}.
                                                 </td>
                                                 <td style={{ padding: '16px' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -657,9 +620,8 @@ export default function Locations() {
                                 </tbody>
                             </table>
 
-                            {/* ✅ NEW: Pagination Controls UI */}
                             {totalPages > 1 && (
-                                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px 20px', gap: '15px', borderTop: '1px solid #f1f5f9', background: 'white' }}>
+                                <div className="pagination-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '15px 20px', gap: '15px', borderTop: '1px solid #f1f5f9', background: 'white' }}>
                                     <button
                                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                         disabled={currentPage === 1}
@@ -682,64 +644,77 @@ export default function Locations() {
                         </div>
                     </div>
                 </div>
+
+                <style>{`
+                .spin { animation: spin 1s linear infinite; }
+                @keyframes spin { 100% { transform: rotate(360deg); } }
+                .hide-scrollbar::-webkit-scrollbar { display: none; }
+
+                .locations-main-view { 
+                    flex: 1; 
+                    margin-left: 280px; 
+                    padding: 35px; 
+                    height: 100vh; 
+                    overflow-y: auto; 
+                    position: relative; 
+                    box-sizing: border-box; 
+                    transition: all 0.3s ease; 
+                    min-width: 0; 
+                }
+                
+                .locations-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 35px; flex-wrap: wrap; gap: 20px; }
+                .responsive-h1 { font-size: 2.4rem; }
+                .responsive-subtitle { font-size: 1.05rem; }
+
+                .locations-content-grid { 
+                    display: grid; 
+                    grid-template-columns: 400px minmax(0, 1fr); 
+                    gap: 35px; 
+                    padding-bottom: 20px; 
+                    align-items: start; 
+                }
+                
+                .form-row { display: flex; gap: 12px; width: 100%; }
+                .form-row > input, .form-row > div { flex: 1; min-width: 0; box-sizing: border-box; }
+                .select-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; }
+
+                /* Tablet / Medium Desktop View */
+                @media (max-width: 1200px) {
+                    .locations-content-grid { grid-template-columns: 320px minmax(0, 1fr); gap: 20px; }
+                    .responsive-h1 { font-size: 2rem; }
+                }
+
+                /* Mobile & Small Tablets */
+                @media (max-width: 850px) {
+                    .locations-main-view { 
+                        margin-left: 0 !important; 
+                        padding: 16px !important; 
+                        padding-top: 90px !important; 
+                        width: 100% !important; 
+                    }
+                    .locations-header { flex-direction: column; align-items: flex-start; gap: 15px; margin-bottom: 25px; }
+                    .header-stats-wrapper { width: 100%; }
+                    .header-stat-card { flex: 1; min-width: unset; }
+
+                    .locations-content-grid { grid-template-columns: 1fr; gap: 25px; }
+                    .locations-content-grid > div:first-child { order: -1; }
+                    
+                    .form-row { flex-direction: column; gap: 12px; }
+                    .form-row > input, .form-row > div { width: 100%; }
+                    .empty-spacer { display: none !important; }
+                }
+
+                /* Ultra-Small Mobile Viewports */
+                @media (max-width: 480px) {
+                    .responsive-h1 { font-size: 1.65rem; }
+                    .responsive-subtitle { font-size: 0.9rem; }
+                    .explore-section-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+                    .explore-section-header button { width: 100%; justify-content: center; }
+                    .pagination-container { flex-direction: column !important; gap: 10px !important; }
+                    .pagination-container button { width: 100%; justify-content: center; }
+                }
+              `}</style>
             </div>
-
-            <style>{`
-        .spin { animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-
-        .locations-main-view { 
-            flex: 1; 
-            margin-left: 280px; 
-            padding: 35px; 
-            height: 100vh; 
-            overflow-y: auto; 
-            position: relative; 
-            box-sizing: border-box; 
-            transition: all 0.3s ease; 
-            min-width: 0; 
-        }
-        
-        .locations-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 35px; flex-wrap: wrap; gap: 20px; }
-        
-        .locations-content-grid { 
-            display: grid; 
-            grid-template-columns: 400px minmax(0, 1fr); 
-            gap: 35px; 
-            padding-bottom: 20px; 
-            align-items: start; 
-        }
-        
-        .form-row { display: flex; gap: 12px; width: 100%; }
-        .form-row > input, .form-row > div { flex: 1; min-width: 0; box-sizing: border-box; }
-        .select-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; }
-
-        /* Tablet/Medium Desktop */
-        @media (max-width: 1200px) {
-            .locations-content-grid { grid-template-columns: 320px minmax(0, 1fr); gap: 20px; }
-        }
-
-        /* Mobile / Tablet Portrait */
-        @media (max-width: 850px) {
-            .locations-main-view { 
-                margin-left: 0 !important; 
-                padding: 15px !important; 
-                padding-top: 90px !important; 
-                width: 100% !important; 
-            }
-            .locations-header { flex-direction: column; align-items: flex-start; gap: 20px; }
-            .locations-content-grid { grid-template-columns: 1fr; gap: 25px; }
-            
-            /* Render form ABOVE the table on mobile */
-            .locations-content-grid > div:first-child { order: -1; }
-            
-            /* FIXED FOR SQUISHED SIDE-BY-SIDE FIELDS ON MOBILE */
-            .form-row { flex-direction: column; gap: 12px; }
-            .form-row > input, .form-row > div { width: 100%; }
-            .form-row > div:empty { display: none; } /* Hides the empty space on odd fields so it looks clean */
-        }
-      `}</style>
         </div>
     );
 }

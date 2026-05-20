@@ -16,6 +16,28 @@ class ServiceType(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     def __str__(self): return self.name
 
+# 2A. Service Category (KNOWLEDGE, SKILLED, BOTH, NONE)
+class ServiceCategory(models.Model):
+    CATEGORY_CHOICES = [
+        ('KNOWLEDGE', 'Knowledge Based'),
+        ('SKILLED', 'Skilled Based'),
+        ('BOTH', 'Both Knowledge & Skilled'),
+        ('NONE', 'No Requirement')
+    ]
+    name = models.CharField(max_length=50, choices=CATEGORY_CHOICES, unique=True)
+    description = models.TextField(blank=True)
+    icon = models.CharField(max_length=50, blank=True, default='')
+    color = models.CharField(max_length=20, blank=True, default='#6366F1')
+    status = models.CharField(max_length=20, default='Active', choices=[('Active','Active'), ('Inactive','Inactive')])
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Service Category"
+        verbose_name_plural = "Service Categories"
+    
+    def __str__(self): return self.get_name_display()
+
 # 3. Service Mode
 class ServiceMode(models.Model):
     name = models.CharField(max_length=50, unique=True)

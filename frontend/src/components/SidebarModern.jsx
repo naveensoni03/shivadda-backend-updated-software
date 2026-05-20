@@ -1,200 +1,133 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut, LayoutDashboard } from "lucide-react";
+import toast from "react-hot-toast";
 
 const SidebarModern = ({ forceOpen }) => {
   const navigate = useNavigate();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  const rawRole = localStorage.getItem("role") || localStorage.getItem("userRole") || "ADMIN";
+  const rawRole = localStorage.getItem("role") || "ADMIN";
   const userRole = rawRole.replace(/['"]/g, "").trim().toUpperCase();
 
-  // ROLES KE LOGIC (Management, Academic, Security) - Yeh logic aapke role-based access ke liye hai. Aap apne roles ke hisab se isko customize kar sakte hain.
-  const isManagement = ["SUPER_ADMIN", "ADMIN", "SCHOOL_ADMIN", "SUPER ADMIN"].includes(userRole) || userRole.includes("ADMIN");
-  const isAcademic = ["TEACHER", "HOD"].includes(userRole);
-  const isSecurity = ["SECURITY", "SECURITY GUARD"].includes(userRole);
-
   useEffect(() => {
-    if (forceOpen !== undefined) {
-      setIsMobileOpen(forceOpen);
-    }
+    if (forceOpen !== undefined) setIsMobileOpen(forceOpen);
   }, [forceOpen]);
 
-  const linkStyle = ({ isActive }) => ({
-    padding: "12px 16px",
-    borderRadius: "14px",
-    color: isActive ? "#4f46e5" : "#64748b",
-    textDecoration: "none",
-    background: isActive ? "linear-gradient(145deg, #ffffff, #f5f3ff)" : "transparent",
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    marginBottom: "8px",
-    fontSize: "0.95rem",
-    fontWeight: isActive ? "700" : "500",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    boxShadow: isActive ? "0 10px 20px -5px rgba(79, 70, 229, 0.15), inset 0 0 0 1px rgba(79, 70, 229, 0.1)" : "none",
-    position: "relative",
-    zIndex: 10,
-    cursor: "pointer",
-  });
-
+  // 🚪 LOGOUT UTILITY ENGINE
   const handleLogout = () => {
-    localStorage.clear();
-    sessionStorage.clear();
-    navigate("/login");
+    if (window.confirm("Are you sure you want to logout?")) {
+      // Clear all local and session credentials
+      localStorage.clear();
+      sessionStorage.clear();
+      toast.success("Logged out successfully! 👋");
+
+      // Redirect to authentication layout
+      navigate("/login");
+    }
   };
 
-  const SerialNo = ({ num }) => (
-    <span style={{ minWidth: '20px', fontSize: '0.85rem', opacity: 0.7 }}>{num}.</span>
-  );
+  const linkStyle = ({ isActive }) => ({
+    padding: "10px 14px",
+    borderRadius: "10px",
+    color: isActive ? "#4f46e5" : "#64748b",
+    textDecoration: "none",
+    background: isActive ? "#eef2ff" : "transparent",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    marginBottom: "4px",
+    fontSize: "0.9rem",
+    fontWeight: isActive ? "700" : "500",
+    transition: "all 0.2s",
+  });
+
+  const sectionHeaderStyle = {
+    color: '#94a3b8', fontSize: '0.7rem', fontWeight: '800',
+    textTransform: 'uppercase', marginTop: '20px', marginBottom: '8px',
+    paddingLeft: '10px', letterSpacing: '1px'
+  };
 
   return (
-    <>
-      {/* 📱 MOBILE TOP HEADER */}
-      <div className="mobile-header">
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div style={{
-            width: '35px', height: '35px', background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-            borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)'
-          }}>
-            <span style={{ color: 'white', fontWeight: '900', fontSize: '1.2rem' }}>S</span>
-          </div>
-          <h2 style={{ color: "#0f172a", fontSize: "1.2rem", fontWeight: "900", margin: 0, letterSpacing: "1px" }}>SHIVADDA</h2>
-        </div>
-        <button className="mobile-menu-btn" onClick={() => setIsMobileOpen(true)}>
-          <Menu size={26} color="#0f172a" />
-        </button>
+    <aside className={`custom-sidebar ${isMobileOpen ? "open" : ""}`} style={{
+      width: "280px", background: "#ffffff", height: "100vh", position: "fixed",
+      padding: "20px", borderRight: "1px solid #f1f5f9", zIndex: 1000, overflowY: "auto",
+      display: "flex", flexDirection: "column", justifyContent: "space-between"
+    }}>
+      <div>
+        <h2 style={{ fontSize: "1.4rem", fontWeight: "900", margin: "0 0 20px 10px", color: "#0f172a" }}>
+          SHIVADDA
+        </h2>
+
+        <nav>
+          {/* 🏠 MAIN CONSOLE CONTROL */}
+          <p style={sectionHeaderStyle}>Main Console</p>
+          <NavLink to="/dashboard" style={linkStyle}>
+            <LayoutDashboard size={18} /> Dashboard
+          </NavLink>
+
+          {/* 1. PLACES */}
+          <p style={sectionHeaderStyle}>1. PLACES</p>
+          <NavLink to="/superadmin/master-data" style={linkStyle}>Master Data</NavLink>
+          <NavLink to="/ai-brain" style={linkStyle}>AI Brain</NavLink>
+          <NavLink to="/institutions" style={linkStyle}>Institutions</NavLink>
+          <NavLink to="/locations" style={linkStyle}>Global Locations</NavLink>
+
+          {/* 2. SERVICES */}
+          <p style={sectionHeaderStyle}>2. SERVICES</p>
+          <NavLink to="/service-types" style={linkStyle}>Types of Services</NavLink>
+          <NavLink to="/services" style={linkStyle}>Services Master</NavLink>
+          <NavLink to="/attendance" style={linkStyle}>Attendance</NavLink>
+          <NavLink to="/students" style={linkStyle}>Student Base</NavLink>
+          <NavLink to="/teachers" style={linkStyle}>Teachers</NavLink>
+          <NavLink to="/courses" style={linkStyle}>Course Manager</NavLink>
+          <NavLink to="/exams" style={linkStyle}>Exams & AI</NavLink>
+          <NavLink to="/homework" style={linkStyle}>Homework & Tasks</NavLink>
+          <NavLink to="/visitors" style={linkStyle}>Front Office</NavLink>
+
+          {/* 3. USERS MANAGEMENT */}
+          <p style={sectionHeaderStyle}>3. USERS MANAGEMENT</p>
+          <NavLink to="/users" style={linkStyle}>Academic Users</NavLink>
+          <NavLink to="/access-logs" style={linkStyle}>Unacademic Users</NavLink>
+          <NavLink to="/virtual-space" style={linkStyle}>Virtual Space</NavLink>
+
+          {/* 10. ACCOUNTS MANAGEMENT */}
+          <p style={sectionHeaderStyle}>10. ACCOUNTS MANAGEMENT</p>
+          <NavLink to="/fees" style={linkStyle}>Fees Ledger</NavLink>
+          <NavLink to="/payroll" style={linkStyle}>Payroll & Salary</NavLink>
+          <NavLink to="/service-catalog" style={linkStyle}>Service Catalog</NavLink>
+          <NavLink to="/payment-accounts" style={linkStyle}>Payment Accounts</NavLink>
+          <NavLink to="/teacher-salary" style={linkStyle}>Teacher Salary</NavLink>
+          <NavLink to="/inventory" style={linkStyle}>Inventory</NavLink>
+          <NavLink to="/timetable" style={linkStyle}>Timetable</NavLink>
+          <NavLink to="/communication" style={linkStyle}>Communication</NavLink>
+
+          {/* 11. UNACADEMIC SERVICES */}
+          <p style={sectionHeaderStyle}>11. UNACADEMIC SERVICES</p>
+          <NavLink to="/library" style={linkStyle}>Library</NavLink>
+          <NavLink to="/hostel" style={linkStyle}>Hostel</NavLink>
+          <NavLink to="/transport" style={linkStyle}>Transport</NavLink>
+        </nav>
       </div>
 
-      {isMobileOpen && <div className="mobile-overlay" onClick={() => setIsMobileOpen(false)}></div>}
-
-      <aside className={`custom-sidebar ${isMobileOpen ? "open" : ""}`} style={{
-        width: "280px", background: "#ffffff", height: "100vh", position: "fixed",
-        top: 0, display: "flex", flexDirection: "column", padding: "35px 25px",
-        borderRight: "1px solid #f1f5f9", zIndex: 1000, overflowY: "auto"
-      }}>
-
-        <button className="mobile-close-btn" onClick={() => setIsMobileOpen(false)}>
-          <X size={24} color="#64748b" />
+      {/* 🛑 SECURE LOGOUT ANCHOR INTERRUPT */}
+      <div style={{ marginTop: "30px", paddingTop: "15px", borderTop: "1px solid #f1f5f9" }}>
+        <button
+          onClick={handleLogout}
+          style={{
+            width: "100%", padding: "12px 14px", borderRadius: "10px", background: "none",
+            border: "none", color: "#ef4444", display: "flex", alignItems: "center",
+            gap: "10px", fontSize: "0.9rem", fontWeight: "700", cursor: "pointer",
+            transition: "background 0.2s"
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = "#fef2f2"}
+          onMouseLeave={(e) => e.currentTarget.style.background = "none"}
+        >
+          <LogOut size={18} /> Logout Session
         </button>
-
-        <div style={{ marginBottom: "40px", display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <div style={{
-            width: '42px', height: '42px', background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-            borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 8px 16px rgba(79, 70, 229, 0.25)'
-          }}>
-            <span style={{ color: 'white', fontWeight: '900', fontSize: '1.4rem' }}>S</span>
-          </div>
-          <h2 style={{ color: "#0f172a", fontSize: "1.6rem", fontWeight: "900", letterSpacing: "-1px", margin: 0 }}>SHIVADDA</h2>
-        </div>
-
-        <nav style={{ flex: 1 }}>
-          {/* COMMON FOR ALL LOGGED IN USERS */}
-          <p style={sectionHeaderStyle}>Overview</p>
-          <NavLink to="/dashboard" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Dashboard</NavLink>
-
-          {/* 🔥 1. PLACES (Old: Super Controls) */}
-          {isManagement && (
-            <>
-              <p style={sectionHeaderStyle}>1. Super Controls PLACES</p>
-              <NavLink to="/superadmin/master-data" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Master Data Grid</NavLink>
-              <NavLink to="/ai-brain" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> AI Brain</NavLink>
-              <NavLink to="/institutions" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Institutions</NavLink>
-              <NavLink to="/locations" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="4" /> Global Locations</NavLink>
-            </>
-          )}
-
-          {/* 🔥 3. USERS MANAGEMENT (Old: Access & Logs) */}
-          {isManagement && (
-            <>
-              <p style={sectionHeaderStyle}>3. Access & Logs  USERS MANAGEMENT</p>
-              <NavLink to="/users" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Academic Users</NavLink>
-              <NavLink to="/access-logs" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Unacademic Users</NavLink>
-              <NavLink to="/virtual-space" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Virtual Space</NavLink>
-            </>
-          )}
-
-          {/* 🔥 2. SERVICES (Old: School Ops) */}
-          {(isManagement || isAcademic || isSecurity) && (
-            <>
-              <p style={sectionHeaderStyle}>2. SERVICES</p>
-
-              {(isManagement || isSecurity) && (
-                <NavLink to="/visitors" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Front Office / Visitors</NavLink>
-              )}
-
-              {(isManagement || isAcademic) && (
-                <>
-                  {isManagement && <NavLink to="/admissions" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Admissions</NavLink>}
-                  <NavLink to="/attendance" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Attendance</NavLink>
-                  <NavLink to="/students" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="4" /> Student Base</NavLink>
-                  {isManagement && <NavLink to="/teachers" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="5" /> Teachers</NavLink>}
-                  <NavLink to="/courses" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="6" /> Course Manager</NavLink>
-                  <NavLink to="/exams" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="7" /> Exams & AI</NavLink>
-                  <NavLink to="/homework" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="8" /> Homework & Tasks</NavLink>
-                </>
-              )}
-            </>
-          )}
-
-          {/* 🔥 10. ACCOUNTS MANAGEMENT (Old: Finance & Assets) */}
-          {isManagement && (
-            <>
-              <p style={sectionHeaderStyle}>10.Finance and Assets <br /> ACCOUNTS MANAGEMENT</p>
-              <NavLink to="/fees" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Fees Ledger</NavLink>
-              <NavLink to="/payroll" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Payroll & Salary</NavLink>
-              <NavLink to="/service-catalog" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> 💳 Service Catalog</NavLink>
-              <NavLink to="/payment-accounts" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="4" /> 📊 Payment Accounts</NavLink>
-              <NavLink to="/teacher-salary" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="5" /> 👩‍🏫 Teacher Salary</NavLink>
-              <NavLink to="/inventory" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="6" /> Inventory</NavLink>
-              <NavLink to="/timetable" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="7" /> Timetable & Routine</NavLink>
-              <NavLink to="/communication" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="8" /> Communication</NavLink>
-            </>
-          )}
-
-          {/* 🔥 11. UNACADEMIC SERVICES (Old: Facilities) */}
-          {(isManagement) && (
-            <>
-              <p style={sectionHeaderStyle}>11. Facilties  <br /> UNACADEMIC SERVICES</p>
-              <NavLink to="/library" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Library</NavLink>
-              <NavLink to="/hostel" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Hostel</NavLink>
-              <NavLink to="/transport" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Transport</NavLink>
-            </>
-          )}
-
-          {/* 🔥 6. SYSTEM (Kept as is based on code provided) */}
-          {isManagement && (
-            <>
-              <p style={sectionHeaderStyle}>System</p>
-              <NavLink to="/services" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="1" /> Service Master</NavLink>
-              <NavLink to="/global-settings" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="2" /> Global Config</NavLink>
-              <NavLink to="/recycle-bin" style={linkStyle} onClick={() => setIsMobileOpen(false)}><SerialNo num="3" /> Recycle Bin</NavLink>
-            </>
-          )}
-        </nav>
-
-        <div onClick={handleLogout} style={logoutButtonStyle}>
-          Terminate Session
-        </div>
-      </aside>
-    </>
+      </div>
+    </aside>
   );
-};
-
-const sectionHeaderStyle = {
-  color: '#94a3b8', fontSize: '0.75rem', fontWeight: '800',
-  textTransform: 'uppercase', marginBottom: '15px', marginTop: '30px',
-  letterSpacing: '1.5px', paddingLeft: '8px'
-};
-
-const logoutButtonStyle = {
-  color: "#ef4444", cursor: "pointer", padding: "16px", borderRadius: "16px",
-  display: "flex", alignItems: "center", gap: "12px", fontWeight: "700",
-  background: "#fff1f2", border: "1px solid #fee2e2", marginTop: '30px',
-  justifyContent: 'center'
 };
 
 export default SidebarModern;

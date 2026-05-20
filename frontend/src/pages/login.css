@@ -1,139 +1,279 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
+/* login.css */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-.login-bg {
-  height: 100vh;
-  width: 100vw;
+.login-wrapper {
+  position: relative;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Modern Mesh Gradient Background */
-  background-color: #0f172a;
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.15) 0px, transparent 50%);
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: #030712;
   overflow: hidden;
+  font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
-.login-card {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 3rem;
-  border-radius: 32px;
-  width: 100%;
-  max-width: 450px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+/* 🌌 Animated Aurora Orbs */
+.aurora-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.4;
+  animation: float 10s infinite alternate ease-in-out;
+  z-index: 1;
+}
+
+.aurora-1 {
+  width: 50vw;
+  height: 50vw;
+  background: rgba(79, 70, 229, 0.3);
+  top: -20%;
+  left: -10%;
+  animation-delay: 0s;
+}
+
+.aurora-2 {
+  width: 40vw;
+  height: 40vw;
+  background: rgba(219, 39, 119, 0.3);
+  bottom: -20%;
+  right: -10%;
+  animation-delay: -2s;
+}
+
+.aurora-3 {
+  width: 30vw;
+  height: 30vw;
+  background: rgba(14, 165, 233, 0.3);
+  top: 30%;
+  left: 30%;
+  animation-delay: -4s;
+}
+
+@keyframes float {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  100% {
+    transform: translate(20px, -30px) scale(1.05);
+  }
+}
+
+/* ✨ Floating Particles */
+.particle {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.5;
+}
+
+/* 💎 Premium Glass Card with Animated Glowing Border */
+.glass-card-wrapper {
   position: relative;
   z-index: 10;
-}
-
-.login-card::before {
-  content: "";
-  position: absolute;
-  top: -2px; left: -2px; right: -2px; bottom: -2px;
-  background: linear-gradient(135deg, rgba(99,102,241,0.5), transparent, rgba(168,85,247,0.5));
-  border-radius: 32px;
-  z-index: -1;
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-}
-
-.login-card h2 {
-  color: #ffffff;
-  font-size: 2.2rem;
-  font-weight: 700;
-  letter-spacing: -1px;
-  margin-bottom: 8px;
-  text-align: center;
-}
-
-.subtitle {
-  color: #94a3b8;
-  text-align: center;
-  margin-bottom: 2.5rem;
-  font-size: 0.95rem;
-}
-
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.input-container {
-  position: relative;
-}
-
-input {
   width: 100%;
-  padding: 16px 16px 16px 45px;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  color: white;
-  font-size: 1rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 440px;
+  border-radius: 28px;
+  padding: 1px;
+  /* Border thickness */
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
-input:focus {
-  border-color: #6366f1;
-  background: rgba(15, 23, 42, 0.8);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
-  outline: none;
-}
-
-.input-icon {
+/* Moving Light on Border */
+.glass-card-wrapper::before {
+  content: '';
   position: absolute;
-  left: 15px;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(transparent, transparent, transparent, #818cf8);
+  animation: rotate-light 4s linear infinite;
+  z-index: -1;
+}
+
+@keyframes rotate-light {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.glass-card {
+  background: rgba(15, 23, 42, 0.85);
+  /* Solid stable background */
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border-radius: 27px;
+  padding: 48px 40px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 🌈 Animated Gradient Text */
+.gradient-text {
+  background: linear-gradient(to right, #ffffff, #a5b4fc, #fbcfe8, #ffffff);
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shine 4s linear infinite;
+}
+
+@keyframes shine {
+  to {
+    background-position: 200% center;
+  }
+}
+
+/* 📝 Custom Inputs */
+.custom-input-group {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.custom-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 14px 14px 14px 48px;
+  border-radius: 14px;
+  color: #f8fafc;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.custom-input::placeholder {
+  color: #64748b;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.custom-input:focus {
+  background: rgba(0, 0, 0, 0.5);
+  border-color: #818cf8;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15), inset 0 0 10px rgba(99, 102, 241, 0.1);
+}
+
+.custom-input:focus::placeholder {
+  opacity: 0.5;
+}
+
+.input-icon-custom {
+  position: absolute;
+  left: 16px;
   top: 50%;
   transform: translateY(-50%);
   color: #64748b;
+  transition: all 0.3s ease;
   pointer-events: none;
 }
 
-button {
-  background: #6366f1;
-  color: white;
-  padding: 16px;
-  border-radius: 16px;
-  border: none;
+.custom-input:focus~.input-icon-custom {
+  color: #818cf8;
+}
+
+/* 🔥 BROWSER AUTOFILL WHITE BACKGROUND FIX 🔥 */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #0f172a inset !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  transition: background-color 5000s ease-in-out 0s;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* 🔐 Secure Captcha Box */
+.captcha-box {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  box-sizing: border-box;
+}
+
+.captcha-text {
+  font-family: monospace;
+  font-size: 1.2rem;
   font-weight: 700;
+  letter-spacing: 6px;
+  color: #e0e7ff;
+  text-shadow: 0 0 10px rgba(129, 140, 248, 0.5);
+  user-select: none;
+}
+
+/* 🚀 Cyber Button */
+.cyber-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: white;
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-button:hover {
-  background: #4f46e5;
-  transform: translateY(-2px);
-  box-shadow: 0 12px 20px -5px rgba(99, 102, 241, 0.5);
+.cyber-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
 }
 
-button:active {
-  transform: translateY(0);
+.cyber-btn:hover::before {
+  left: 100%;
 }
 
-.error {
-  background: rgba(239, 68, 68, 0.1);
-  color: #fca5a5;
-  padding: 12px;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  text-align: center;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  margin-bottom: 1rem;
+.cyber-btn:hover {
+  box-shadow: 0 8px 25px rgba(124, 58, 237, 0.5);
+}
+
+.cyber-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+
+/* ✨ Floating Toy Bubbles (Naya Add Kiya Hai) */
+.floating-toy-bubble {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), inset 0 0 15px rgba(255, 255, 255, 0.05);
+  z-index: 2;
+  user-select: none;
+  pointer-events: none;
 }

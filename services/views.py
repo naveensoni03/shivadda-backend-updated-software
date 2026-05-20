@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from .models import (
     EducationLevel, 
     ServiceType, 
+    ServiceCategory,
     ServiceMode, 
     ManagementType, 
     PlaceCodeMapping,
@@ -20,6 +21,7 @@ from .models import (
 from .serializers import (
     EducationLevelSerializer, 
     ServiceTypeSerializer, 
+    ServiceCategorySerializer,
     ServiceModeSerializer,
     ManagementTypeSerializer,
     PlaceCodeMappingSerializer,
@@ -40,6 +42,10 @@ class EducationLevelViewSet(viewsets.ModelViewSet):
 class ServiceTypeViewSet(viewsets.ModelViewSet):
     queryset = ServiceType.objects.all()
     serializer_class = ServiceTypeSerializer
+
+class ServiceCategoryViewSet(viewsets.ModelViewSet):
+    queryset = ServiceCategory.objects.filter(status='Active')
+    serializer_class = ServiceCategorySerializer
 
 class ServiceModeViewSet(viewsets.ModelViewSet):
     queryset = ServiceMode.objects.all()

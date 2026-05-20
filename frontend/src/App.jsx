@@ -1,3 +1,4 @@
+import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
@@ -23,6 +24,7 @@ import Visitors from "./pages/Visitors";
 import Agents from "./pages/Agents";
 import Locations from "./pages/Locations";
 import ServiceMaster from "./pages/ServiceMaster";
+import ServiceTypes from "./pages/ServiceTypes";
 import AccessLogs from "./pages/AccessLogs";
 import UserManager from "./pages/UserManager";
 import VirtualSpace from "./pages/VirtualSpace";
@@ -55,7 +57,6 @@ import StudentProfile from "./pages/student/Profile";
 import StudentCourseSpace from "./pages/student/StudentCourseSpace";
 import StudentAssignments from "./pages/student/StudentAssignments";
 import TakeExam from "./pages/student/TakeExam";
-// 🔥 NAYA IMPORT: Student Fees
 import StudentFees from "./pages/student/Fees";
 
 // 👩‍🏫 TEACHER PORTAL IMPORTS
@@ -89,35 +90,35 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   const token = sessionStorage.getItem("access_token") || localStorage.getItem("access_token") || localStorage.getItem("access");
   const rawRole = sessionStorage.getItem("user_role") || localStorage.getItem("user_role") || localStorage.getItem("role") || "";
 
-  // 🔥 SUPREME FIX: Quotes हटाओ और बीच के "Space" को "Underscore" (_) में बदल दो!
-  // इससे "SUPER ADMIN" और "SUPER_ADMIN" दोनों एक ही बन जाएंगे।
+  // Quotes hatao aur space ko underscore (_) me badlo
   const userRole = rawRole.replace(/['"]/g, "").replace(/\s+/g, "_").trim().toUpperCase();
 
-  if (!token) {
+  // 🔥 WHITE SCREEN FIX: Token nahi hai YA fir Role invalid/empty hai, toh sidha login window par bhejo
+  if (!token || !userRole || userRole === "") {
     return <Navigate to="/login" replace />;
   }
 
   // 2. Format allowed roles to match UPPERCASE and Underscores
   const safeAllowedRoles = allowedRoles.map(role => role.replace(/\s+/g, "_").toUpperCase().trim());
 
-  // 3. Strict Check
+  // 3. Strict Authorization Check
   if (!safeAllowedRoles.includes(userRole)) {
     console.warn(`🛡️ Access Denied! Role "${userRole}" tried to access a restricted route.`);
 
-    // Strict Role Redirects (Koi kisi dusre ke portal me nahi jayega)
+    // Strict Portal Role Redirects
     if (userRole === "STUDENT") return <Navigate to="/student/dashboard" replace />;
     if (userRole === "TEACHER" || userRole === "HOD") return <Navigate to="/teacher/dashboard" replace />;
     if (userRole === "PARENT") return <Navigate to="/parent/dashboard" replace />;
 
-    // Default for Management / Staff / Security
-    return <Navigate to="/dashboard" replace />;
+    // Agar koi random state ho toh reset karne ke liye login par daal dein
+    return <Navigate to="/login" replace />;
   }
 
   return children;
 };
 
 export default function App() {
-  // 🚀 NEW ARCHITECTURE ROLE GROUPS
+  // 🚀 ROLE GROUPS CONFIGURATION
   const ADMIN_ONLY = ["SUPER_ADMIN", "ADMIN", "SCHOOL_ADMIN"];
   const ACADEMIC_STAFF = ["SUPER_ADMIN", "ADMIN", "SCHOOL_ADMIN", "HOD", "TEACHER"];
   const FINANCE_ROLES = ["SUPER_ADMIN", "ADMIN", "SCHOOL_ADMIN"];
@@ -149,6 +150,8 @@ export default function App() {
           <Route path="/institutions" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><Institutions /></ProtectedRoute>} />
           <Route path="/locations" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><Locations /></ProtectedRoute>} />
           <Route path="/services" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><ServiceMaster /></ProtectedRoute>} />
+          <Route path="/service-types" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><ServiceTypes /></ProtectedRoute>} />
+          <Route path="/types-of-services" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><ServiceTypes /></ProtectedRoute>} />
           <Route path="/access-logs" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><AccessLogs /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><UserManager /></ProtectedRoute>} />
           <Route path="/system" element={<ProtectedRoute allowedRoles={ADMIN_ONLY}><SystemConfig /></ProtectedRoute>} />
