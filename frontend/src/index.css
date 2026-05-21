@@ -52,22 +52,26 @@
   div[style*="margin-left:280px"] {
     margin-left: 0 !important;
     width: 100% !important;
-    padding-top: 90px !important;
+    padding-top: 75px !important;
     padding-left: 15px !important;
     padding-right: 15px !important;
     box-sizing: border-box !important;
   }
 
+  .dashboard-page-wrapper {
+    flex-direction: column !important;
+  }
+
   .waoo-view {
     margin-left: 0 !important;
     padding: 15px !important;
-    padding-top: 90px !important;
+    padding-top: 75px !important;
     width: 100% !important;
     box-sizing: border-box;
   }
 
   .mobile-header {
-    display: flex;
+    display: flex !important;
     justify-content: space-between;
     align-items: center;
     background: #ffffff;

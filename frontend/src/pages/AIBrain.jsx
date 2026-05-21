@@ -1,198 +1,198 @@
 import React, { useState, useEffect } from "react";
 import SidebarModern from "../components/SidebarModern";
-import { 
-  Brain, TrendingUp, AlertTriangle, Zap, Target, 
-  Users, DollarSign, Activity, ChevronRight, Loader, Sparkles,
-  Cpu, Server, BarChart3, Globe, ShieldCheck
+import {
+    Brain, TrendingUp, AlertTriangle, Zap, Target,
+    Users, DollarSign, Activity, ChevronRight, Loader, Sparkles,
+    Cpu, Server, BarChart3, Globe, ShieldCheck
 } from "lucide-react";
 
 export default function AIBrain() {
-  const [analyzing, setAnalyzing] = useState(true);
-  const [systemPulse, setSystemPulse] = useState(false);
+    const [analyzing, setAnalyzing] = useState(true);
+    const [systemPulse, setSystemPulse] = useState(false);
 
-  // --- MOCK INTELLIGENCE DATA ---
-  const aiStats = {
-    revenue: "₹8.5L",
-    growth: "+18%",
-    risk: "Low",
-    prediction: "Positive"
-  };
+    // --- MOCK INTELLIGENCE DATA ---
+    const aiStats = {
+        revenue: "₹8.5L",
+        growth: "+18%",
+        risk: "Low",
+        prediction: "Positive"
+    };
 
-  const batchPerformance = [
-    { name: "JEE Mains '26", score: 92, trend: 'up' },
-    { name: "NEET Medical", score: 78, trend: 'stable' },
-    { name: "Foundation 10th", score: 45, trend: 'down' },
-  ];
+    const batchPerformance = [
+        { name: "JEE Mains '26", score: 92, trend: 'up' },
+        { name: "NEET Medical", score: 78, trend: 'stable' },
+        { name: "Foundation 10th", score: 45, trend: 'down' },
+    ];
 
-  const insights = [
-    { id: 1, type: 'opportunity', title: "Revenue Spike Detected", desc: "Launch 'Crash Course' now to capture ₹2L extra market." },
-    { id: 2, type: 'alert', title: "Dropout Risk: 5 Students", desc: "Foundation batch attendance dropped by 15% this week." },
-    { id: 3, type: 'opt', title: "Resource Idle", desc: "Chemistry Lab is empty on Fridays. Reschedule Class 11." },
-  ];
+    const insights = [
+        { id: 1, type: 'opportunity', title: "Revenue Spike Detected", desc: "Launch 'Crash Course' now to capture ₹2L extra market." },
+        { id: 2, type: 'alert', title: "Dropout Risk: 5 Students", desc: "Foundation batch attendance dropped by 15% this week." },
+        { id: 3, type: 'opt', title: "Resource Idle", desc: "Chemistry Lab is empty on Fridays. Reschedule Class 11." },
+    ];
 
-  useEffect(() => {
-    setTimeout(() => setAnalyzing(false), 3000); // 3s Intro
-    const interval = setInterval(() => setSystemPulse(p => !p), 2000);
-    return () => clearInterval(interval);
-  }, []);
+    useEffect(() => {
+        setTimeout(() => setAnalyzing(false), 3000); // 3s Intro
+        const interval = setInterval(() => setSystemPulse(p => !p), 2000);
+        return () => clearInterval(interval);
+    }, []);
 
-  return (
-    <div className="neural-app">
-      <SidebarModern />
-      <div className="cyber-grid-bg"></div>
-      
-      {/* AMBIENT LIGHTS */}
-      <div className="orb orb-1"></div>
-      <div className="orb orb-2"></div>
+    return (
+        <div className="neural-app">
+            <SidebarModern />
+            <div className="cyber-grid-bg"></div>
 
-      <div className="neural-container hide-scrollbar">
-        
-        {/* HEADER */}
-        <header className="neural-header">
-            <div className="nh-left">
-                <div className={`core-indicator ${systemPulse ? 'pulse' : ''}`}>
-                    <Cpu size={24} color={systemPulse ? "#fff" : "#a855f7"} />
-                </div>
-                <div>
-                    <h1 className="glitch-text" data-text="SHIVADDA CORE">SHIVADDA CORE</h1>
-                    <p>Artificial Intelligence & Predictive Analytics</p>
-                </div>
-            </div>
-            <div className="nh-right">
-                <div className="sys-status">
-                    <span className="blink-dot"></span> SYSTEM OPTIMAL
-                </div>
-                <div className="server-time">T-MINUS 00:00:00</div>
-            </div>
-        </header>
+            {/* AMBIENT LIGHTS */}
+            <div className="orb orb-1"></div>
+            <div className="orb orb-2"></div>
 
-        {analyzing ? (
-            <div className="boot-sequence">
-                <div className="scanner"></div>
-                <Brain size={80} className="loading-brain" color="#d8b4fe"/>
-                <h2>ESTABLISHING NEURAL LINK...</h2>
-                <div className="loading-bar"><div className="fill"></div></div>
-                <div className="terminal-text">
-                    <p>&gt; Reading Database...</p>
-                    <p>&gt; Analyzing Student Behavior...</p>
-                    <p>&gt; Predicting Financial Trajectory...</p>
-                </div>
-            </div>
-        ) : (
-            <div className="neural-dashboard fade-in-up">
-                
-                {/* --- ROW 1: KPI HUD --- */}
-                <div className="hud-grid">
-                    <div className="hud-card glass-card slide-up delay-1">
-                        <div className="hc-icon bg-purple"><DollarSign size={20}/></div>
+            <div className="neural-container hide-scrollbar">
+
+                {/* HEADER */}
+                <header className="neural-header">
+                    <div className="nh-left">
+                        <div className={`core-indicator ${systemPulse ? 'pulse' : ''}`}>
+                            <Cpu size={24} color={systemPulse ? "#fff" : "#a855f7"} />
+                        </div>
                         <div>
-                            <span>Projected Revenue</span>
-                            <h3>{aiStats.revenue} <span className="stat-up">{aiStats.growth}</span></h3>
+                            <h1 className="glitch-text" data-text="SHIVADDA CORE">SHIVADDA CORE</h1>
+                            <p>Artificial Intelligence & Predictive Analytics</p>
                         </div>
                     </div>
-                    <div className="hud-card glass-card slide-up delay-2">
-                        <div className="hc-icon bg-blue"><ShieldCheck size={20}/></div>
-                        <div>
-                            <span>Churn Risk</span>
-                            <h3>{aiStats.risk} <span className="stat-safe">Stable</span></h3>
+                    <div className="nh-right">
+                        <div className="sys-status">
+                            <span className="blink-dot"></span> SYSTEM OPTIMAL
                         </div>
+                        <div className="server-time">T-MINUS 00:00:00</div>
                     </div>
-                    <div className="hud-card glass-card slide-up delay-3">
-                        <div className="hc-icon bg-cyan"><Activity size={20}/></div>
-                        <div>
-                            <span>AI Confidence</span>
-                            <h3>98.4% <span className="stat-up">High</span></h3>
-                        </div>
-                    </div>
-                    <div className="hud-card glass-card slide-up delay-4">
-                        <div className="hc-icon bg-pink"><Server size={20}/></div>
-                        <div>
-                            <span>Data Points</span>
-                            <h3>5,240 <span className="stat-neutral">Live</span></h3>
-                        </div>
-                    </div>
-                </div>
+                </header>
 
-                {/* --- ROW 2: MAIN VISUALIZATION --- */}
-                <div className="main-viz-grid">
-                    
-                    {/* LEFT: THE BRAIN (Interactive) */}
-                    <div className="viz-card brain-box glass-card scale-in">
-                        <div className="card-label">CORE PROCESSING UNIT</div>
-                        <div className="brain-visual">
-                            <div className="central-core">
-                                <Brain size={64} color="white"/>
+                {analyzing ? (
+                    <div className="boot-sequence">
+                        <div className="scanner"></div>
+                        <Brain size={80} className="loading-brain" color="#d8b4fe" />
+                        <h2>ESTABLISHING NEURAL LINK...</h2>
+                        <div className="loading-bar"><div className="fill"></div></div>
+                        <div className="terminal-text">
+                            <p>&gt; Reading Database...</p>
+                            <p>&gt; Analyzing Student Behavior...</p>
+                            <p>&gt; Predicting Financial Trajectory...</p>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="neural-dashboard fade-in-up">
+
+                        {/* --- ROW 1: KPI HUD --- */}
+                        <div className="hud-grid">
+                            <div className="hud-card glass-card slide-up delay-1">
+                                <div className="hc-icon bg-purple"><DollarSign size={20} /></div>
+                                <div>
+                                    <span>Projected Revenue</span>
+                                    <h3>{aiStats.revenue} <span className="stat-up">{aiStats.growth}</span></h3>
+                                </div>
                             </div>
-                            <div className="orbit orbit-1"></div>
-                            <div className="orbit orbit-2"></div>
-                            <div className="orbit orbit-3"></div>
-                            <div className="floating-stat fs-1 float-slow">Fee: 90%</div>
-                            <div className="floating-stat fs-2 float-medium">Att: 85%</div>
-                            <div className="floating-stat fs-3 float-fast">Exam: 72%</div>
-                        </div>
-                        <div className="brain-footer">
-                            Analyzing patterns across 12 Batches...
-                        </div>
-                    </div>
-
-                    {/* RIGHT: STRATEGIC INSIGHTS */}
-                    <div className="viz-card insights-box glass-card slide-in-right">
-                        <div className="card-label">STRATEGIC RECOMMENDATIONS</div>
-                        <div className="insights-list">
-                            {insights.map((ins, i) => (
-                                <div key={ins.id} className={`insight-row ${ins.type} stagger-item`} style={{animationDelay: `${i * 0.15}s`}}>
-                                    <div className="ir-left">
-                                        {ins.type === 'opportunity' && <TrendingUp size={18} color="#4ade80"/>}
-                                        {ins.type === 'alert' && <AlertTriangle size={18} color="#f87171"/>}
-                                        {ins.type === 'opt' && <Zap size={18} color="#fbbf24"/>}
-                                    </div>
-                                    <div className="ir-content">
-                                        <h4>{ins.title}</h4>
-                                        <p>{ins.desc}</p>
-                                    </div>
-                                    <button className="ir-action"><ChevronRight size={16}/></button>
+                            <div className="hud-card glass-card slide-up delay-2">
+                                <div className="hc-icon bg-blue"><ShieldCheck size={20} /></div>
+                                <div>
+                                    <span>Churn Risk</span>
+                                    <h3>{aiStats.risk} <span className="stat-safe">Stable</span></h3>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* --- ROW 3: BATCH MATRIX & GRAPH --- */}
-                <div className="bottom-grid">
-                    <div className="glass-card batch-matrix slide-in-left">
-                        <div className="card-label">BATCH HEALTH MONITOR</div>
-                        {batchPerformance.map((b, i) => (
-                            <div key={i} className="bm-row stagger-item" style={{animationDelay: `${i * 0.15}s`}}>
-                                <div className="bm-name">{b.name}</div>
-                                <div className="bm-bar-track">
-                                    <div className="bm-bar-fill" style={{width: `${b.score}%`, backgroundColor: b.score > 80 ? '#4ade80' : b.score > 50 ? '#fbbf24' : '#f87171'}}></div>
-                                </div>
-                                <div className="bm-score">{b.score}%</div>
                             </div>
-                        ))}
-                    </div>
-
-                    <div className="glass-card prediction-graph slide-in-right">
-                        <div className="card-label">REVENUE TRAJECTORY (AI PREDICTION)</div>
-                        <div className="graph-bars">
-                            {[40, 55, 35, 60, 75, 90, 100].map((h, i) => (
-                                <div key={i} className={`g-bar ${i > 4 ? 'predicted' : ''} grow-bar`} style={{height: `${h}%`, animationDelay: `${i * 0.1}s`}}>
-                                    <span className="tooltip">₹{h}k</span>
+                            <div className="hud-card glass-card slide-up delay-3">
+                                <div className="hc-icon bg-cyan"><Activity size={20} /></div>
+                                <div>
+                                    <span>AI Confidence</span>
+                                    <h3>98.4% <span className="stat-up">High</span></h3>
                                 </div>
-                            ))}
+                            </div>
+                            <div className="hud-card glass-card slide-up delay-4">
+                                <div className="hc-icon bg-pink"><Server size={20} /></div>
+                                <div>
+                                    <span>Data Points</span>
+                                    <h3>5,240 <span className="stat-neutral">Live</span></h3>
+                                </div>
+                            </div>
                         </div>
-                        <div className="graph-x">
-                            <span>JUN</span><span>JUL</span><span>AUG</span><span>SEP</span><span>OCT</span><span className="pred">NOV</span><span className="pred">DEC</span>
+
+                        {/* --- ROW 2: MAIN VISUALIZATION --- */}
+                        <div className="main-viz-grid">
+
+                            {/* LEFT: THE BRAIN (Interactive) */}
+                            <div className="viz-card brain-box glass-card scale-in">
+                                <div className="card-label">CORE PROCESSING UNIT</div>
+                                <div className="brain-visual">
+                                    <div className="central-core">
+                                        <Brain size={64} color="white" />
+                                    </div>
+                                    <div className="orbit orbit-1"></div>
+                                    <div className="orbit orbit-2"></div>
+                                    <div className="orbit orbit-3"></div>
+                                    <div className="floating-stat fs-1 float-slow">Fee: 90%</div>
+                                    <div className="floating-stat fs-2 float-medium">Att: 85%</div>
+                                    <div className="floating-stat fs-3 float-fast">Exam: 72%</div>
+                                </div>
+                                <div className="brain-footer">
+                                    Analyzing patterns across 12 Batches...
+                                </div>
+                            </div>
+
+                            {/* RIGHT: STRATEGIC INSIGHTS */}
+                            <div className="viz-card insights-box glass-card slide-in-right">
+                                <div className="card-label">STRATEGIC RECOMMENDATIONS</div>
+                                <div className="insights-list">
+                                    {insights.map((ins, i) => (
+                                        <div key={ins.id} className={`insight-row ${ins.type} stagger-item`} style={{ animationDelay: `${i * 0.15}s` }}>
+                                            <div className="ir-left">
+                                                {ins.type === 'opportunity' && <TrendingUp size={18} color="#4ade80" />}
+                                                {ins.type === 'alert' && <AlertTriangle size={18} color="#f87171" />}
+                                                {ins.type === 'opt' && <Zap size={18} color="#fbbf24" />}
+                                            </div>
+                                            <div className="ir-content">
+                                                <h4>{ins.title}</h4>
+                                                <p>{ins.desc}</p>
+                                            </div>
+                                            <button className="ir-action"><ChevronRight size={16} /></button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
+
+                        {/* --- ROW 3: BATCH MATRIX & GRAPH --- */}
+                        <div className="bottom-grid">
+                            <div className="glass-card batch-matrix slide-in-left">
+                                <div className="card-label">BATCH HEALTH MONITOR</div>
+                                {batchPerformance.map((b, i) => (
+                                    <div key={i} className="bm-row stagger-item" style={{ animationDelay: `${i * 0.15}s` }}>
+                                        <div className="bm-name">{b.name}</div>
+                                        <div className="bm-bar-track">
+                                            <div className="bm-bar-fill" style={{ width: `${b.score}%`, backgroundColor: b.score > 80 ? '#4ade80' : b.score > 50 ? '#fbbf24' : '#f87171' }}></div>
+                                        </div>
+                                        <div className="bm-score">{b.score}%</div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="glass-card prediction-graph slide-in-right">
+                                <div className="card-label">REVENUE TRAJECTORY (AI PREDICTION)</div>
+                                <div className="graph-bars">
+                                    {[40, 55, 35, 60, 75, 90, 100].map((h, i) => (
+                                        <div key={i} className={`g-bar ${i > 4 ? 'predicted' : ''} grow-bar`} style={{ height: `${h}%`, animationDelay: `${i * 0.1}s` }}>
+                                            <span className="tooltip">₹{h}k</span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="graph-x">
+                                    <span>JUN</span><span>JUL</span><span>AUG</span><span>SEP</span><span>OCT</span><span className="pred">NOV</span><span className="pred">DEC</span>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
-                </div>
-
+                )}
             </div>
-        )}
-      </div>
 
-      {/* 🚀 CSS FOR 100% RESPONSIVENESS AND PROPER SCROLLING */}
-      <style>{`
+            {/* 🚀 CSS FOR 100% RESPONSIVENESS AND PROPER SCROLLING */}
+            <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap');
         
         :root {
@@ -389,26 +389,45 @@ export default function AIBrain() {
             /* On mobile, ONLY the container scrolls vertically. Body remains locked. */
             .neural-container {
                 margin-left: 0 !important;
-                padding: 15px !important;
-                padding-top: 85px !important; /* Sidebar header clearance */
-                padding-bottom: 150px !important; /* Chatbot & bottom nav clearance */
+                padding: 12px !important;
+                padding-top: 80px !important; /* Sidebar header clearance */
+                padding-bottom: 100px !important; /* Bottom clearance */
                 width: 100% !important; 
                 max-width: 100% !important;
                 height: 100vh !important; /* Keeps scroll active */
+                overflow-y: auto;
+                box-sizing: border-box;
             }
 
             /* Responsive Header */
-            .neural-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .neural-header { 
+                flex-direction: column; 
+                align-items: flex-start; 
+                gap: 12px; 
+                padding-bottom: 15px;
+                margin-bottom: 20px;
+            }
             .nh-right { text-align: left; }
             .sys-status { justify-content: flex-start; }
+            .nh-left { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .glitch-text { font-size: 1.3rem; }
 
             /* ✅ FIXED: Grid Layouts to Stack for Mobile */
-            .hud-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 15px; }
+            .hud-grid { 
+                grid-template-columns: repeat(2, 1fr) !important; 
+                gap: 12px; 
+                margin-bottom: 20px;
+            }
+            .hud-card { 
+                padding: 12px; 
+                font-size: 0.75rem;
+            }
+            .hud-card h3 { font-size: 1rem; }
             
             .main-viz-grid { 
-                grid-template-columns: 1fr !important; /* Forces vertical stack */
+                grid-template-columns: 1fr !important;
                 height: auto !important; 
-                gap: 20px !important;
+                gap: 15px !important;
             }
             
             .insights-list {
@@ -418,22 +437,39 @@ export default function AIBrain() {
             }
 
             .bottom-grid { 
-                grid-template-columns: 1fr !important; /* Forces vertical stack */
-                gap: 20px !important;
+                grid-template-columns: 1fr !important;
+                gap: 15px !important;
             }
 
             /* Brain Scaling for Mobile */
-            .brain-visual { transform: scale(0.85); margin: 0 auto; }
+            .brain-visual { transform: scale(0.7); margin: 10px auto; }
+            .brain-box { min-height: 200px; }
             
-            /* Typography Tweaks */
-            .glitch-text { font-size: 1.5rem; }
-            .hud-card h3 { font-size: 1.2rem; }
+            /* Cards */
+            .glass-card { padding: 15px; }
+            .card-label { font-size: 0.65rem; margin-bottom: 10px; }
         }
 
-        @media (max-width: 400px) {
-            .hud-grid { grid-template-columns: 1fr !important; }
+        @media (max-width: 480px) {
+            .neural-container {
+                padding: 10px !important;
+                padding-top: 75px !important;
+                padding-bottom: 80px !important;
+            }
+            
+            .hud-grid { grid-template-columns: 1fr !important; gap: 10px; }
+            .hud-card { flex-direction: column; align-items: flex-start; }
+            .hud-card h3 { font-size: 0.9rem; }
+            
+            .neural-header { margin-bottom: 15px; }
+            .glitch-text { font-size: 1.1rem; }
+            
+            .brain-visual { transform: scale(0.6); }
+            .floating-stat { font-size: 0.6rem !important; }
+            
+            .glass-card { padding: 12px; }
         }
       `}</style>
-    </div>
-  );
+        </div>
+    );
 }

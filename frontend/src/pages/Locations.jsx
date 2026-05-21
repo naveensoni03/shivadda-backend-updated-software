@@ -656,10 +656,12 @@ export default function Locations() {
                     padding: 35px; 
                     height: 100vh; 
                     overflow-y: auto; 
+                    overflow-x: hidden;
                     position: relative; 
                     box-sizing: border-box; 
                     transition: all 0.3s ease; 
-                    min-width: 0; 
+                    min-width: 0;
+                    width: calc(100% - 280px);
                 }
                 
                 .locations-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 35px; flex-wrap: wrap; gap: 20px; }
@@ -688,30 +690,106 @@ export default function Locations() {
                 @media (max-width: 850px) {
                     .locations-main-view { 
                         margin-left: 0 !important; 
-                        padding: 16px !important; 
-                        padding-top: 90px !important; 
-                        width: 100% !important; 
+                        margin-right: 0 !important;
+                        padding: 12px !important; 
+                        padding-top: 80px !important; 
+                        padding-bottom: 20px !important;
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        box-sizing: border-box;
+                        overflow-x: hidden !important;
+                        min-width: 0;
                     }
-                    .locations-header { flex-direction: column; align-items: flex-start; gap: 15px; margin-bottom: 25px; }
-                    .header-stats-wrapper { width: 100%; }
-                    .header-stat-card { flex: 1; min-width: unset; }
+                    .locations-header { 
+                        flex-direction: column; 
+                        align-items: flex-start; 
+                        gap: 12px; 
+                        margin-bottom: 15px; 
+                        width: 100%;
+                        box-sizing: border-box;
+                    }
+                    .header-stats-wrapper { 
+                        width: 100%; 
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 10px;
+                    }
+                    .header-stat-card { 
+                        flex: 0 1 auto; 
+                        min-width: unset; 
+                        font-size: 0.7rem !important;
+                        padding: 8px 12px !important;
+                        white-space: nowrap;
+                    }
 
-                    .locations-content-grid { grid-template-columns: 1fr; gap: 25px; }
+                    .locations-content-grid { 
+                        grid-template-columns: 1fr; 
+                        gap: 15px; 
+                        padding-bottom: 10px;
+                        width: 100%;
+                        box-sizing: border-box;
+                    }
+                    .locations-content-grid > div { 
+                        width: 100%;
+                        box-sizing: border-box;
+                        min-width: 0;
+                    }
                     .locations-content-grid > div:first-child { order: -1; }
                     
-                    .form-row { flex-direction: column; gap: 12px; }
-                    .form-row > input, .form-row > div { width: 100%; }
+                    .form-row { 
+                        flex-direction: column; 
+                        gap: 8px; 
+                        width: 100% !important;
+                        box-sizing: border-box;
+                    }
+                    .form-row > input, 
+                    .form-row > div { 
+                        width: 100%; 
+                        box-sizing: border-box;
+                        min-width: 0;
+                    }
+                    .form-row > div > select,
+                    .form-row > input {
+                        width: 100% !important;
+                    }
                     .empty-spacer { display: none !important; }
+                    
+                    /* Form improvements */
+                    form { 
+                        gap: 8px !important;
+                        width: 100%;
+                        box-sizing: border-box;
+                    }
+                    
+                    /* Responsive inputs */
+                    input[type="text"], 
+                    input[type="email"], 
+                    input[type="number"],
+                    select { 
+                        font-size: 16px !important; 
+                        padding: 12px !important;
+                        width: 100% !important;
+                        box-sizing: border-box !important;
+                    }
+                    
+                    .table-scroll-container { 
+                        margin-top: 15px;
+                        width: 100%;
+                        box-sizing: border-box;
+                        overflow-x: auto;
+                    }
                 }
 
                 /* Ultra-Small Mobile Viewports */
                 @media (max-width: 480px) {
-                    .responsive-h1 { font-size: 1.65rem; }
-                    .responsive-subtitle { font-size: 0.9rem; }
-                    .explore-section-header { flex-direction: column; align-items: flex-start; gap: 12px; }
-                    .explore-section-header button { width: 100%; justify-content: center; }
-                    .pagination-container { flex-direction: column !important; gap: 10px !important; }
-                    .pagination-container button { width: 100%; justify-content: center; }
+                    .responsive-h1 { font-size: 1.4rem; line-height: 1.2; }
+                    .responsive-subtitle { font-size: 0.8rem; }
+                    .explore-section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+                    .explore-section-header button { width: 100%; justify-content: center; font-size: 0.8rem; }
+                    .pagination-container { flex-direction: column !important; gap: 8px !important; }
+                    .pagination-container button { width: 100%; justify-content: center; font-size: 0.8rem; }
+                    .locations-header { margin-bottom: 15px; }
+                    .header-stat-card { min-height: auto; padding: 8px 12px !important; }
                 }
               `}</style>
             </div>

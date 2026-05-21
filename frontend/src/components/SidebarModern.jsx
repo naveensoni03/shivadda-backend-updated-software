@@ -1,14 +1,67 @@
 import React, { useState, useEffect } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { Menu, X, LogOut, LayoutDashboard } from "lucide-react";
 import toast from "react-hot-toast";
 
 const SidebarModern = ({ forceOpen }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const rawRole = localStorage.getItem("role") || "ADMIN";
   const userRole = rawRole.replace(/['"]/g, "").trim().toUpperCase();
+
+  // 🎨 THEME COLOR MAPPING - Matches feature colors
+  const FEATURE_COLORS = {
+    // 0. HOME & ABOUT
+    '/dashboard': { bg: '#6366F1', text: '#ffffff' },
+    '/home': { bg: '#6366F1', text: '#ffffff' },
+    
+    // 1. PLACES
+    '/superadmin/master-data': { bg: '#8B5CF6', text: '#ffffff' },
+    '/ai-brain': { bg: '#8B5CF6', text: '#ffffff' },
+    '/institutions': { bg: '#8B5CF6', text: '#ffffff' },
+    '/locations': { bg: '#8B5CF6', text: '#ffffff' },
+    
+    // 2. SERVICES
+    '/service-types': { bg: '#06B6D4', text: '#ffffff' },
+    '/services': { bg: '#06B6D4', text: '#ffffff' },
+    '/attendance': { bg: '#06B6D4', text: '#ffffff' },
+    '/students': { bg: '#06B6D4', text: '#ffffff' },
+    '/teachers': { bg: '#06B6D4', text: '#ffffff' },
+    '/courses': { bg: '#06B6D4', text: '#ffffff' },
+    '/exams': { bg: '#06B6D4', text: '#ffffff' },
+    '/homework': { bg: '#06B6D4', text: '#ffffff' },
+    '/visitors': { bg: '#06B6D4', text: '#ffffff' },
+    
+    // 3. USERS MANAGEMENT
+    '/users': { bg: '#10B981', text: '#ffffff' },
+    '/access-logs': { bg: '#10B981', text: '#ffffff' },
+    '/virtual-space': { bg: '#10B981', text: '#ffffff' },
+    
+    // 10. ACCOUNTS MANAGEMENT
+    '/fees': { bg: '#F59E0B', text: '#ffffff' },
+    '/payroll': { bg: '#F59E0B', text: '#ffffff' },
+    '/service-catalog': { bg: '#F59E0B', text: '#ffffff' },
+    '/payment-accounts': { bg: '#F59E0B', text: '#ffffff' },
+    '/teacher-salary': { bg: '#F59E0B', text: '#ffffff' },
+    '/inventory': { bg: '#F59E0B', text: '#ffffff' },
+    '/timetable': { bg: '#F59E0B', text: '#ffffff' },
+    '/communication': { bg: '#F59E0B', text: '#ffffff' },
+    
+    // 11. UNACADEMIC SERVICES
+    '/library': { bg: '#EC4899', text: '#ffffff' },
+    '/hostel': { bg: '#EC4899', text: '#ffffff' },
+    '/transport': { bg: '#EC4899', text: '#ffffff' },
+  };
+
+  // Get color for current route
+  const getHeaderColor = () => {
+    const currentPath = location.pathname;
+    return FEATURE_COLORS[currentPath] || { bg: '#6366F1', text: '#ffffff' };
+  };
+
+  const headerColor = getHeaderColor();
 
   useEffect(() => {
     if (forceOpen !== undefined) setIsMobileOpen(forceOpen);
@@ -49,19 +102,62 @@ const SidebarModern = ({ forceOpen }) => {
   };
 
   return (
-    <aside className={`custom-sidebar ${isMobileOpen ? "open" : ""}`} style={{
-      width: "280px", background: "#ffffff", height: "100vh", position: "fixed",
-      padding: "20px", borderRight: "1px solid #f1f5f9", zIndex: 1000, overflowY: "auto",
-      display: "flex", flexDirection: "column", justifyContent: "space-between"
-    }}>
-      <div>
-        <h2 style={{ fontSize: "1.4rem", fontWeight: "900", margin: "0 0 20px 10px", color: "#0f172a" }}>
+    <>
+      {/* 📱 MOBILE MENU BUTTON - Shows only on small screens */}
+      <div className="mobile-header" style={{
+        position: "fixed", top: 0, left: 0, right: 0,
+        background: headerColor.bg, padding: "15px 20px", zIndex: 999,
+        borderBottom: `2px solid ${headerColor.bg}`, alignItems: "center",
+        justifyContent: "space-between", transition: "background 0.3s ease"
+      }}>
+        <h2 style={{ fontSize: "1.2rem", fontWeight: "900", margin: 0, color: headerColor.text }}>
           SHIVADDA
         </h2>
+        <button
+          onClick={() => setIsMobileOpen(!isMobileOpen)}
+          style={{
+            background: "none", border: "none", cursor: "pointer",
+            padding: 0, display: "flex", alignItems: "center"
+          }}
+        >
+          {isMobileOpen ? <X size={24} color={headerColor.text} /> : <Menu size={24} color={headerColor.text} />}
+        </button>
+      </div>
+
+      {/* 🔲 MOBILE OVERLAY - Click to close menu */}
+      {isMobileOpen && (
+        <div
+          className="mobile-overlay"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+
+      {/* 🎯 MAIN SIDEBAR */}
+      <aside className={`custom-sidebar ${isMobileOpen ? "open" : ""}`} style={{
+        width: "280px", background: "#ffffff", height: "100vh", position: "fixed",
+        padding: "20px", borderRight: "1px solid #f1f5f9", zIndex: 1000, overflowY: "auto",
+        display: "flex", flexDirection: "column", justifyContent: "space-between"
+      }}>
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+          <h2 style={{ fontSize: "1.4rem", fontWeight: "900", margin: 0, color: "#0f172a" }}>
+            SHIVADDA
+          </h2>
+          <button
+            onClick={() => setIsMobileOpen(false)}
+            className="mobile-close-btn"
+            style={{
+              background: "#f1f5f9", border: "none",
+              padding: "8px", borderRadius: "10px", cursor: "pointer"
+            }}
+          >
+            <X size={20} color="#0f172a" />
+          </button>
+        </div>
 
         <nav>
-          {/* 🏠 MAIN CONSOLE CONTROL */}
-          <p style={sectionHeaderStyle}>Main Console</p>
+          {/* 🏠 HOME & ABOUT SECTION */}
+          <p style={sectionHeaderStyle}>0. HOME & ABOUT</p>
           <NavLink to="/dashboard" style={linkStyle}>
             <LayoutDashboard size={18} /> Dashboard
           </NavLink>
@@ -127,6 +223,7 @@ const SidebarModern = ({ forceOpen }) => {
         </button>
       </div>
     </aside>
+    </>
   );
 };
 
